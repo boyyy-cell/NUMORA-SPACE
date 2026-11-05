@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Sparkles,
   Send,
   HelpCircle,
   BookOpen,
@@ -10,29 +9,29 @@ import {
   User,
   Volume2,
   VolumeX,
-  ShieldAlert,
-  CheckCircle2,
-  AlertTriangle
+  ShieldCheck,
+  AlertTriangle,
+  ArrowRight
 } from 'lucide-react';
 import MathView from '../../components/common/MathView';
 import { voiceService } from '../../services/voiceService';
 import { apiService } from '../../services/api';
 
 const MODES = [
-  { id: 'explain', label: 'Explain (Jelaskan)', icon: BookOpen, desc: 'Penjelasan analogi visual dan konsep bermakna' },
-  { id: 'ask', label: 'Ask (Tanya NORA)', icon: HelpCircle, desc: 'NORA mengajukan pertanyaan pemantik berpikir' },
-  { id: 'hint', label: 'Hint (Petunjuk Bertahap)', icon: Lightbulb, desc: 'Petunjuk berjenjang tanpa membocorkan jawaban' },
-  { id: 'review', label: 'Review (Konsolidasi)', icon: RotateCcw, desc: 'Ulas kembali pemahaman materi sebelumnya' },
+  { id: 'explain', label: 'Jelaskan (Explain)', icon: BookOpen },
+  { id: 'ask', label: 'Tanya (Ask)', icon: HelpCircle },
+  { id: 'hint', label: 'Petunjuk (Hint)', icon: Lightbulb },
+  { id: 'review', label: 'Ulas (Review)', icon: RotateCcw },
 ];
 
 const INITIAL_MESSAGES = [
   {
     id: 1,
     sender: 'nora',
-    text: 'Halo! Aku NORA, pendamping belajarmu di NUMORA Space. 👋\n\nKita tidak akan sekadar menghafal rumus, melainkan memahami apa makna di balik simbol aljabar seperti variabel $x$, koefisien pengali, dan konstanta tetap. Ada yang ingin kamu diskusikan hari ini?',
-    math: '2x + 5 = 15',
+    text: 'Halo! Aku NORA, tutor matematika pendampingmu. 👋\n\nKamu bisa berdiskusi tentang variabel, koefisien, atau cara menyelesaikan persamaan. Apa konsep yang ingin kamu pelajari hari ini?',
+    math: '3x + 5 = 17',
     timestamp: '10:00',
-    spokenText: 'Halo! Aku NORA, pendamping belajarmu di NUMORA Space. Ada yang ingin kamu diskusikan hari ini?'
+    spokenText: 'Halo! Aku NORA, tutor pendampingmu di NUMORA Space. Apa yang ingin kamu diskusikan hari ini?'
   },
   {
     id: 2,
@@ -43,8 +42,9 @@ const INITIAL_MESSAGES = [
   {
     id: 3,
     sender: 'nora',
-    text: 'Pertanyaan yang sangat esensial! Coba ingat kembali definisi koefisien:\n\nKoefisien adalah bilangan atau angka yang menempel dan mengalikan variabel $x$. Pada bentuk $-5x$, tanda negatif (-) melekat pada angkanya. Jadi koefisiennya adalah -5, bukan 5.\n\nJika tandanya positif seperti $3x$, koefisiennya adalah 3. Pahamkah bedanya?',
+    text: 'Pada bentuk -5x, koefisiennya adalah -5, bukan 5. Tanda negatif di depan angka merupakan bagian utuh dari koefisiennya.',
     math: '-5x \\implies a = -5',
+    followUp: 'Pahamkah kamu bedanya jika bentuknya positif seperti 3x?',
     timestamp: '10:02',
     spokenText: 'Pada bentuk negatif 5 x, koefisiennya adalah negatif 5, bukan 5. Tanda negatif ikut melekat pada angkanya.'
   }
@@ -88,7 +88,6 @@ export default function NoraChatPreview({ compact = false }) {
     setIsTyping(true);
 
     try {
-      // Call backend Socratic endpoint
       const response = await apiService.noraChat(userText, selectedMode, hintTier);
       setMessages((prev) => [
         ...prev,
@@ -98,29 +97,34 @@ export default function NoraChatPreview({ compact = false }) {
           text: response.reply,
           math: response.math_latex,
           spokenText: response.voice_spoken_text || response.reply,
+          followUp: selectedMode === 'ask' ? 'Coba tuliskan langkah analisismu selanjutnya.' : null,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           flag: response.misconception_flag
         }
       ]);
     } catch (err) {
-      // Fallback pedagogical Socratic response
+      // Natural, concise pedagogical Socratic fallback response (strictly 2-4 sentences)
       setTimeout(() => {
         let replyText = '';
         let mathExpr = null;
         let speech = '';
+        let followUpQuestion = null;
 
         if (selectedMode === 'hint') {
-          replyText = `💡 [Mode Hint - Tahap ${hintTier}]\nMari kita telaah langkah demi langkah. Untuk memecahkan pertanyaanmu, coba ingat prinsip keseimbangan: apa pun yang kita lakukan di ruas kiri, harus kita perlakukan sama di ruas kanan. Apa langkah pertamamu?`;
+          replyText = `Petunjuk Tahap ${hintTier}: Pada timbangan aljabar, kedua ruas harus selalu diperlakukan adil.`;
           mathExpr = 'ax + b = c \\implies ax = c - b';
-          speech = 'Mari kita telaah langkah demi langkah dengan prinsip keseimbangan timbangan aljabar.';
+          speech = 'Kedua ruas timbangan harus selalu diperlakukan adil.';
+          followUpQuestion = 'Apa operasi pertama yang akan kamu lakukan di kedua ruas?';
         } else if (selectedMode === 'ask') {
-          replyText = `❓ [Pertanyaan Reflektif NORA]:\nJika nilai suatu variabel belum kita ketahui, menurutmu mengapa kita memilih menggunakan huruf seperti x atau y daripada membiarkannya kosong?`;
-          mathExpr = 'x, y \\in \\mathbb{R}';
-          speech = 'Pertanyaan reflektif NORA: mengapa kita memilih menggunakan huruf daripada membiarkannya kosong?';
+          replyText = `Coba telaah kembali: mengapa kita menggunakan huruf x untuk melambangkan nilai yang belum diketahui?`;
+          mathExpr = 'x \\in \\mathbb{R}';
+          speech = 'Mengapa kita menggunakan huruf x untuk nilai yang belum diketahui?';
+          followUpQuestion = 'Apakah nilai x selalu tetap atau bisa berubah?';
         } else {
-          replyText = `✨ [Mode ${selectedMode.toUpperCase()}]:\nAljabar adalah bahasa untuk memodelkan dunia nyata. Huruf x adalah wadah penampung nilai numerik yang fleksibel!`;
+          replyText = `Aljabar adalah bahasa untuk memodelkan persoalan nyata ke dalam lambang matematika. Huruf x adalah wadah penampung nilai!`;
           mathExpr = '3x + 5 = 17';
-          speech = 'Aljabar adalah bahasa untuk memodelkan dunia nyata. Huruf x adalah wadah penampung nilai.';
+          speech = 'Aljabar adalah bahasa untuk memodelkan persoalan nyata.';
+          followUpQuestion = 'Ingin mencoba contoh latihan substitusi bersama?';
         }
 
         setMessages((prev) => [
@@ -131,48 +135,51 @@ export default function NoraChatPreview({ compact = false }) {
             text: replyText,
             math: mathExpr,
             spokenText: speech,
+            followUp: followUpQuestion,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ]);
-      }, 700);
+      }, 500);
     } finally {
       setIsTyping(false);
     }
   };
 
+  const handleSelectFollowUp = (question) => {
+    setInputValue(question);
+  };
+
   return (
-    <div className={`glass-card rounded-2xl flex flex-col overflow-hidden border border-orchid-500/20 shadow-card-soft ${compact ? 'h-[500px]' : 'h-[640px]'}`}>
+    <div className={`bg-pure-white rounded-2xl flex flex-col overflow-hidden border border-border-clean shadow-card-clean ${compact ? 'h-[460px]' : 'h-[580px]'}`}>
       {/* NORA Header */}
-      <div className="p-4 bg-aubergine-900/90 border-b border-white/5 flex items-center justify-between">
+      <div className="p-4 bg-pure-white border-b border-border-clean flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orchid-400 to-apricot-400 flex items-center justify-center p-0.5 shadow-glow-orchid">
-              <div className="w-full h-full rounded-full bg-plum-950 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-orchid-300" />
-              </div>
+            <div className="w-9 h-9 rounded-full bg-forest/10 border border-forest/20 flex items-center justify-center">
+              <Bot className="w-5 h-5 text-forest" />
             </div>
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-sage-400 rounded-full border-2 border-plum-900" />
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-forest rounded-full border-2 border-pure-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-ivory-100 text-sm">NORA Socratic AI Tutor</h3>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-orchid-500/15 text-orchid-300 border border-orchid-500/30">
-                Socratic Loop v1.6
+              <h3 className="font-bold text-charcoal text-sm">NORA Tutor Sokratik</h3>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sage/20 text-forest border border-sage/30">
+                Online
               </span>
             </div>
-            <p className="text-[11px] text-lavender-300">Bimbingan Daya Nalar Aljabar Berbahasa Indonesia</p>
+            <p className="text-[11px] text-secondary-text">Pendamping Berpikir Matematika Aljabar</p>
           </div>
         </div>
 
-        {/* Guardrail Info */}
-        <div className="hidden sm:flex items-center gap-1.5 text-xs text-lavender-300 bg-plum-900/60 px-2.5 py-1 rounded-xl border border-white/5">
-          <ShieldAlert className="w-3.5 h-3.5 text-sage-400" />
-          <span>Anti-Spoiler Guardrail Active</span>
+        {/* Anti-spoiler guardrail badge */}
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-secondary-text bg-ivory px-3 py-1 rounded-xl border border-border-clean">
+          <ShieldCheck className="w-3.5 h-3.5 text-forest" />
+          <span>Bimbingan Bernalar</span>
         </div>
       </div>
 
       {/* Mode Selector & Hint Tiers */}
-      <div className="px-4 py-2.5 bg-plum-950/60 border-b border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div className="px-4 py-2.5 bg-ivory border-b border-border-clean flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-1.5 overflow-x-auto">
           {MODES.map((mode) => {
             const Icon = mode.icon;
@@ -181,13 +188,13 @@ export default function NoraChatPreview({ compact = false }) {
               <button
                 key={mode.id}
                 onClick={() => setSelectedMode(mode.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-orchid-500/20 border border-orchid-400/40 text-ivory-100 font-medium shadow-sm'
-                    : 'text-lavender-300 hover:text-ivory-100 hover:bg-white/5 border border-transparent'
+                    ? 'bg-forest text-pure-white font-semibold shadow-subtle'
+                    : 'text-secondary-text hover:text-charcoal hover:bg-pure-white border border-transparent'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-orchid-300' : ''}`} />
+                <Icon className="w-3.5 h-3.5" />
                 <span>{mode.label}</span>
               </button>
             );
@@ -196,16 +203,16 @@ export default function NoraChatPreview({ compact = false }) {
 
         {/* If Mode is Hint: Show 3 Tiers */}
         {selectedMode === 'hint' && (
-          <div className="flex items-center gap-1 bg-aubergine-800/80 p-1 rounded-lg border border-white/10 text-[11px]">
-            <span className="text-lavender-300 px-1">Tahap:</span>
+          <div className="flex items-center gap-1 bg-pure-white px-2 py-1 rounded-lg border border-border-clean text-[11px]">
+            <span className="text-secondary-text">Tahap:</span>
             {[1, 2, 3].map((t) => (
               <button
                 key={t}
                 onClick={() => setHintTier(t)}
-                className={`px-2 py-0.5 rounded font-mono ${
+                className={`px-2 py-0.5 rounded font-semibold ${
                   hintTier === t
-                    ? 'bg-apricot-400 text-plum-950 font-bold'
-                    : 'text-lavender-300 hover:text-ivory-100'
+                    ? 'bg-forest text-pure-white'
+                    : 'text-secondary-text hover:text-charcoal'
                 }`}
               >
                 {t}
@@ -215,66 +222,80 @@ export default function NoraChatPreview({ compact = false }) {
         )}
       </div>
 
-      {/* Chat Messages */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-4 text-sm">
+      {/* Chat Messages Area */}
+      <div className="flex-1 p-4 overflow-y-auto space-y-3.5 text-sm bg-ivory/30">
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex items-start gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}
+            className={`flex items-start gap-2.5 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}
           >
             {msg.sender === 'nora' ? (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orchid-400 to-apricot-400 flex items-center justify-center shrink-0">
-                <Bot className="w-4 h-4 text-plum-950" />
+              <div className="w-7 h-7 rounded-full bg-forest text-pure-white flex items-center justify-center shrink-0">
+                <Bot className="w-4 h-4" />
               </div>
             ) : (
-              <div className="w-8 h-8 rounded-full bg-aubergine-700 border border-orchid-500/20 flex items-center justify-center shrink-0">
-                <User className="w-4 h-4 text-lavender-300" />
+              <div className="w-7 h-7 rounded-full bg-charcoal text-pure-white flex items-center justify-center shrink-0">
+                <User className="w-4 h-4" />
               </div>
             )}
 
             <div
-              className={`max-w-[85%] rounded-2xl p-3.5 shadow-sm space-y-2 ${
+              className={`max-w-[85%] rounded-2xl p-3.5 space-y-2 shadow-subtle ${
                 msg.sender === 'user'
-                  ? 'bg-orchid-500/20 border border-orchid-400/30 text-ivory-100 rounded-tr-none'
-                  : 'bg-aubergine-900/90 border border-orchid-500/20 text-ivory-100/95 rounded-tl-none'
+                  ? 'bg-forest text-pure-white rounded-tr-none'
+                  : 'bg-pure-white border border-border-clean text-charcoal rounded-tl-none'
               }`}
             >
               <p className="whitespace-pre-line text-xs sm:text-sm leading-relaxed">{msg.text}</p>
 
               {msg.math && (
-                <div className="p-2 rounded-lg bg-plum-950/70 border border-orchid-500/20 text-center my-1.5">
-                  <MathView math={msg.math} block={true} className="text-orchid-300" />
+                <div className={`p-2 rounded-lg text-center font-mono my-1 border ${
+                  msg.sender === 'user'
+                    ? 'bg-forest-600 text-pure-white border-forest-500'
+                    : 'bg-ivory text-forest font-semibold border-border-clean'
+                }`}>
+                  <MathView math={msg.math} block={true} />
+                </div>
+              )}
+
+              {/* One Single Follow-up Question at a Time */}
+              {msg.followUp && (
+                <div
+                  onClick={() => handleSelectFollowUp(msg.followUp)}
+                  className="mt-2 p-2 rounded-xl bg-sage/15 border border-sage/30 text-[11px] text-forest font-medium cursor-pointer hover:bg-sage/25 transition-colors flex items-center justify-between"
+                >
+                  <span>💡 Pertanyaan lanjutan: <strong>{msg.followUp}</strong></span>
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0 ml-1.5" />
                 </div>
               )}
 
               {msg.flag && (
-                <div className="p-2 rounded-lg bg-apricot-500/10 border border-apricot-500/30 text-[11px] text-apricot-300 flex items-center gap-1.5">
+                <div className="p-2 rounded-lg bg-terracotta/10 border border-terracotta/30 text-[11px] text-terracotta flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                   <span>{msg.flag}</span>
                 </div>
               )}
 
-              <div className="flex items-center justify-between text-[10px] text-lavender-300 pt-1 border-t border-white/5">
-                <div className="flex items-center gap-2">
-                  <span>{msg.sender === 'nora' ? 'NORA' : 'Kamu'}</span>
-                  <span>• {msg.timestamp}</span>
-                </div>
+              <div className={`flex items-center justify-between text-[10px] pt-1 border-t ${
+                msg.sender === 'user' ? 'border-forest-600 text-pure-white/70' : 'border-border-clean text-secondary-text'
+              }`}>
+                <span>{msg.sender === 'nora' ? 'NORA' : 'Kamu'} • {msg.timestamp}</span>
 
                 {msg.sender === 'nora' && (
                   <button
                     onClick={() => handleSpeak(msg.id, msg.spokenText || msg.text)}
-                    className="flex items-center gap-1 text-orchid-300 hover:text-apricot-300 hover:underline p-1 rounded hover:bg-white/5"
+                    className="flex items-center gap-1 text-forest hover:underline p-0.5 rounded"
                     title="Dengarkan Suara NORA"
                   >
                     {activeSpeakingId === msg.id ? (
                       <>
-                        <VolumeX className="w-3.5 h-3.5 text-rose-400" />
-                        <span className="text-[10px] text-rose-400">Berhenti</span>
+                        <VolumeX className="w-3.5 h-3.5 text-rose-600" />
+                        <span className="text-rose-600">Berhenti</span>
                       </>
                     ) : (
                       <>
                         <Volume2 className="w-3.5 h-3.5" />
-                        <span className="text-[10px]">Dengar</span>
+                        <span>Dengar</span>
                       </>
                     )}
                   </button>
@@ -285,44 +306,40 @@ export default function NoraChatPreview({ compact = false }) {
         ))}
 
         {isTyping && (
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orchid-400 to-apricot-400 flex items-center justify-center shrink-0">
-              <Bot className="w-4 h-4 text-plum-950" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-forest text-pure-white flex items-center justify-center shrink-0">
+              <Bot className="w-4 h-4" />
             </div>
-            <div className="p-3 rounded-2xl bg-aubergine-900/90 border border-orchid-500/20 text-lavender-300 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-2xl bg-pure-white border border-border-clean text-secondary-text text-xs flex items-center gap-2 shadow-subtle">
               <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-orchid-400 animate-bounce" />
-                <span className="w-1.5 h-1.5 rounded-full bg-orchid-400 animate-bounce [animation-delay:0.2s]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-orchid-400 animate-bounce [animation-delay:0.4s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-forest animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-forest animate-bounce [animation-delay:0.2s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-forest animate-bounce [animation-delay:0.4s]" />
               </div>
-              <span>NORA sedang menganalisis alur penalaran...</span>
+              <span>NORA sedang menganalisis alur bernalar...</span>
             </div>
           </div>
         )}
       </div>
 
       {/* Input Field */}
-      <form onSubmit={handleSend} className="p-3 bg-aubergine-900/90 border-t border-white/5">
+      <form onSubmit={handleSend} className="p-3 bg-pure-white border-t border-border-clean">
         <div className="flex items-center gap-2">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Tanyakan konsep aljabar, misal: 'Apa koefisien dari -5x?'"
-            className="flex-1 bg-plum-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-ivory-100 placeholder-lavender-300/60 focus:outline-none focus:border-orchid-400/50 focus:ring-1 focus:ring-orchid-400/50 transition-all"
+            placeholder="Tanyakan konsep aljabar, misal: 'Apa arti tanda negatif pada -5x?'"
+            className="flex-1 bg-ivory border border-border-clean rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest transition-all"
           />
           <button
             type="submit"
             disabled={!inputValue.trim() || isTyping}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-orchid-400 to-apricot-400 text-plum-950 font-bold text-xs hover:opacity-95 transition-opacity disabled:opacity-40 flex items-center justify-center gap-1.5 shadow-sm"
+            className="px-4 py-2.5 rounded-xl bg-forest text-pure-white font-semibold text-xs hover:bg-forest-600 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5 shadow-subtle"
           >
-            <Send className="w-4 h-4 text-plum-950" />
+            <Send className="w-4 h-4" />
             <span className="hidden sm:inline">Kirim</span>
           </button>
-        </div>
-        <div className="flex items-center justify-between mt-2 text-[10px] text-lavender-300 px-1">
-          <span>🛡️ Protokol Sokratik: NORA membimbing tanpa membocorkan jawaban langsung.</span>
-          <span className="font-mono text-orchid-300/80">Active Socratic Mode</span>
         </div>
       </form>
     </div>

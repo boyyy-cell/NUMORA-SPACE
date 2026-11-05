@@ -3,74 +3,76 @@
 @tailwind utilities;
 
 :root {
-  --color-plum: #19151F;
-  --color-aubergine: #28222F;
-  --color-orchid: #B69AD9;
-  --color-apricot: #F0A77E;
-  --color-sage: #A8BFA9;
-  --color-ivory: #F5EFE5;
-  --color-lavender: #C8B9C9;
+  --color-ivory: #F6F5EF;
+  --color-white: #FFFFFF;
+  --color-forest: #355B45;
+  --color-sage: #A7BCA8;
+  --color-terracotta: #D58B68;
+  --color-charcoal: #28332C;
+  --color-secondary: #707A70;
+  --color-border: #E1E5DC;
 }
 
 @layer base {
   body {
-    background-color: #19151F;
-    color: #F5EFE5;
+    background-color: #F6F5EF;
+    color: #28332C;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
   }
 
-  /* Selection highlight using Soft Orchid */
+  /* Selection highlight using Soft Sage */
   ::selection {
-    background-color: rgba(182, 154, 217, 0.35);
-    color: #F5EFE5;
+    background-color: rgba(167, 188, 168, 0.45);
+    color: #28332C;
   }
 }
 
-/* Glassmorphism helpers — Midnight Orchid Theme */
+/* Clean UI Surface Helpers — SAGE & IVORY Design System */
+.clean-panel,
 .glass-panel {
-  background: rgba(40, 34, 47, 0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(200, 185, 201, 0.12);
+  background: #FFFFFF;
+  border: 1px solid #E1E5DC;
+  box-shadow: 0 1px 3px rgba(40, 51, 44, 0.04);
 }
 
+.clean-card,
 .glass-card {
-  background: rgba(34, 28, 41, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(182, 154, 217, 0.18);
+  background: #FFFFFF;
+  border: 1px solid #E1E5DC;
+  box-shadow: 0 2px 8px -2px rgba(40, 51, 44, 0.05);
 }
 
+.clean-card-interactive,
 .glass-card-interactive {
-  background: rgba(34, 28, 41, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(200, 185, 201, 0.12);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #FFFFFF;
+  border: 1px solid #E1E5DC;
+  box-shadow: 0 2px 8px -2px rgba(40, 51, 44, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.clean-card-interactive:hover,
 .glass-card-interactive:hover {
-  border-color: rgba(182, 154, 217, 0.45);
+  border-color: #355B45;
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px -6px rgba(182, 154, 217, 0.18);
+  box-shadow: 0 8px 20px -4px rgba(53, 91, 69, 0.12);
 }
 
-/* Elegant warm dark scrollbar */
+/* Clean organic scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #19151F;
+  background: #F6F5EF;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3B3245;
+  background: #D5DFD6;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #5A4E68;
+  background: #A7BCA8;
 }

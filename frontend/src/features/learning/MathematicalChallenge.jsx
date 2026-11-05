@@ -6,11 +6,8 @@ import {
   Award,
   CheckCircle2,
   AlertCircle,
-  HelpCircle,
   Volume2,
-  ArrowRight,
-  Sparkles,
-  BookOpen
+  ArrowRight
 } from 'lucide-react';
 
 const CHALLENGES = [
@@ -23,7 +20,7 @@ const CHALLENGES = [
     questionType: 'identify_coefficient',
     correctAnswer: '-5',
     pisaStage: 'FORMULATE & EMPLOY',
-    hint: 'Ingat bahwa tanda positif atau negatif di depan bilangan merupakan bagian utuh dari koefisiennya.',
+    hint: 'Tanda negatif di depan angka merupakan bagian utuh dari koefisiennya.',
     explanationText: 'Pada bentuk -5x, koefisiennya adalah -5 karena angka yang melipatgandakan x adalah bilangan bulat negatif lima.'
   },
   {
@@ -65,7 +62,7 @@ export default function MathematicalChallenge() {
       setFeedback({
         is_correct: isCorrect,
         student_answer: userAnswer,
-        diagnosed_type: isCorrect ? 'Concept Mastered' : 'Check Sign or Variable',
+        diagnosed_type: isCorrect ? 'Konsep Dikuasai' : 'Periksa Tanda Bilangan',
         feedback: isCorrect
           ? 'Tepat sekali! Jawabanmu benar secara konseptual.'
           : `Jawaban '${userAnswer}' belum tepat. Coba perhatikan petunjuk di bawah.`,
@@ -87,26 +84,26 @@ export default function MathematicalChallenge() {
   };
 
   return (
-    <div className="glass-card rounded-2xl p-6 border border-orchid-500/20 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+    <div className="bg-pure-white rounded-2xl p-6 border border-border-clean shadow-card-clean space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-clean pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-orchid-300 flex items-center gap-1">
+            <span className="text-xs font-semibold uppercase tracking-wider text-forest flex items-center gap-1">
               <Award className="w-3.5 h-3.5" />
-              Tantangan Literasi Matematis
+              Tantangan Literasi Matematika
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-apricot-500/15 text-apricot-300 border border-apricot-500/30">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-sage/20 text-forest border border-sage/30">
               PISA Framework
             </span>
           </div>
-          <h3 className="text-lg font-bold text-ivory-100 mt-1">
+          <h3 className="text-base font-bold text-charcoal mt-1">
             {currentChallenge.title}
           </h3>
         </div>
 
         <button
           onClick={() => handleVoice(`${currentChallenge.context} ${currentChallenge.question}`)}
-          className="p-2 rounded-xl bg-plum-900/60 hover:bg-plum-800/80 text-orchid-300 border border-orchid-500/20 flex items-center gap-1.5 text-xs self-start sm:self-auto transition-colors"
+          className="p-2 rounded-xl bg-ivory hover:bg-sage/20 text-forest border border-border-clean flex items-center gap-1.5 text-xs self-start sm:self-auto transition-colors"
         >
           <Volume2 className="w-4 h-4" />
           <span>Bacakan Soal</span>
@@ -114,28 +111,28 @@ export default function MathematicalChallenge() {
       </div>
 
       {/* Context Scenario */}
-      <div className="p-4 rounded-xl bg-plum-950/70 border border-white/5 space-y-3 text-xs leading-relaxed">
-        <p className="text-lavender-300">{currentChallenge.context}</p>
-        <div className="p-3 rounded-lg bg-aubergine-900 border border-orchid-500/30 text-center font-mono text-orchid-300 font-bold text-sm">
+      <div className="p-4 rounded-xl bg-ivory border border-border-clean space-y-3 text-xs leading-relaxed">
+        <p className="text-secondary-text">{currentChallenge.context}</p>
+        <div className="p-2.5 rounded-lg bg-pure-white border border-border-clean text-center font-mono text-forest font-bold text-sm shadow-subtle">
           <MathView math={currentChallenge.expression} />
         </div>
-        <p className="font-semibold text-ivory-100">{currentChallenge.question}</p>
+        <p className="font-semibold text-charcoal">{currentChallenge.question}</p>
       </div>
 
       {/* Answer Form */}
       <form onSubmit={handleVerify} className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-2.5">
           <input
             type="text"
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
             placeholder="Tuliskan jawaban analisismu..."
-            className="flex-1 bg-plum-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-ivory-100 placeholder-lavender-300/60 focus:outline-none focus:border-orchid-400/50 focus:ring-1 focus:ring-orchid-400/50 transition-all"
+            className="flex-1 bg-ivory/60 border border-border-clean rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest transition-all"
           />
           <button
             type="submit"
             disabled={isLoading || !userAnswer.trim()}
-            className="px-6 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-orchid-400 to-apricot-400 text-plum-950 hover:opacity-90 disabled:opacity-40 transition-opacity shadow-sm"
+            className="px-5 py-2.5 rounded-xl font-semibold text-xs bg-forest text-pure-white hover:bg-forest-600 disabled:opacity-40 transition-colors shadow-subtle"
           >
             {isLoading ? 'Menganalisis...' : 'Periksa Jawaban'}
           </button>
@@ -144,27 +141,27 @@ export default function MathematicalChallenge() {
 
       {/* Diagnostic Socratic Feedback */}
       {feedback && (
-        <div className={`p-4 rounded-xl border space-y-2 text-xs animate-in fade-in duration-300 ${
+        <div className={`p-4 rounded-xl border space-y-2 text-xs animate-in fade-in duration-200 ${
           feedback.is_correct
-            ? 'bg-sage-500/15 border-sage-500/30 text-sage-300'
-            : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+            ? 'bg-sage/15 border-sage/30 text-forest'
+            : 'bg-terracotta/10 border-terracotta/30 text-terracotta'
         }`}>
           <div className="flex items-center gap-2 font-bold">
-            {feedback.is_correct ? <CheckCircle2 className="w-5 h-5 text-sage-400" /> : <AlertCircle className="w-5 h-5 text-rose-400" />}
+            {feedback.is_correct ? <CheckCircle2 className="w-4 h-4 text-forest" /> : <AlertCircle className="w-4 h-4 text-terracotta" />}
             <span>Diagnosis: {feedback.diagnosed_type}</span>
           </div>
-          <p className="text-ivory-100/90 leading-relaxed">{feedback.feedback}</p>
+          <p className="text-charcoal leading-relaxed">{feedback.feedback}</p>
           {feedback.recommended_hint && (
-            <div className="p-2.5 rounded-lg bg-plum-950/70 border border-orchid-500/20 text-[11px] text-orchid-300">
+            <div className="p-2.5 rounded-lg bg-pure-white border border-border-clean text-[11px] text-forest font-medium">
               💡 {feedback.recommended_hint}
             </div>
           )}
 
           {feedback.is_correct && (
-            <div className="pt-2">
+            <div className="pt-1">
               <button
                 onClick={handleNext}
-                className="px-4 py-1.5 rounded-lg bg-sage-400 text-plum-950 font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+                className="px-4 py-1.5 rounded-lg bg-forest text-pure-white font-semibold text-xs flex items-center gap-1.5 hover:bg-forest-600 transition-colors"
               >
                 <span>Lanjut ke Tantangan Berikutnya</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -176,4 +173,3 @@ export default function MathematicalChallenge() {
     </div>
   );
 }
-

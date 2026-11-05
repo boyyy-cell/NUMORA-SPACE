@@ -4,8 +4,8 @@
   "description": "Platform Pembelajaran Matematika Digital Berbasis AI untuk Siswa SMP Kelas VII - Algebra, Beyond Formulas.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#19151F",
-  "theme_color": "#19151F",
+  "background_color": "#F6F5EF",
+  "theme_color": "#F6F5EF",
   "orientation": "portrait-primary",
   "icons": [
     {

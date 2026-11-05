@@ -11,43 +11,43 @@ export default function Navbar() {
   const { status, checkNow, baseUrl, error } = useBackendStatus();
 
   return (
-    <header className="sticky top-0 z-50 w-full glass-panel border-b border-lavender/10">
+    <header className="sticky top-0 z-50 w-full bg-pure-white/95 backdrop-blur-sm border-b border-border-clean shadow-subtle">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
         {/* Brand */}
         <BrandLogo showTagline={false} size="default" />
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-lavender">
-          <a href="#features" className="hover:text-ivory transition-colors">
+        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-secondary-text">
+          <a href="#features" className="hover:text-charcoal transition-colors">
             Fitur Utama
           </a>
-          <a href="#preview-modules" className="hover:text-orchid transition-colors">
+          <a href="#preview-modules" className="hover:text-charcoal transition-colors">
             Modul Aljabar
           </a>
-          <a href="#preview-nora" className="hover:text-apricot transition-colors flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-apricot" />
+          <a href="#preview-nora" className="hover:text-forest transition-colors flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-forest" />
             NORA AI
           </a>
-          <Link to="/researcher-dashboard" className="hover:text-orchid transition-colors flex items-center gap-1">
+          <Link to="/researcher-dashboard" className="hover:text-forest transition-colors flex items-center gap-1">
             <Microscope className="w-3.5 h-3.5" />
             Portal Peneliti
           </Link>
         </nav>
 
         {/* Right CTA & Backend Badge */}
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="hidden lg:flex items-center gap-3">
           <BackendStatusBadge status={status} checkNow={checkNow} baseUrl={baseUrl} error={error} compact={true} />
 
           <Link
             to="/login"
-            className="text-xs font-semibold text-ivory px-4 py-2 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-lavender/20"
+            className="text-xs font-semibold text-charcoal px-3.5 py-2 rounded-xl hover:bg-ivory transition-colors border border-border-clean"
           >
             Sign In
           </Link>
 
           <Link
             to="/student-dashboard"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-orchid to-apricot text-plum shadow-glow-orchid hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-forest text-pure-white hover:bg-forest-600 transition-colors shadow-subtle"
           >
             <span>Masuk Demo Siswa</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -59,7 +59,7 @@ export default function Navbar() {
           <BackendStatusBadge status={status} checkNow={checkNow} baseUrl={baseUrl} error={error} compact={true} />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg bg-aubergine text-ivory hover:bg-aubergine-light border border-lavender/10"
+            className="p-2 rounded-lg bg-ivory text-charcoal hover:bg-sage/20 border border-border-clean"
             aria-label="Toggle Navigation"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -69,54 +69,54 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden glass-card border-b border-lavender/10 px-4 pt-3 pb-6 space-y-4 animate-in slide-in-from-top duration-200">
-          <nav className="flex flex-col space-y-3 text-sm font-medium text-lavender">
+        <div className="md:hidden bg-pure-white border-b border-border-clean px-4 pt-3 pb-6 space-y-4 animate-in slide-in-from-top duration-200">
+          <nav className="flex flex-col space-y-2 text-sm font-medium text-secondary-text">
             <a
               href="#features"
               onClick={() => setMobileMenuOpen(false)}
-              className="py-1.5 px-3 rounded-lg hover:bg-white/5 text-ivory"
+              className="py-2 px-3 rounded-lg hover:bg-ivory text-charcoal"
             >
               Fitur Utama
             </a>
             <a
               href="#preview-modules"
               onClick={() => setMobileMenuOpen(false)}
-              className="py-1.5 px-3 rounded-lg hover:bg-white/5 text-ivory"
+              className="py-2 px-3 rounded-lg hover:bg-ivory text-charcoal"
             >
               Modul Pembelajaran Aljabar
             </a>
             <a
               href="#preview-nora"
               onClick={() => setMobileMenuOpen(false)}
-              className="py-1.5 px-3 rounded-lg hover:bg-white/5 text-apricot flex items-center gap-2"
+              className="py-2 px-3 rounded-lg hover:bg-ivory text-forest flex items-center gap-2"
             >
-              <Sparkles className="w-4 h-4" />
-              NORA AI Preview
+              <Sparkles className="w-4 h-4 text-forest" />
+              NORA AI
             </a>
             <Link
               to="/researcher-dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className="py-1.5 px-3 rounded-lg hover:bg-white/5 text-orchid flex items-center gap-2"
+              className="py-2 px-3 rounded-lg hover:bg-ivory text-forest flex items-center gap-2"
             >
               <Microscope className="w-4 h-4" />
-              Dashboard Peneliti (Protokol 2 Siswa)
+              Portal Peneliti
             </Link>
           </nav>
 
-          <div className="pt-3 border-t border-lavender/10 flex flex-col gap-2">
+          <div className="pt-3 border-t border-border-clean flex flex-col gap-2">
             <Link
               to="/student-dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-2.5 rounded-xl text-center text-xs font-bold bg-gradient-to-r from-orchid to-apricot text-plum"
+              className="w-full py-2.5 rounded-xl text-center text-xs font-semibold bg-forest text-pure-white hover:bg-forest-600"
             >
-              Masuk Demo Siswa (Student Space)
+              Masuk Demo Siswa
             </Link>
             <Link
               to="/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-2.5 rounded-xl text-center text-xs font-semibold bg-aubergine text-ivory border border-lavender/15"
+              className="w-full py-2.5 rounded-xl text-center text-xs font-semibold bg-pure-white text-charcoal border border-border-clean hover:bg-ivory"
             >
-              Halaman Login (Pilihan Demo)
+              Halaman Login
             </Link>
           </div>
         </div>

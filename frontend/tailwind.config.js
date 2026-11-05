@@ -7,72 +7,107 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary MIDNIGHT ORCHID Palette
-        orchid: {
-          DEFAULT: "#B69AD9",
-          50: "#FAF7FC",
-          100: "#F2EDF8",
-          200: "#E3D6F0",
-          300: "#CEBBE6",
-          400: "#B69AD9",
-          500: "#9A78C5",
-          600: "#7F5AAB",
-          700: "#63438A",
-          800: "#482F66",
-          900: "#301D47",
+        // SAGE & IVORY Design System
+        ivory: {
+          DEFAULT: "#F6F5EF",
+          50: "#FAF9F6",
+          100: "#F6F5EF",
+          200: "#EFECE2",
+          300: "#E2DDD0",
+          400: "#D3CCBC",
         },
-        apricot: {
-          DEFAULT: "#F0A77E",
-          50: "#FEF7F3",
-          100: "#FCEEE5",
-          200: "#F9D7C4",
-          300: "#F5BEA1",
-          400: "#F0A77E",
-          500: "#E88955",
-          600: "#D36D33",
-          700: "#A95222",
-          800: "#7C3B17",
-          900: "#53250E",
+        forest: {
+          DEFAULT: "#355B45",
+          50: "#F2F6F3",
+          100: "#E1EDE4",
+          200: "#C2DACB",
+          300: "#9EC2AD",
+          400: "#6EA082",
+          500: "#355B45",
+          600: "#2B4B38",
+          700: "#223B2C",
+          800: "#182A1F",
+          900: "#101B14",
         },
         sage: {
-          DEFAULT: "#A8BFA9",
-          100: "#EBF1EC",
-          200: "#D4E1D5",
-          300: "#BDD1BE",
-          400: "#A8BFA9",
+          DEFAULT: "#A7BCA8",
+          50: "#F6F9F6",
+          100: "#EDF3EE",
+          200: "#DBE6DC",
+          300: "#C7D8C8",
+          400: "#A7BCA8",
           500: "#8FA890",
           600: "#718972",
+          700: "#556A56",
+        },
+        terracotta: {
+          DEFAULT: "#D58B68",
+          50: "#FCF7F4",
+          100: "#F8ECE5",
+          200: "#F1DACD",
+          300: "#E6BFAC",
+          400: "#DD9E80",
+          500: "#D58B68",
+          600: "#C2744F",
+          700: "#A25735",
+        },
+        charcoal: {
+          DEFAULT: "#28332C",
+          50: "#F4F5F4",
+          100: "#E5E7E5",
+          200: "#C8CCC8",
+          300: "#A4ACA5",
+          400: "#7B857D",
+          500: "#59645C",
+          600: "#3E4941",
+          700: "#28332C",
+          800: "#1D2520",
+          900: "#131915",
+        },
+        'secondary-text': "#707A70",
+        'border-clean': "#E1E5DC",
+        'pure-white': "#FFFFFF",
+
+        // Backward compatibility mappings
+        orchid: {
+          DEFAULT: "#355B45",
+          300: "#355B45",
+          400: "#355B45",
+          500: "#2B4B38",
+        },
+        apricot: {
+          DEFAULT: "#D58B68",
+          300: "#D58B68",
+          400: "#D58B68",
+          500: "#C2744F",
         },
         plum: {
-          DEFAULT: "#19151F",
-          950: "#130F18",
+          DEFAULT: "#F6F5EF",
+          900: "#F6F5EF",
+          950: "#EFECE2",
         },
         aubergine: {
-          DEFAULT: "#28222F",
-          light: "#332C3C",
-          dark: "#211B27",
-        },
-        ivory: {
-          DEFAULT: "#F5EFE5",
-          muted: "#E8DEC9",
+          DEFAULT: "#FFFFFF",
+          700: "#FFFFFF",
+          800: "#FFFFFF",
+          900: "#FFFFFF",
         },
         lavender: {
-          DEFAULT: "#C8B9C9",
-          dark: "#8E7D90",
+          DEFAULT: "#707A70",
+          300: "#707A70",
         },
 
-        // Semantic & Legacy Alias Mapping for Full Backward-Compatibility
         numora: {
-          bg: "#19151F",            // Midnight Plum
-          surface: "#28222F",       // Deep Aubergine
-          card: "#221C29",          // Elevated card surface
-          cyan: "#B69AD9",          // Soft Orchid (Replaced Blue Cyan)
-          violet: "#F0A77E",        // Warm Apricot (Replaced Electric Violet)
-          white: "#F5EFE5",         // Ivory White
-          muted: "#C8B9C9",         // Muted Lavender
-          success: "#A8BFA9",       // Sage Green
-          warning: "#F0A77E",       // Warm Apricot
-          error: "#E87989",         // Soft Muted Coral
+          bg: "#F6F5EF",            // Warm Ivory
+          surface: "#FFFFFF",       // Pure White
+          card: "#FFFFFF",          // Pure White
+          cyan: "#355B45",          // Forest Green
+          violet: "#D58B68",        // Muted Terracotta
+          white: "#28332C",         // Charcoal text
+          muted: "#707A70",         // Secondary Text
+          success: "#355B45",       // Forest Green
+          warning: "#D58B68",       // Muted Terracotta
+          error: "#C85A5A",
         }
       },
       fontFamily: {
@@ -80,25 +115,23 @@ export default {
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
       boxShadow: {
-        'glow-orchid': '0 0 25px -5px rgba(182, 154, 217, 0.25)',
-        'glow-apricot': '0 0 25px -5px rgba(240, 167, 126, 0.25)',
-        'glow-sage': '0 0 25px -5px rgba(168, 191, 169, 0.25)',
-        'card-soft': '0 12px 32px -8px rgba(14, 10, 19, 0.65)',
-        'glow-cyan': '0 0 25px -5px rgba(182, 154, 217, 0.25)',    // alias for compatibility
-        'glow-violet': '0 0 25px -5px rgba(240, 167, 126, 0.25)',  // alias for compatibility
+        'subtle': '0 1px 3px 0 rgba(40, 51, 44, 0.05), 0 1px 2px -1px rgba(40, 51, 44, 0.05)',
+        'card-clean': '0 2px 8px -2px rgba(40, 51, 44, 0.06), 0 1px 4px -1px rgba(40, 51, 44, 0.04)',
+        'card-soft': '0 4px 14px -3px rgba(40, 51, 44, 0.08)',
+        'elevated': '0 10px 25px -5px rgba(40, 51, 44, 0.08), 0 8px 10px -6px rgba(40, 51, 44, 0.04)',
+        'glow-orchid': 'none',
+        'glow-apricot': 'none',
+        'glow-sage': 'none',
+        'glow-cyan': 'none',
+        'glow-violet': 'none',
       },
       animation: {
         'float-slow': 'float 8s ease-in-out infinite',
-        'pulse-subtle': 'pulseSubtle 4s ease-in-out infinite',
       },
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        pulseSubtle: {
-          '0%, 100%': { opacity: '0.4' },
-          '50%': { opacity: '0.75' },
+          '50%': { transform: 'translateY(-6px)' },
         }
       }
     },

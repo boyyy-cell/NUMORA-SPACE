@@ -7,36 +7,38 @@ import {
   LayoutDashboard,
   BookOpen,
   Bot,
-  BarChart3,
+  Sliders,
+  Award,
   Microscope,
   GraduationCap,
   Home,
   LogOut,
-  Sliders,
-  Award,
-  UserCheck,
-  Brain,
-  FileCheck2
+  Users,
+  Activity,
+  FileText,
+  Download
 } from 'lucide-react';
 
 export default function Sidebar({ role = 'student', activeTab = 'overview', setActiveTab, isOpen, setIsOpen }) {
   const location = useLocation();
   const { status, checkNow, baseUrl, error } = useBackendStatus();
 
+  // Simplified 5 primary navigation tabs for Student Space
   const studentLinks = [
-    { id: 'overview', label: 'Ringkasan Belajar', icon: LayoutDashboard },
-    { id: 'modules', label: 'Modul Aljabar', icon: BookOpen },
-    { id: 'lab', label: 'Algebra Lab & 3D', icon: Sliders, badge: 'LAB' },
-    { id: 'nora', label: 'NORA Socratic AI', icon: Bot, badge: 'SOCRATIC' },
-    { id: 'challenge', label: 'Tantangan PISA', icon: Award, badge: 'LITERASI' },
-    { id: 'progress', label: 'Kemajuan Belajar', icon: BarChart3 },
+    { id: 'overview', label: 'Beranda', icon: LayoutDashboard },
+    { id: 'modules', label: 'Materi', icon: BookOpen },
+    { id: 'lab', label: 'Algebra Lab', icon: Sliders },
+    { id: 'nora', label: 'NORA', icon: Bot },
+    { id: 'challenge', label: 'Evaluasi', icon: Award },
   ];
 
+  // Simplified 5 primary navigation tabs for Researcher Space
   const researcherLinks = [
-    { id: 'overview', label: 'Ringkasan Riset', icon: LayoutDashboard },
-    { id: 'subjects', label: 'Subjek S-001 & S-002', icon: UserCheck, badge: '2 SUBJEK' },
-    { id: 'cognitive', label: 'Beban Kognitif (Leppink)', icon: Brain, badge: 'LEPPINK' },
-    { id: 'assessment', label: 'Pusat Asesmen', icon: FileCheck2 },
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'subjects', label: 'Partisipan', icon: Users },
+    { id: 'monitoring', label: 'Monitoring', icon: Activity },
+    { id: 'instruments', label: 'Instrumen', icon: FileText },
+    { id: 'analytics', label: 'Analisis & Ekspor', icon: Download },
   ];
 
   const links = role === 'researcher' ? researcherLinks : studentLinks;
@@ -47,52 +49,52 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
       {isOpen && (
         <div
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-plum/80 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-charcoal/40 backdrop-blur-xs z-40 lg:hidden"
         />
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-aubergine border-r border-lavender/10 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-pure-white border-r border-border-clean flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="p-5 space-y-6">
+        <div className="p-5 space-y-5">
           {/* Logo */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pb-2">
             <BrandLogo size="default" />
           </div>
 
           {/* Current Role Indicator */}
-          <div className="p-2.5 rounded-xl bg-plum/70 border border-lavender/10 flex items-center justify-between">
+          <div className="p-2.5 rounded-xl bg-ivory border border-border-clean flex items-center justify-between">
             <div className="flex items-center gap-2">
               {role === 'researcher' ? (
-                <Microscope className="w-4 h-4 text-orchid" />
+                <Microscope className="w-4 h-4 text-forest" />
               ) : (
-                <GraduationCap className="w-4 h-4 text-apricot" />
+                <GraduationCap className="w-4 h-4 text-forest" />
               )}
               <div className="leading-tight">
-                <span className="text-[11px] font-bold text-ivory uppercase tracking-wider block">
-                  {role === 'researcher' ? 'Portal Peneliti' : 'Portal Siswa'}
+                <span className="text-[11px] font-bold text-charcoal uppercase tracking-wider block">
+                  {role === 'researcher' ? 'Ruang Peneliti' : 'Ruang Siswa'}
                 </span>
-                <span className="text-[9px] text-lavender font-mono">
-                  Midnight Orchid v1.6
+                <span className="text-[10px] text-secondary-text">
+                  Sage & Ivory v1.6
                 </span>
               </div>
             </div>
 
             <Link
               to={role === 'researcher' ? '/student-dashboard' : '/researcher-dashboard'}
-              className="text-[10px] text-apricot hover:underline"
+              className="text-[11px] text-forest font-semibold hover:underline"
               title="Ganti ke peran lain"
             >
-              Tukar Peran
+              Ganti
             </Link>
           </div>
 
           {/* Navigation Links */}
-          <nav className="space-y-1">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-lavender/70 px-2 mb-2">
-              Menu Navigasi
+          <nav className="space-y-1 pt-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-secondary-text px-2 mb-2">
+              Menu Utama
             </div>
             {links.map((item) => {
               const Icon = item.icon;
@@ -104,21 +106,14 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
                     setActiveTab?.(item.id);
                     setIsOpen?.(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-orchid/20 to-apricot/15 text-ivory border border-orchid/35 shadow-sm font-semibold'
-                      : 'text-lavender hover:text-ivory hover:bg-white/5'
+                      ? 'bg-forest text-pure-white font-semibold shadow-subtle'
+                      : 'text-secondary-text hover:text-charcoal hover:bg-ivory font-medium'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-orchid' : ''}`} />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-orchid/15 text-orchid border border-orchid/25">
-                      {item.badge}
-                    </span>
-                  )}
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-pure-white' : 'text-secondary-text'}`} />
+                  <span>{item.label}</span>
                 </button>
               );
             })}
@@ -126,13 +121,13 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
         </div>
 
         {/* Sidebar Footer: Backend status & links */}
-        <div className="p-4 border-t border-lavender/10 space-y-3 bg-plum/40">
+        <div className="p-4 border-t border-border-clean space-y-3 bg-ivory/50">
           <BackendStatusBadge status={status} checkNow={checkNow} baseUrl={baseUrl} error={error} />
 
-          <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center justify-between pt-1 text-xs">
             <Link
               to="/"
-              className="flex items-center gap-1.5 text-xs text-lavender hover:text-ivory transition-colors"
+              className="flex items-center gap-1.5 text-secondary-text hover:text-charcoal transition-colors font-medium"
             >
               <Home className="w-3.5 h-3.5" />
               <span>Beranda</span>
@@ -140,10 +135,10 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
 
             <Link
               to="/login"
-              className="flex items-center gap-1.5 text-xs text-rose-300 hover:text-rose-200 transition-colors"
+              className="flex items-center gap-1.5 text-rose-700 hover:text-rose-800 transition-colors font-medium"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Keluar Demo</span>
+              <span>Keluar</span>
             </Link>
           </div>
         </div>

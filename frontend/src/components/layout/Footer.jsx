@@ -4,60 +4,60 @@ import { Sparkles, GraduationCap, Microscope } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-aubergine/80 border-t border-lavender/10 pt-12 pb-8 mt-20">
+    <footer className="bg-pure-white border-t border-border-clean pt-12 pb-8 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand Col */}
-          <div className="md:col-span-2 space-y-4">
+          <div className="md:col-span-2 space-y-3">
             <BrandLogo showTagline={true} size="default" />
-            <p className="text-xs text-lavender leading-relaxed max-w-md">
-              NUMORA Space adalah platform pembelajaran matematika digital masa depan yang berfokus pada pemahaman esensial aljabar untuk siswa SMP kelas VII melalui pendekatan visual interaktif, representasi model mental, dan pendampingan AI sokratik NORA.
+            <p className="text-xs text-secondary-text leading-relaxed max-w-md">
+              NUMORA Space membantu siswa SMP kelas VII memahami konsep aljabar melalui visualisasi interaktif dan pendampingan berpikir AI NORA.
             </p>
-            <div className="flex items-center gap-2 text-[11px] text-orchid bg-plum/70 p-2.5 rounded-xl border border-lavender/10 inline-flex">
-              <Sparkles className="w-4 h-4 text-apricot" />
-              <span>NUMORA Space v1.6 — Midnight Orchid Edition</span>
+            <div className="inline-flex items-center gap-2 text-xs text-forest bg-sage/15 px-3 py-1.5 rounded-xl border border-sage/30">
+              <Sparkles className="w-3.5 h-3.5 text-forest" />
+              <span>NUMORA Space v1.6 — Sage & Ivory Edition</span>
             </div>
           </div>
 
           {/* Links Col 1 */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-ivory mb-3 flex items-center gap-1.5">
-              <GraduationCap className="w-3.5 h-3.5 text-orchid" />
-              Modul SMP Kelas VII
+            <h4 className="text-xs font-bold uppercase tracking-wider text-charcoal mb-3 flex items-center gap-1.5">
+              <GraduationCap className="w-3.5 h-3.5 text-forest" />
+              Fondasi Aljabar
             </h4>
-            <ul className="space-y-2 text-xs text-lavender">
-              <li>1. Understanding Variables</li>
-              <li>2. Understanding Coefficients</li>
-              <li>3. Understanding Constants</li>
-              <li>4. Algebraic Expressions</li>
+            <ul className="space-y-1.5 text-xs text-secondary-text">
+              <li>1. Variabel ($x, y$)</li>
+              <li>2. Koefisien ($ax$)</li>
+              <li>3. Konstanta ($c$)</li>
+              <li>4. Bentuk Aljabar ($ax + b$)</li>
             </ul>
           </div>
 
           {/* Links Col 2 */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-ivory mb-3 flex items-center gap-1.5">
-              <Microscope className="w-3.5 h-3.5 text-apricot" />
-              Portal & Demonstrasi
+            <h4 className="text-xs font-bold uppercase tracking-wider text-charcoal mb-3 flex items-center gap-1.5">
+              <Microscope className="w-3.5 h-3.5 text-terracotta" />
+              Navigasi Cepat
             </h4>
-            <ul className="space-y-2 text-xs text-lavender">
-              <li><a href="/login" className="hover:text-orchid transition-colors">Login Portal (Demo)</a></li>
-              <li><a href="/student-dashboard" className="hover:text-orchid transition-colors">Student Space (Demo)</a></li>
-              <li><a href="/researcher-dashboard" className="hover:text-apricot transition-colors">Researcher Space (2 Subjek)</a></li>
-              <li><span className="text-lavender/60">FastAPI Docs: /docs</span></li>
+            <ul className="space-y-1.5 text-xs text-secondary-text">
+              <li><a href="/login" className="hover:text-forest transition-colors">Masuk Platform</a></li>
+              <li><a href="/student-dashboard" className="hover:text-forest transition-colors">Ruang Siswa</a></li>
+              <li><a href="/researcher-dashboard" className="hover:text-forest transition-colors">Ruang Peneliti</a></li>
+              <li><span className="text-secondary-text/80">API Backend: FastAPI</span></li>
             </ul>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-6 border-t border-lavender/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-lavender">
+        <div className="pt-6 border-t border-border-clean flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-secondary-text">
           <div>
-            © {new Date().getFullYear()} NUMORA Space. Hak Cipta Dilindungi. Tagline: <span className="text-orchid font-medium">Algebra, Beyond Formulas.</span>
+            © {new Date().getFullYear()} NUMORA Space. Tagline: <span className="text-forest font-semibold">Algebra, Beyond Formulas.</span>
           </div>
           <div className="flex items-center gap-2 text-[11px]">
-            <span className="px-2 py-0.5 rounded bg-white/5 border border-lavender/15 text-ivory/80">
-              Midnight Orchid Design
+            <span className="px-2 py-0.5 rounded bg-ivory border border-border-clean text-charcoal">
+              Sage & Ivory
             </span>
-            <span>Dirancang dengan dedikasi untuk pendidikan matematika Indonesia</span>
+            <span>Platform Pembelajaran Matematika SMP Kelas VII</span>
           </div>
         </div>
       </div>

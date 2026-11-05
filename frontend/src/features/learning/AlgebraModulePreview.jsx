@@ -1,58 +1,50 @@
 import React, { useState } from 'react';
 import MathView from '../../components/common/MathView';
-import { Box, Layers, Hash, GitBranch, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Box, Layers, Hash, GitBranch } from 'lucide-react';
 
 export const MODULES_DATA = [
   {
     id: 'variables',
     title: 'Understanding Variables',
     subtitle: 'Memahami Variabel',
-    description: 'Variabel adalah lambang pengganti suatu bilangan yang belum diketahui nilainya secara pasti (misal: x, y, a, b).',
+    description: 'Variabel adalah lambang pengganti bilangan yang nilainya dapat bervariasi (misal: x, y, a).',
     math: 'x, y, a \\in \\mathbb{R}',
     icon: Box,
-    color: 'from-orchid-400 to-apricot-400',
-    borderColor: 'border-orchid-400/30',
-    progress: 75,
-    sampleStatus: 'In Progress (SAMPLE DATA)',
+    progress: 100,
+    sampleStatus: 'Selesai Dipelajari',
     objectCount: 3,
   },
   {
     id: 'coefficients',
     title: 'Understanding Coefficients',
     subtitle: 'Memahami Koefisien',
-    description: 'Faktor pengali dari suatu variabel pada bentuk aljabar yang menunjukkan berapa kali variabel tersebut dijumlahkan.',
+    description: 'Faktor pengali dari suatu variabel yang menunjukkan berapa kali variabel dilipatgandakan.',
     math: '3x = x + x + x',
     icon: Layers,
-    color: 'from-orchid-500 to-orchid-400',
-    borderColor: 'border-orchid-500/30',
     progress: 40,
-    sampleStatus: 'In Progress (SAMPLE DATA)',
+    sampleStatus: 'Sedang Dipelajari',
     objectCount: 4,
   },
   {
     id: 'constants',
     title: 'Understanding Constants',
     subtitle: 'Memahami Konstanta',
-    description: 'Suku dari suatu bentuk aljabar yang berupa bilangan mandiri dan tidak memuat variabel apa pun.',
+    description: 'Suku dari bentuk aljabar yang berupa bilangan mandiri dan tidak memuat variabel pengali.',
     math: 'c = 7',
     icon: Hash,
-    color: 'from-sage-400 to-sage-500',
-    borderColor: 'border-sage-400/30',
-    progress: 90,
-    sampleStatus: 'Mastered (SAMPLE DATA)',
+    progress: 0,
+    sampleStatus: 'Tersedia',
     objectCount: 7,
   },
   {
     id: 'expressions',
     title: 'Understanding Algebraic Expressions',
     subtitle: 'Memahami Bentuk Aljabar',
-    description: 'Kombinasi utuh antara koefisien, variabel, dan konstanta yang dihubungkan melalui operasi hitung matematika.',
+    description: 'Kombinasi antara koefisien, variabel, dan konstanta dalam operasi matematika.',
     math: '3x + 7 = 22',
     icon: GitBranch,
-    color: 'from-apricot-400 to-orchid-400',
-    borderColor: 'border-apricot-400/30',
-    progress: 25,
-    sampleStatus: 'Started (SAMPLE DATA)',
+    progress: 0,
+    sampleStatus: 'Tersedia',
     objectCount: 5,
   },
 ];
@@ -63,24 +55,19 @@ export default function AlgebraModulePreview() {
   const activeModule = MODULES_DATA[activeModuleIndex];
 
   return (
-    <div className="glass-card rounded-2xl p-6 border border-orchid-500/20 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+    <div className="bg-pure-white rounded-2xl p-6 border border-border-clean shadow-card-clean space-y-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border-clean pb-3">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-orchid-300">
-              Laboratorium Konseptual
-            </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-plum-900/60 text-lavender-300 border border-white/10">
-              Interactive 2D Demo
-            </span>
-          </div>
-          <h3 className="text-lg font-bold text-ivory-100 mt-1">
-            Visualisasi Interaktif: 4 Pilar Fondasi Aljabar
+          <span className="text-xs font-semibold uppercase tracking-wider text-forest">
+            Laboratorium Konseptual
+          </span>
+          <h3 className="text-base font-bold text-charcoal mt-0.5">
+            4 Pilar Fondasi Aljabar
           </h3>
         </div>
 
         {/* Tab switch */}
-        <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-plum-950/60 border border-white/5">
+        <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-ivory border border-border-clean">
           {MODULES_DATA.map((m, idx) => {
             const Icon = m.icon;
             const isCurrent = idx === activeModuleIndex;
@@ -90,154 +77,129 @@ export default function AlgebraModulePreview() {
                 onClick={() => setActiveModuleIndex(idx)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
                   isCurrent
-                    ? 'bg-aubergine-700 text-ivory-100 font-semibold border border-orchid-400/30 shadow-sm'
-                    : 'text-lavender-300 hover:text-ivory-100 hover:bg-white/5'
+                    ? 'bg-pure-white text-forest font-semibold shadow-subtle border border-border-clean'
+                    : 'text-secondary-text hover:text-charcoal hover:bg-pure-white/60'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isCurrent ? 'text-orchid-300' : ''}`} />
-                <span className="hidden sm:inline">{m.subtitle}</span>
-                <span className="sm:hidden">{idx + 1}</span>
+                <Icon className={`w-3.5 h-3.5 ${isCurrent ? 'text-forest' : ''}`} />
+                <span>{m.subtitle}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Interactive Canvas Display */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Interactive Canvas */}
-        <div className="lg:col-span-7 rounded-xl bg-plum-950/90 border border-white/10 p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs text-lavender-300 border-b border-white/5 pb-2">
+      {/* Interactive Display */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="lg:col-span-7 rounded-xl bg-ivory border border-border-clean p-5 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between text-xs text-secondary-text border-b border-border-clean pb-2">
             <span>Visualisasi Real-Time</span>
-            <MathView math={activeModule.math} className="text-orchid-300 font-bold" />
+            <div className="font-mono text-forest font-bold text-xs bg-pure-white px-2 py-0.5 rounded border border-border-clean">
+              {activeModule.math}
+            </div>
           </div>
 
-          {/* SVG / Canvas Area */}
-          <div className="py-8 flex flex-col items-center justify-center min-h-[220px]">
+          <div className="py-6 flex flex-col items-center justify-center min-h-[160px]">
             {activeModule.id === 'variables' && (
-              <div className="text-center space-y-4">
-                <div className="inline-flex items-center gap-3 p-4 rounded-2xl bg-aubergine-800/80 border border-orchid-500/30 shadow-glow-orchid animate-float-slow">
-                  <div className="w-16 h-16 rounded-xl bg-orchid-500/20 border-2 border-dashed border-orchid-400 flex items-center justify-center text-2xl font-black text-orchid-300 font-mono">
-                    x
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs text-lavender-300">Wadah Nilai Misterius</p>
-                    <p className="text-sm font-semibold text-ivory-100">Nilai variabel saat ini = {varValue}</p>
-                    <p className="text-[11px] text-orchid-300">Dapat menampung sembarang angka</p>
-                  </div>
+              <div className="p-4 rounded-xl bg-pure-white border-2 border-forest flex items-center gap-3 shadow-subtle">
+                <div className="w-12 h-12 rounded-lg bg-forest/10 border border-forest flex items-center justify-center text-xl font-bold text-forest font-mono">
+                  x
+                </div>
+                <div className="text-left text-xs">
+                  <p className="font-semibold text-charcoal">Wadah Nilai Variabel</p>
+                  <p className="text-secondary-text">Nilai variabel saat ini = <strong className="text-forest font-mono">{varValue}</strong></p>
                 </div>
               </div>
             )}
 
             {activeModule.id === 'coefficients' && (
-              <div className="text-center space-y-3">
-                <div className="text-xs text-lavender-300 mb-2">3 Kotak Variabel $x$ yang identik:</div>
-                <div className="flex items-center justify-center gap-3">
+              <div className="space-y-2 text-center">
+                <div className="flex items-center justify-center gap-2">
                   {[1, 2, 3].map((item) => (
                     <div
                       key={item}
-                      className="w-14 h-14 rounded-xl bg-orchid-500/20 border-2 border-orchid-400 flex flex-col items-center justify-center shadow-glow-orchid"
+                      className="w-14 h-14 rounded-xl bg-pure-white border-2 border-forest flex flex-col items-center justify-center shadow-subtle"
                     >
-                      <span className="text-xs text-orchid-300 font-bold font-mono">x</span>
-                      <span className="text-[10px] text-ivory-100/70">isi={varValue}</span>
+                      <span className="text-xs text-forest font-bold font-mono">x</span>
+                      <span className="text-[10px] text-secondary-text">isi={varValue}</span>
                     </div>
                   ))}
                 </div>
-                <div className="pt-2">
-                  <span className="text-xs font-mono text-ivory-100 bg-aubergine-800/80 px-3 py-1 rounded-full border border-orchid-500/20">
-                    3 × {varValue} = {3 * varValue} total nilai
-                  </span>
-                </div>
+                <span className="text-xs font-mono text-charcoal bg-pure-white px-3 py-1 rounded-full border border-border-clean inline-block">
+                  3 × {varValue} = <strong className="text-forest">{3 * varValue}</strong>
+                </span>
               </div>
             )}
 
             {activeModule.id === 'constants' && (
-              <div className="text-center space-y-3">
-                <div className="text-xs text-lavender-300 mb-2">7 Unit Nilai Mandiri (Tetap):</div>
-                <div className="flex flex-wrap items-center justify-center gap-2 max-w-xs mx-auto">
+              <div className="space-y-2 text-center">
+                <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-xs mx-auto">
                   {[1, 2, 3, 4, 5, 6, 7].map((num) => (
                     <div
                       key={num}
-                      className="w-9 h-9 rounded-lg bg-sage-500/20 border border-sage-500/40 flex items-center justify-center text-xs font-bold text-sage-300"
+                      className="w-8 h-8 rounded-lg bg-pure-white border border-border-clean flex items-center justify-center text-xs font-bold text-terracotta shadow-subtle"
                     >
                       1
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-lavender-300 pt-2">Nilai konstanta tidak berubah dan tidak memiliki variabel pengali.</p>
+                <p className="text-xs text-secondary-text">Nilai konstanta tetap 7 tanpa ada pengali.</p>
               </div>
             )}
 
             {activeModule.id === 'expressions' && (
-              <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  <div className="p-2.5 rounded-xl bg-aubergine-800 border border-orchid-500/40 text-center">
-                    <span className="text-xs text-orchid-300 font-bold font-mono">3x ({3 * varValue})</span>
-                    <span className="block text-[10px] text-lavender-300">Suku Berpengali</span>
-                  </div>
-                  <span className="text-xl font-bold text-ivory-100">+</span>
-                  <div className="p-2.5 rounded-xl bg-aubergine-800 border border-sage-500/40 text-center">
-                    <span className="text-xs text-sage-300 font-bold font-mono">7</span>
-                    <span className="block text-[10px] text-lavender-300">Suku Konstanta</span>
-                  </div>
-                  <span className="text-xl font-bold text-ivory-100">=</span>
-                  <div className="p-2.5 rounded-xl bg-gradient-to-r from-orchid-500/20 to-apricot-500/20 border border-orchid-400 text-center">
-                    <span className="text-xs text-apricot-300 font-bold font-mono">{3 * varValue + 7}</span>
-                    <span className="block text-[10px] text-ivory-100/90">Hasil Bentuk Aljabar</span>
-                  </div>
+              <div className="flex items-center justify-center gap-2 flex-wrap text-center">
+                <div className="p-2.5 rounded-xl bg-pure-white border border-border-clean">
+                  <span className="text-xs text-forest font-bold font-mono">3x ({3 * varValue})</span>
+                </div>
+                <span className="text-base font-bold text-charcoal">+</span>
+                <div className="p-2.5 rounded-xl bg-pure-white border border-border-clean">
+                  <span className="text-xs text-terracotta font-bold font-mono">7</span>
+                </div>
+                <span className="text-base font-bold text-charcoal">=</span>
+                <div className="p-2.5 rounded-xl bg-forest/10 border border-forest/30">
+                  <span className="text-xs text-forest font-bold font-mono">{3 * varValue + 7}</span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Interactive slider for x value */}
-          <div className="pt-3 border-t border-white/5 flex items-center gap-3">
-            <span className="text-xs text-lavender-300 whitespace-nowrap">Simulasi Nilai $x$:</span>
+          <div className="pt-2 border-t border-border-clean flex items-center gap-3">
+            <span className="text-xs text-secondary-text whitespace-nowrap">Simulasi Nilai $x$:</span>
             <input
               type="range"
               min="1"
               max="10"
               value={varValue}
               onChange={(e) => setVarValue(Number(e.target.value))}
-              className="w-full accent-orchid-400 cursor-pointer"
+              className="w-full accent-forest cursor-pointer"
             />
-            <span className="text-xs font-bold font-mono text-orchid-300 px-2 py-0.5 rounded bg-orchid-500/10 border border-orchid-500/20">
+            <span className="text-xs font-bold font-mono text-forest px-2 py-0.5 rounded bg-pure-white border border-border-clean">
               x = {varValue}
             </span>
           </div>
         </div>
 
-        {/* Right: Explanation & Pedagogical Guide */}
-        <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-orchid-400" />
-              <h4 className="text-sm font-semibold text-ivory-100">{activeModule.title}</h4>
-            </div>
-            <p className="text-xs text-lavender-300 leading-relaxed mb-4">
+        <div className="lg:col-span-5 flex flex-col justify-between space-y-3">
+          <div className="space-y-2">
+            <h4 className="text-sm font-bold text-charcoal">{activeModule.title}</h4>
+            <p className="text-xs text-secondary-text leading-relaxed">
               {activeModule.description}
             </p>
 
-            <div className="p-3 rounded-xl bg-plum-950/60 border border-white/5 space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-orchid-300">
-                Formula Matematika (KaTeX):
-              </div>
-              <div className="p-2 rounded bg-aubergine-800/80 text-center font-mono text-sm text-ivory-100">
+            <div className="p-3 rounded-xl bg-ivory border border-border-clean space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-forest block">
+                Formula KaTeX:
+              </span>
+              <div className="p-2 rounded bg-pure-white text-center font-mono text-xs font-semibold text-charcoal border border-border-clean">
                 <MathView math={activeModule.math} block={true} />
               </div>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-aubergine-800/60 border border-white/5 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] uppercase font-bold text-lavender-300 tracking-wider block">
-                Status Modul
-              </span>
-              <span className="text-xs font-semibold text-apricot-300">
-                {activeModule.sampleStatus}
-              </span>
-            </div>
-            <span className="text-xs font-mono font-bold text-ivory-100 px-2 py-1 rounded bg-white/10">
+          <div className="p-3 rounded-xl bg-pure-white border border-border-clean flex items-center justify-between text-xs">
+            <span className="text-secondary-text">{activeModule.sampleStatus}</span>
+            <span className="font-mono font-semibold text-forest">
               {activeModule.progress}% Selesai
             </span>
           </div>
@@ -246,4 +208,3 @@ export default function AlgebraModulePreview() {
     </div>
   );
 }
-

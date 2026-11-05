@@ -1,54 +1,61 @@
 /**
- * NUMORA Space — Centralized Design Tokens (v1.6)
- * Design Concept: MIDNIGHT ORCHID
+ * NUMORA Space — Centralized Design Tokens (v1.6 Phase 1.5)
+ * Design Concept: SAGE & IVORY
  *
  * Core Palette:
- * - Midnight Plum: #19151F (Primary canvas background)
- * - Deep Aubergine: #28222F (Sidebar, navbar, panel surfaces)
- * - Soft Orchid: #B69AD9 (Primary brand & conceptual accent)
- * - Warm Apricot: #F0A77E (Interaction, highlights, CTA, negative tokens)
- * - Sage Green: #A8BFA9 (Success, equilibrium, completed progress)
- * - Ivory White: #F5EFE5 (High-contrast readable text & symbols)
- * - Muted Lavender: #C8B9C9 (Secondary text, metadata, subtle borders)
+ * - Warm Ivory: #F6F5EF (Primary canvas background)
+ * - Pure White: #FFFFFF (Card surfaces, panels, modal dialogs)
+ * - Forest Green: #355B45 (Primary buttons, active navigation, key brand elements)
+ * - Soft Sage: #A7BCA8 (Supporting accent, positive tokens, balance indicators)
+ * - Muted Terracotta: #D58B68 (Highlights, negative algebraic tokens, warnings)
+ * - Charcoal: #28332C (Primary typography, high contrast)
+ * - Secondary Text: #707A70 (Secondary typography, captions, metadata)
+ * - Border: #E1E5DC (Dividers, borders, subtle outlines)
  */
 
 export const designTokens = {
   colors: {
-    // Canvas & Surface
+    // Canvas & Surfaces
     bg: {
-      primary: '#19151F',       // Midnight Plum
-      secondary: '#28222F',     // Deep Aubergine
-      card: '#221C29',          // Elevated card surface
-      inset: '#14101A',         // Deeper dark inset
+      primary: '#F6F5EF',       // Warm Ivory
+      card: '#FFFFFF',          // Pure White
+      panel: '#FFFFFF',         // Pure White
+      subtle: '#EFEFE8',        // Slightly deeper ivory for nested insets
+      darkInset: '#E8ECE4',     // Muted sage inset
     },
-    // Accents
-    accent: {
-      orchid: '#B69AD9',        // Soft Orchid
-      apricot: '#F0A77E',       // Warm Apricot
-      sage: '#A8BFA9',          // Sage Green
-      orchidGlow: 'rgba(182, 154, 217, 0.20)',
-      apricotGlow: 'rgba(240, 167, 126, 0.25)',
-      sageGlow: 'rgba(168, 191, 169, 0.25)',
+    // Primary Brand & Accents
+    brand: {
+      forest: '#355B45',        // Forest Green
+      forestHover: '#2B4B38',   // Deeper Forest Green
+      sage: '#A7BCA8',          // Soft Sage
+      terracotta: '#D58B68',    // Muted Terracotta
     },
     // Typography
     text: {
-      primary: '#F5EFE5',       // Ivory White
-      secondary: '#C8B9C9',     // Muted Lavender
-      dim: '#857787',           // Inactive / Disabled
+      primary: '#28332C',       // Charcoal
+      secondary: '#707A70',     // Muted Secondary Text
+      inverted: '#FFFFFF',      // White text on dark buttons
+      terracotta: '#D58B68',
+      forest: '#355B45',
     },
     // Semantics
     semantic: {
-      success: '#A8BFA9',       // Sage Green
-      warning: '#F0A77E',       // Warm Apricot
-      error: '#E87989',         // Muted Coral
-      info: '#B69AD9',          // Soft Orchid
+      success: '#355B45',       // Forest Green
+      successBg: '#EFF5F1',
+      warning: '#D58B68',       // Muted Terracotta
+      warningBg: '#FDF5F0',
+      error: '#C85A5A',
+      errorBg: '#FDF0F0',
+      info: '#5B7A8C',
+      infoBg: '#F0F6FA',
     },
-    // Borders
+    // Borders & Dividers
     border: {
-      subtle: 'rgba(200, 185, 201, 0.12)',
-      orchid: 'rgba(182, 154, 217, 0.30)',
-      apricot: 'rgba(240, 167, 126, 0.35)',
-      sage: 'rgba(168, 191, 169, 0.35)',
+      default: '#E1E5DC',       // Border
+      focus: '#355B45',         // Forest Green focus ring
+      subtle: '#ECEFE8',
+      terracotta: 'rgba(213, 139, 104, 0.40)',
+      forest: 'rgba(53, 91, 69, 0.35)',
     }
   },
   typography: {
@@ -56,16 +63,15 @@ export const designTokens = {
     fontMono: "'JetBrains Mono', monospace",
   },
   radius: {
-    sm: '0.5rem',    // 8px
-    md: '0.75rem',   // 12px
-    lg: '1rem',      // 16px
-    xl: '1.25rem',   // 20px
+    sm: '0.375rem',  // 6px
+    md: '0.5rem',    // 8px
+    lg: '0.75rem',   // 12px
+    xl: '1rem',      // 16px
     full: '9999px',
   },
   shadows: {
-    soft: '0 10px 30px -10px rgba(10, 7, 14, 0.7)',
-    glowOrchid: '0 0 25px -5px rgba(182, 154, 217, 0.22)',
-    glowApricot: '0 0 25px -5px rgba(240, 167, 126, 0.25)',
-    cardSoft: '0 12px 32px -8px rgba(14, 10, 19, 0.65)',
+    subtle: '0 1px 3px 0 rgba(40, 51, 44, 0.05), 0 1px 2px -1px rgba(40, 51, 44, 0.05)',
+    card: '0 2px 8px -2px rgba(40, 51, 44, 0.06), 0 1px 4px -1px rgba(40, 51, 44, 0.04)',
+    elevated: '0 10px 25px -5px rgba(40, 51, 44, 0.08), 0 8px 10px -6px rgba(40, 51, 44, 0.04)',
   }
 };
