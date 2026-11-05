@@ -81,11 +81,11 @@ export const apiService = {
     return await fetchWithTimeout(`${API_BASE_URL}/api/v1/research/cognitive-load-status`);
   },
 
-  // NORA Socratic AI
-  async noraChat(message, mode = 'explain', hint_tier = 1) {
+  // NORA Open Conversational AI & Socratic System
+  async noraChat(message, mode = 'explain', hint_tier = 1, history = []) {
     return await fetchWithTimeout(`${API_BASE_URL}/api/v1/nora/chat`, {
       method: 'POST',
-      body: JSON.stringify({ message, mode, hint_tier })
+      body: JSON.stringify({ message, mode, hint_tier, history })
     });
   }
 };

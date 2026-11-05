@@ -1,12 +1,18 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
+
+
+class NoraMessage(BaseModel):
+    role: str = Field(..., description="Peran: 'user', 'assistant', atau 'nora'")
+    content: str = Field(..., description="Isi teks pesan")
 
 
 class NoraChatRequest(BaseModel):
     message: str = Field(..., example="NORA, apa koefisien dari -5x?")
-    mode: str = Field(default="explain", example="explain")  # explain, ask, hint, review
+    mode: Optional[str] = Field(default="explain", example="explain")  # explain, ask, hint, review, chat
     hint_tier: Optional[int] = Field(default=1, example=1)   # 1 (gentle), 2 (concept), 3 (specific)
     context_topic: Optional[str] = Field(default="algebra_coefficients", example="algebra_coefficients")
+    history: Optional[List[NoraMessage]] = Field(default=[], description="Riwayat percakapan sebelumnya untuk multi-turn chat")
 
 
 class NoraChatResponse(BaseModel):
@@ -18,4 +24,5 @@ class NoraChatResponse(BaseModel):
     misconception_flag: Optional[str] = None
     socratic_question: Optional[str] = None
     demo_mode: bool = True
-
+    verified_math: Optional[Dict[str, Any]] = None
+    is_generative: bool = False

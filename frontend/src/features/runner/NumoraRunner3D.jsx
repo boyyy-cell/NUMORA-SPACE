@@ -18,7 +18,8 @@ import {
   XCircle, 
   HelpCircle,
   Zap,
-  Flame
+  Flame,
+  Maximize2
 } from 'lucide-react';
 import { getRandomQuestion } from './questionBank';
 import { sounds } from './soundEffects';
@@ -31,7 +32,7 @@ const GRAVITY = -26.0;
 const JUMP_FORCE = 11.2;
 const SLIDE_DURATION = 0.75; // detik
 const BASE_SPEED = 14.0;
-const GATE_INTERVAL = 320; // Jarak antar gerbang soal (meter)
+const GATE_INTERVAL = 320; // Jarak antar gerbang portal (meter)
 
 export default function NumoraRunner3D({ onBackToDashboard }) {
   const containerRef = useRef(null);
@@ -47,18 +48,19 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
   const [isMuted, setIsMuted] = useState(false);
   const [highScore, setHighScore] = useState(0);
 
-  // --- STATE TANTANGAN SOAL ---
+  // --- STATE TANTANGAN GERBANG PORTAL ---
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [questionTimer, setQuestionTimer] = useState(10);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [questionResult, setQuestionResult] = useState(null); // 'correct' | 'wrong' | 'timeout'
+  const [gateNumber, setGateNumber] = useState(1);
   const [streakCount, setStreakCount] = useState(0);
   const [sessionAnswered, setSessionAnswered] = useState(0);
   const [sessionCorrect, setSessionCorrect] = useState(0);
   const [sessionMistakes, setSessionMistakes] = useState([]);
   const [gameOverSummary, setGameOverSummary] = useState(null);
 
-  // --- REFS INTERNAL ENGINE TIGA DIMENSI ---
+  // --- REFS INTERNAL THREE.JS ENGINE ---
   const engineRef = useRef({
     scene: null,
     camera: null,
@@ -73,7 +75,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     shadowMesh: null,
     obstacles: [],
     coinsList: [],
-    gateMesh: null,
+    activeGateInWorld: null,
     sceneryItems: [],
     currentLane: 1, // 0 = Kiri, 1 = Tengah, 2 = Kanan
     targetLaneX: 0,
@@ -83,12 +85,17 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     isSliding: false,
     slideTimer: 0,
     speed: BASE_SPEED,
+    normalTargetSpeed: BASE_SPEED,
     lastTime: 0,
     animId: null,
     distanceTravelled: 0,
     nextGateDistance: GATE_INTERVAL,
-    activeGateInWorld: null,
     nextSpawnDistance: 25,
+    gateCounter: 0,
+    isApproachingGate: false,
+    // Camera default target positions
+    cameraDefaultY: 3.6,
+    cameraDefaultZ: 6.2,
   });
 
   // Touch control tracking
@@ -129,7 +136,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     if (!e.isJumping) {
       e.isJumping = true;
       e.jumpVelocity = JUMP_FORCE;
-      e.isSliding = false; // Batalkan slide jika sedang slide
+      e.isSliding = false;
       sounds.playJump();
     }
   }, []);
@@ -139,7 +146,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     if (!e.isSliding) {
       e.isSliding = true;
       e.slideTimer = SLIDE_DURATION;
-      // Jika di udara, percepat jatuh
       if (e.isJumping) {
         e.jumpVelocity = -12.0;
       }
@@ -151,7 +157,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
   useEffect(() => {
     const handleKeyDown = (ev) => {
       if (gameState === 'question') {
-        // Tombol 1/2/3/4 atau A/B/C/D saat menjawab soal
         if (['1', 'a', 'A'].includes(ev.key)) handleOptionClick(0);
         else if (['2', 'b', 'B'].includes(ev.key)) handleOptionClick(1);
         else if (['3', 'c', 'C'].includes(ev.key)) handleOptionClick(2);
@@ -221,18 +226,16 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     const dy = touch.clientY - touchStartRef.current.y;
     const elapsed = Date.now() - touchStartRef.current.time;
 
-    if (elapsed > 600) return; // Terlalu lambat untuk swipe
+    if (elapsed > 600) return;
 
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
 
     if (Math.max(absDx, absDy) > 30) {
       if (absDx > absDy) {
-        // Horizontal swipe
         if (dx > 0) moveRight();
         else moveLeft();
       } else {
-        // Vertical swipe
         if (dy < 0) triggerJump();
         else triggerSlide();
       }
@@ -343,14 +346,14 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     charHead.castShadow = true;
     charGroup.add(charHead);
 
-    // Headband / Topi (Muted Terracotta)
+    // Headband (Muted Terracotta)
     const bandGeo = new THREE.CylinderGeometry(0.33, 0.33, 0.1, 20);
     const bandMat = new THREE.MeshStandardMaterial({ color: 0xD58B68 });
     const headband = new THREE.Mesh(bandGeo, bandMat);
     headband.position.y = 1.82;
     charGroup.add(headband);
 
-    // Tangan Kiri & Kanan (Pivot di pundak)
+    // Tangan Kiri & Kanan
     const armGeo = new THREE.BoxGeometry(0.2, 0.65, 0.2);
     const armMat = new THREE.MeshStandardMaterial({ color: 0x355B45 });
 
@@ -364,9 +367,9 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     rightArm.castShadow = true;
     charGroup.add(rightArm);
 
-    // Kaki Kiri & Kanan (Pivot di pinggul)
+    // Kaki Kiri & Kanan
     const legGeo = new THREE.BoxGeometry(0.24, 0.7, 0.24);
-    const legMat = new THREE.MeshStandardMaterial({ color: 0x28332C }); // Celana Charcoal
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x28332C });
 
     const leftLeg = new THREE.Mesh(legGeo, legMat);
     leftLeg.position.set(-0.22, 0.35, 0);
@@ -378,7 +381,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     rightLeg.castShadow = true;
     charGroup.add(rightLeg);
 
-    // Bayangan di tanah (Subtle Shadow Blob)
+    // Bayangan di tanah
     const shadowGeo = new THREE.CircleGeometry(0.55, 24);
     const shadowMat = new THREE.MeshBasicMaterial({ color: 0x1A231D, opacity: 0.35, transparent: true });
     const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
@@ -388,7 +391,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
 
     scene.add(charGroup);
 
-    // 7. Elemen Alam Lingkungan (Pilar & Pohon Geometris di Sisi Lintasan)
+    // 7. Elemen Alam Lingkungan (Pilar & Lentera Sisi Lintasan)
     const sceneryItems = [];
     for (let z = -100; z <= 20; z += 14) {
       [-5.5, 5.5].forEach((sideX) => {
@@ -397,7 +400,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
         const pillar = new THREE.Mesh(pillarGeo, pillarMat);
         pillar.position.set(sideX, 1.6, z);
 
-        // Lampu kristal atas
         const topGeo = new THREE.OctahedronGeometry(0.4);
         const topMat = new THREE.MeshStandardMaterial({
           color: 0xD58B68,
@@ -430,7 +432,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       sceneryItems,
       obstacles: [],
       coinsList: [],
-      gateMesh: null,
+      activeGateInWorld: null,
       currentLane: 1,
       targetLaneX: 0,
       charY: 0,
@@ -439,10 +441,13 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       isSliding: false,
       slideTimer: 0,
       speed: BASE_SPEED,
+      normalTargetSpeed: BASE_SPEED,
       lastTime: performance.now(),
       distanceTravelled: 0,
       nextGateDistance: GATE_INTERVAL,
       nextSpawnDistance: 25,
+      gateCounter: 0,
+      isApproachingGate: false,
     };
 
     // Resize handler
@@ -477,10 +482,9 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     const laneX = LANE_X[chosenLane];
 
     if (chosenType === 'crate') {
-      // Peti kayu/penghalang penuh (Harus pindah jalur)
       const geo = new THREE.BoxGeometry(1.4, 1.3, 1.4);
       const mat = new THREE.MeshStandardMaterial({
-        color: 0xD58B68, // Terracotta
+        color: 0xD58B68,
         roughness: 0.7,
       });
       const crate = new THREE.Mesh(geo, mat);
@@ -490,7 +494,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       scene.add(crate);
       return crate;
     } else if (chosenType === 'low_hurdle') {
-      // Rintangan rendah (Harus lompat)
       const group = new THREE.Group();
       const barGeo = new THREE.BoxGeometry(1.6, 0.22, 0.2);
       const barMat = new THREE.MeshStandardMaterial({ color: 0x9B2C2C, roughness: 0.4 });
@@ -498,7 +501,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       bar.position.set(0, 0.45, 0);
       group.add(bar);
 
-      // Kaki penyangga
       [-0.7, 0.7].forEach((legX) => {
         const legG = new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8);
         const legM = new THREE.MeshStandardMaterial({ color: 0x28332C });
@@ -512,7 +514,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       scene.add(group);
       return group;
     } else {
-      // Rintangan tinggi / palang gantung (Harus merunduk / slide)
       const group = new THREE.Group();
       const topBarGeo = new THREE.BoxGeometry(1.7, 0.7, 0.25);
       const topBarMat = new THREE.MeshStandardMaterial({ color: 0x355B45, roughness: 0.4 });
@@ -520,7 +521,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       topBar.position.set(0, 1.65, 0);
       group.add(topBar);
 
-      // Tiang sisi
       [-0.8, 0.8].forEach((poleX) => {
         const poleG = new THREE.CylinderGeometry(0.08, 0.08, 2.0, 8);
         const poleM = new THREE.MeshStandardMaterial({ color: 0xA7BCA8 });
@@ -539,7 +539,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
   const spawnCoin = (scene, lane, zPos, yPos = 0.5) => {
     const geo = new THREE.CylinderGeometry(0.32, 0.32, 0.08, 16);
     const mat = new THREE.MeshStandardMaterial({
-      color: 0xF59E0B, // Emas berkilau
+      color: 0xF59E0B,
       metalness: 0.8,
       roughness: 0.2,
       emissive: 0xD97706,
@@ -553,58 +553,134 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     return coin;
   };
 
-  const spawnAlgebraGate = (scene, zPos) => {
-    const group = new THREE.Group();
+  // --- UPGRADED FUTURISTIC ALGEBRA PORTAL ---
+  const spawnAlgebraPortal = (scene, zPos, gateNum = 1) => {
+    const portalGroup = new THREE.Group();
 
-    // Portal Gerbang Aljabar Megah
-    const archMat = new THREE.MeshStandardMaterial({
+    // 1. Pilar Pylon Kiri & Kanan (Futuristic Conduits)
+    [-3.5, 3.5].forEach((px) => {
+      // Tiang Utama
+      const colG = new THREE.CylinderGeometry(0.38, 0.45, 5.2, 12);
+      const colM = new THREE.MeshStandardMaterial({
+        color: 0x28332C,
+        metalness: 0.4,
+        roughness: 0.5,
+      });
+      const col = new THREE.Mesh(colG, colM);
+      col.position.set(px, 2.6, 0);
+      portalGroup.add(col);
+
+      // Jalur Cahaya Neon Emissive pada tiang
+      const neonG = new THREE.BoxGeometry(0.12, 4.8, 0.12);
+      const neonM = new THREE.MeshBasicMaterial({ color: 0xA7BCA8 });
+      const neon = new THREE.Mesh(neonG, neonM);
+      neon.position.set(px + (px > 0 ? -0.32 : 0.32), 2.6, 0.15);
+      portalGroup.add(neon);
+
+      // Kristal Pemancar di Puncak Tiang
+      const emitterG = new THREE.OctahedronGeometry(0.45);
+      const emitterM = new THREE.MeshStandardMaterial({
+        color: 0xD58B68,
+        emissive: 0xD58B68,
+        emissiveIntensity: 0.8,
+      });
+      const emitter = new THREE.Mesh(emitterG, emitterM);
+      emitter.position.set(px, 5.3, 0);
+      portalGroup.add(emitter);
+    });
+
+    // 2. Lengkungan Mahkota Melingkar (Arch Crown)
+    const archCurveGeo = new THREE.TorusGeometry(3.55, 0.28, 16, 32, Math.PI);
+    const archCurveMat = new THREE.MeshStandardMaterial({
       color: 0x355B45,
-      metalness: 0.3,
-      roughness: 0.4,
+      metalness: 0.5,
+      roughness: 0.3,
     });
+    const archCrown = new THREE.Mesh(archCurveGeo, archCrownMat => archCurveMat);
+    archCrown.position.set(0, 2.6, 0);
+    portalGroup.add(archCrown);
 
-    // Tiang kiri & kanan
-    [-3.2, 3.2].forEach((x) => {
-      const colGeo = new THREE.BoxGeometry(0.65, 4.5, 0.65);
-      const col = new THREE.Mesh(colGeo, archMat);
-      col.position.set(x, 2.25, 0);
-      group.add(col);
+    // 3. Cincin Energi Konsentris Berputar (Concentric Energy Rings)
+    // Cincin Luar
+    const ringOuterGeo = new THREE.TorusGeometry(3.1, 0.08, 16, 48);
+    const ringOuterMat = new THREE.MeshBasicMaterial({
+      color: 0x355B45,
+      wireframe: false,
     });
+    const ringOuter = new THREE.Mesh(ringOuterGeo, ringOuterMat);
+    ringOuter.position.set(0, 2.6, 0);
+    portalGroup.add(ringOuter);
 
-    // Balok atas
-    const topGeo = new THREE.BoxGeometry(7.1, 0.8, 0.8);
-    const topBar = new THREE.Mesh(topGeo, archMat);
-    topBar.position.set(0, 4.3, 0);
-    group.add(topBar);
-
-    // Banner Luminous Tengah
-    const bannerGeo = new THREE.PlaneGeometry(4.8, 1.4);
-    const bannerMat = new THREE.MeshBasicMaterial({
+    // Cincin Dalam (Berputar arah berlawanan)
+    const ringInnerGeo = new THREE.TorusGeometry(2.35, 0.06, 16, 40);
+    const ringInnerMat = new THREE.MeshBasicMaterial({
       color: 0xA7BCA8,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.85,
     });
-    const banner = new THREE.Mesh(bannerGeo, bannerMat);
-    banner.position.set(0, 3.2, 0);
-    group.add(banner);
+    const ringInner = new THREE.Mesh(ringInnerGeo, ringInnerMat);
+    ringInner.position.set(0, 2.6, 0);
+    portalGroup.add(ringInner);
 
-    // Tirai energi melintang (Glowing Portal)
-    const portalGeo = new THREE.PlaneGeometry(6.0, 3.4);
-    const portalMat = new THREE.MeshBasicMaterial({
+    // 4. Inti Pusaran Energi Luminous (Vortex Core Disc)
+    const coreGeo = new THREE.CircleGeometry(2.28, 36);
+    const coreMat = new THREE.MeshBasicMaterial({
       color: 0x355B45,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.32,
       side: THREE.DoubleSide,
     });
-    const portal = new THREE.Mesh(portalGeo, portalMat);
-    portal.position.set(0, 1.7, 0);
-    group.add(portal);
+    const coreDisc = new THREE.Mesh(coreGeo, coreMat);
+    coreDisc.position.set(0, 2.6, 0);
+    portalGroup.add(coreDisc);
 
-    group.position.set(0, 0, zPos);
-    group.userData = { triggered: false };
-    scene.add(group);
-    return group;
+    // 5. Partikel Matematika Mengapung & Mengorbit (Orbiting Math Glyphs)
+    const orbitNodes = [];
+    const nodeCount = 6;
+    for (let i = 0; i < nodeCount; i++) {
+      const angle = (i / nodeCount) * Math.PI * 2;
+      const nodeRadius = 3.3;
+      const nodeGeo = new THREE.OctahedronGeometry(0.24);
+      const nodeMat = new THREE.MeshStandardMaterial({
+        color: i % 2 === 0 ? 0xF59E0B : 0xD58B68,
+        emissive: i % 2 === 0 ? 0xD97706 : 0xD58B68,
+        emissiveIntensity: 0.6,
+      });
+      const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
+      nodeMesh.position.set(
+        Math.cos(angle) * nodeRadius,
+        2.6 + Math.sin(angle) * (nodeRadius * 0.8),
+        Math.sin(angle * 2) * 0.3
+      );
+      portalGroup.add(nodeMesh);
+      orbitNodes.push({ mesh: nodeMesh, baseAngle: angle, radius: nodeRadius });
+    }
+
+    // 6. Landasan Energi di Tanah (Ground Energy Threshold Rune)
+    const groundRuneGeo = new THREE.RingGeometry(1.6, 2.8, 32);
+    const groundRuneMat = new THREE.MeshBasicMaterial({
+      color: 0xA7BCA8,
+      transparent: true,
+      opacity: 0.5,
+      side: THREE.DoubleSide,
+    });
+    const groundRune = new THREE.Mesh(groundRuneGeo, groundRuneMat);
+    groundRune.rotation.x = -Math.PI / 2;
+    groundRune.position.set(0, 0.03, 0);
+    portalGroup.add(groundRune);
+
+    portalGroup.position.set(0, 0, zPos);
+    portalGroup.userData = {
+      triggered: false,
+      gateNumber: gateNum,
+      ringOuter,
+      ringInner,
+      coreDisc,
+      groundRune,
+      orbitNodes,
+      cleared: false,
+    };
+
+    scene.add(portalGroup);
+    return portalGroup;
   };
 
   // --- GAME LOOP UTAMA (ANIMATION FRAME) ---
@@ -618,29 +694,31 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       if (!animRunning) return;
       e.animId = requestAnimationFrame(gameLoop);
 
-      // Hitung delta waktu
       const dt = Math.min((currentTime - (e.lastTime || currentTime)) / 1000, 0.08);
       e.lastTime = currentTime;
 
-      // HANYA UPDATE FISIKA JIKA STATE PLAYING
+      // UPDATE FISIKA HANYA SAAT PLAYING
       if (gameState === 'playing') {
-        // 1. Naikkan Jarak & Kecepatan bertahap
+        // 1. Jarak & Kecepatan
         e.distanceTravelled += e.speed * dt;
         const currentMeters = Math.floor(e.distanceTravelled);
         setDistance(currentMeters);
         setScore((prev) => prev + Math.round(e.speed * dt * comboMultiplier * 1.5));
 
-        // Kecepatan bertambah sedikit demi sedikit
-        e.speed = Math.min(BASE_SPEED + e.distanceTravelled * 0.008, 26.0);
+        // Kecepatan normal meningkat bertahap
+        e.normalTargetSpeed = Math.min(BASE_SPEED + e.distanceTravelled * 0.008, 26.0);
+
+        // Jika tidak sedang mendekati portal, lerp kecepatan ke normal
+        if (!e.isApproachingGate) {
+          e.speed += (e.normalTargetSpeed - e.speed) * (4.0 * dt);
+        }
 
         // 2. Transisi Jalur (Smooth Horizontal Lerp)
         e.charGroup.position.x += (e.targetLaneX - e.charGroup.position.x) * (14.0 * dt);
-
-        // Kemiringan badan saat berbelok (Banking tilt)
         const tiltX = (e.targetLaneX - e.charGroup.position.x) * -0.25;
         e.charGroup.rotation.z = tiltX;
 
-        // 3. Fisika Lompat (Jump & Gravity)
+        // 3. Fisika Lompat
         if (e.isJumping) {
           e.charY += e.jumpVelocity * dt;
           e.jumpVelocity += GRAVITY * dt;
@@ -651,10 +729,9 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
           }
         }
 
-        // 4. Fisika Merunduk (Slide / Crouch)
+        // 4. Fisika Merunduk
         if (e.isSliding) {
           e.slideTimer -= dt;
-          // Squash karakter ke bawah
           e.charGroup.scale.set(1.15, 0.45, 1.15);
           e.charGroup.position.y = 0;
           if (e.slideTimer <= 0) {
@@ -666,25 +743,22 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
           e.charGroup.position.y = e.charY;
         }
 
-        // Bayangan di tanah mengikuti posisi karakter
+        // Bayangan
         if (e.shadowMesh) {
           e.shadowMesh.position.x = e.charGroup.position.x;
-          // Bayangan mengecil jika melompat tinggi
           const shadowScale = Math.max(0.3, 1.0 - e.charY * 0.28);
           e.shadowMesh.scale.set(shadowScale, shadowScale, shadowScale);
         }
 
-        // 5. Animasi Ayunan Anggota Tubuh (Running Cycle)
-        const runCycle = currentTime * 0.012 * (e.speed / BASE_SPEED);
+        // 5. Animasi Lari Karakter
+        const runCycle = currentTime * 0.012 * (Math.max(e.speed, 2.0) / BASE_SPEED);
         if (!e.isJumping && !e.isSliding) {
           if (e.leftArm) e.leftArm.rotation.x = Math.sin(runCycle) * 0.85;
           if (e.rightArm) e.rightArm.rotation.x = -Math.sin(runCycle) * 0.85;
           if (e.leftLeg) e.leftLeg.rotation.x = -Math.sin(runCycle) * 0.95;
           if (e.rightLeg) e.rightLeg.rotation.x = Math.sin(runCycle) * 0.95;
-          // Goyangan pinggul halus
           e.charGroup.position.y = Math.abs(Math.sin(runCycle * 2)) * 0.08;
         } else if (e.isJumping) {
-          // Pose melompat (tangan ke atas, kaki menekuk)
           if (e.leftArm) e.leftArm.rotation.x = -1.8;
           if (e.rightArm) e.rightArm.rotation.x = -1.8;
           if (e.leftLeg) e.leftLeg.rotation.x = 0.5;
@@ -701,15 +775,12 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
 
         // 7. Spawning Dinamis Obstacles & Koin
         if (e.distanceTravelled > e.nextSpawnDistance) {
-          // Jangan spawn obstacle tepat sebelum Gerbang Aljabar
           const distToGate = e.nextGateDistance - e.distanceTravelled;
-          if (distToGate > 35 || distToGate < -20) {
+          if (distToGate > 40 || distToGate < -20) {
             const spawnZ = -80;
-            // Spawn obstacle
             const obs = spawnObstacle(e.scene, spawnZ);
             e.obstacles.push(obs);
 
-            // Spawn rentetan koin di jalur lain
             const coinLane = (obs.userData.lane + 1) % 3;
             for (let c = 0; c < 3; c++) {
               const coin = spawnCoin(e.scene, coinLane, spawnZ + (c * 3.8) - 6);
@@ -719,11 +790,13 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
           e.nextSpawnDistance = e.distanceTravelled + 24 + Math.random() * 12;
         }
 
-        // 8. Spawning Gerbang Aljabar (Algebra Gate)
+        // 8. Spawning Gerbang Portal Aljabar Futuristik
         if (e.distanceTravelled >= e.nextGateDistance && !e.activeGateInWorld) {
-          const gate = spawnAlgebraGate(e.scene, -85);
-          e.activeGateInWorld = gate;
+          e.gateCounter += 1;
+          const portal = spawnAlgebraPortal(e.scene, -85, e.gateCounter);
+          e.activeGateInWorld = portal;
           e.nextGateDistance = e.distanceTravelled + GATE_INTERVAL;
+          setGateNumber(e.gateCounter);
         }
 
         // 9. Update & Deteksi Tabrakan Obstacles
@@ -731,24 +804,16 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
           const obs = e.obstacles[i];
           obs.position.z += e.speed * dt;
 
-          // Deteksi tabrakan dengan karakter (Z di sekitar karakter ~0)
           if (Math.abs(obs.position.z) < 1.2 && obs.userData.lane === e.currentLane) {
             let hit = false;
             const u = obs.userData;
 
             if (u.type === 'crate') {
-              // Crate selalu menabrak jika di jalur yang sama
               hit = true;
             } else if (u.type === 'low_hurdle') {
-              // Menabrak jika karakter tidak melompat cukup tinggi
-              if (e.charY < 0.8) {
-                hit = true;
-              }
+              if (e.charY < 0.8) hit = true;
             } else if (u.type === 'high_barrier') {
-              // Menabrak jika karakter berdiri atau melompat (harus merunduk)
-              if (!e.isSliding) {
-                hit = true;
-              }
+              if (!e.isSliding) hit = true;
             }
 
             if (hit) {
@@ -756,7 +821,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
               e.scene.remove(obs);
               e.obstacles.splice(i, 1);
 
-              // Kurangi nyawa
               setLives((prev) => {
                 const newLives = prev - 1;
                 if (newLives <= 0) {
@@ -765,14 +829,12 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
                 return newLives;
               });
 
-              // Reset combo
               setComboMultiplier(1);
               setStreakCount(0);
               continue;
             }
           }
 
-          // Hapus obstacle yang sudah lewat jauh di belakang
           if (obs.position.z > 14) {
             e.scene.remove(obs);
             e.obstacles.splice(i, 1);
@@ -785,7 +847,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
           coin.position.z += e.speed * dt;
           coin.rotation.y += 3.5 * dt;
 
-          // Deteksi ambil koin
           if (!coin.userData.collected && Math.abs(coin.position.z) < 1.1 && coin.userData.lane === e.currentLane) {
             coin.userData.collected = true;
             sounds.playCoin();
@@ -802,21 +863,70 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
           }
         }
 
-        // 11. Deteksi Tiba di Gerbang Aljabar
+        // 11. ANIMASI & DETEKSI PENDEKATAN GERBANG PORTAL ALJABAR
         if (e.activeGateInWorld) {
-          const gate = e.activeGateInWorld;
-          gate.position.z += e.speed * dt;
+          const portal = e.activeGateInWorld;
+          const u = portal.userData;
+          portal.position.z += e.speed * dt;
 
-          // Saat gerbang mendekat di z = -3.5, picu tantangan soal!
-          if (!gate.userData.triggered && gate.position.z >= -4.5) {
-            gate.userData.triggered = true;
+          const isCleared = u.cleared;
+
+          // Animasi Cincin Energi Portal Berputar
+          if (u.ringOuter) {
+            u.ringOuter.rotation.z += (e.isApproachingGate ? 6.5 : 2.2) * dt;
+          }
+          if (u.ringInner) {
+            u.ringInner.rotation.z -= (e.isApproachingGate ? 8.2 : 2.8) * dt;
+          }
+
+          // Animasi Partikel Matematika Mengorbit
+          if (u.orbitNodes) {
+            u.orbitNodes.forEach((node, idx) => {
+              const speedMult = e.isApproachingGate ? 4.0 : 1.5;
+              const angle = node.baseAngle + (currentTime * 0.001 * speedMult);
+              node.mesh.position.x = Math.cos(angle) * node.radius;
+              node.mesh.position.y = 2.6 + Math.sin(angle) * (node.radius * 0.8);
+              node.mesh.rotation.x += 2.0 * dt;
+              node.mesh.rotation.y += 3.0 * dt;
+            });
+          }
+
+          // Efek Denyut Inti Pusaran Energi (Vortex Pulse)
+          if (u.coreDisc && !isCleared) {
+            u.coreDisc.material.opacity = 0.32 + Math.sin(currentTime * 0.006) * 0.16;
+            u.coreDisc.rotation.z += 1.2 * dt;
+          }
+
+          // FASE 1: Karakter mulai mendekati portal (Z di antara -26 dan -5.5)
+          if (!u.triggered && portal.position.z >= -26 && portal.position.z < -4.8) {
+            e.isApproachingGate = true;
+            // Melambat secara halus (smooth deceleration)
+            e.speed = THREE.MathUtils.lerp(e.speed, 2.2, 3.2 * dt);
+
+            // Transisi Kamera Halus mendekat ke portal (Cinematic zoom in)
+            e.camera.position.x += (e.charGroup.position.x * 0.3 - e.camera.position.x) * (3.0 * dt);
+            e.camera.position.y += (2.9 - e.camera.position.y) * (3.0 * dt);
+            e.camera.position.z += (4.8 - e.camera.position.z) * (3.0 * dt);
+          }
+
+          // FASE 2: Berhenti tepat di depan portal dan buka tantangan soal
+          if (!u.triggered && portal.position.z >= -4.8) {
+            u.triggered = true;
+            e.speed = 0;
             triggerAlgebraChallenge();
           }
 
-          if (gate.position.z > 14) {
-            e.scene.remove(gate);
+          // Hapus portal setelah lewat jauh di belakang
+          if (portal.position.z > 14) {
+            e.scene.remove(portal);
             e.activeGateInWorld = null;
+            e.isApproachingGate = false;
           }
+        } else {
+          // Reset posisi kamera normal saat berlari bebas
+          e.camera.position.x += (0 - e.camera.position.x) * (4.0 * dt);
+          e.camera.position.y += (e.cameraDefaultY - e.camera.position.y) * (4.0 * dt);
+          e.camera.position.z += (e.cameraDefaultZ - e.camera.position.z) * (4.0 * dt);
         }
       }
 
@@ -861,13 +971,16 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     return () => clearInterval(timer);
   }, [gameState, questionResult]);
 
-  // --- PENANGANAN JAWABAN SOAL ---
+  // --- PENANGANAN JAWABAN SOAL & ANIMASI KELANJUTAN ---
   const handleOptionClick = (idx) => {
     if (questionResult !== null || !currentQuestion) return;
     const chosen = currentQuestion.options[idx];
     setSelectedAnswer(chosen);
 
     setSessionAnswered((prev) => prev + 1);
+
+    const e = engineRef.current;
+    const portal = e.activeGateInWorld;
 
     if (chosen === currentQuestion.correctAnswer) {
       // JAWABAN BENAR!
@@ -881,16 +994,28 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       const newMultiplier = Math.min(1 + newStreak * 0.5, 3.5);
       setComboMultiplier(newMultiplier);
 
-      // Tambah skor besar
       const bonusScore = Math.round(150 * newMultiplier);
       setScore((prev) => prev + bonusScore);
 
-      // Resume permainan setelah 1 detik animasi kemenangan
+      // ANIMASI PORTAL TERBUKA: Inti pusaran memancar hijau zamrud & membesar membuka celah
+      if (portal && portal.userData.coreDisc) {
+        portal.userData.cleared = true;
+        portal.userData.coreDisc.material.color.setHex(0x10B981); // Emerald Green
+        portal.userData.coreDisc.scale.set(1.5, 1.5, 1.5);
+      }
+
+      // Resume permainan secara otomatis setelah 1 detik animasi kemenangan
       setTimeout(() => {
+        if (portal) {
+          // Gerakkan portal melewati karakter
+          portal.position.z = 2.0;
+        }
+        e.isApproachingGate = false;
+        e.speed = e.normalTargetSpeed;
         setGameState('playing');
         setCurrentQuestion(null);
         setQuestionResult(null);
-      }, 1100);
+      }, 1000);
     } else {
       // JAWABAN SALAH!
       sounds.playWrong();
@@ -898,7 +1023,10 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       setComboMultiplier(1);
       setStreakCount(0);
 
-      // Catat kesalahan untuk evaluasi belajar
+      if (portal && portal.userData.coreDisc) {
+        portal.userData.coreDisc.material.color.setHex(0xD58B68); // Terracotta warning
+      }
+
       setSessionMistakes((prev) => [
         ...prev,
         {
@@ -909,7 +1037,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
         },
       ]);
 
-      // Kurangi 1 nyawa
       setLives((prev) => {
         const newLives = prev - 1;
         if (newLives <= 0) {
@@ -928,6 +1055,12 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     setComboMultiplier(1);
     setStreakCount(0);
     setSessionAnswered((prev) => prev + 1);
+
+    const e = engineRef.current;
+    const portal = e.activeGateInWorld;
+    if (portal && portal.userData.coreDisc) {
+      portal.userData.coreDisc.material.color.setHex(0xD58B68);
+    }
 
     setSessionMistakes((prev) => [
       ...prev,
@@ -955,6 +1088,12 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     if (lives <= 0) {
       triggerGameOver('Kehabisan nyawa di Gerbang Aljabar!');
     } else {
+      const e = engineRef.current;
+      if (e.activeGateInWorld) {
+        e.activeGateInWorld.position.z = 2.0;
+      }
+      e.isApproachingGate = false;
+      e.speed = e.normalTargetSpeed;
       setGameState('playing');
       setCurrentQuestion(null);
       setQuestionResult(null);
@@ -1001,6 +1140,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     setLives(3);
     setComboMultiplier(1);
     setStreakCount(0);
+    setGateNumber(1);
     setSessionAnswered(0);
     setSessionCorrect(0);
     setSessionMistakes([]);
@@ -1016,9 +1156,12 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     e.isJumping = false;
     e.isSliding = false;
     e.speed = BASE_SPEED;
+    e.normalTargetSpeed = BASE_SPEED;
     e.distanceTravelled = 0;
     e.nextGateDistance = GATE_INTERVAL;
     e.nextSpawnDistance = 25;
+    e.gateCounter = 0;
+    e.isApproachingGate = false;
     e.lastTime = performance.now();
 
     // Bersihkan rintangan lama
@@ -1035,6 +1178,10 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       e.charGroup.position.set(0, 0, 0);
       e.charGroup.scale.set(1, 1, 1);
     }
+
+    // Reset kamera
+    e.camera.position.set(0, e.cameraDefaultY, e.cameraDefaultZ);
+    e.camera.lookAt(0, 1.2, -6.0);
 
     setGameState('playing');
   };
@@ -1127,7 +1274,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       {/* --- KONTROL VIRTUAL MOBILE (LAYAR SENTUH) --- */}
       {gameState === 'playing' && (
         <div className="absolute bottom-4 left-4 right-4 flex justify-between pointer-events-none z-20 sm:hidden">
-          {/* Tombol Arah Jalur (Kiri - Kanan) */}
           <div className="flex gap-2 pointer-events-auto">
             <button
               onTouchStart={(e) => { e.preventDefault(); moveLeft(); }}
@@ -1145,7 +1291,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
             </button>
           </div>
 
-          {/* Tombol Aksi (Lompat - Merunduk) */}
           <div className="flex gap-2 pointer-events-auto">
             <button
               onTouchStart={(e) => { e.preventDefault(); triggerSlide(); }}
@@ -1165,44 +1310,64 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
         </div>
       )}
 
-      {/* --- OVERLAY TANTANGAN GERBANG ALJABAR (MODAL) --- */}
+      {/* --- UPGRADED NON-OBTRUSIVE ALGEBRA PORTAL CHALLENGE MODAL --- */}
       {gameState === 'question' && currentQuestion && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-40 animate-fade-in">
-          <div className="bg-[#FFFFFF] border-2 border-[#355B45] rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl relative overflow-hidden">
-            {/* Header Gerbang & Timer */}
-            <div className="flex items-center justify-between mb-4">
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-40 animate-fade-in">
+          <div className="bg-white/95 backdrop-blur-md border-2 border-[#355B45] rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl relative overflow-hidden transform transition-all animate-in zoom-in-95">
+            {/* Header Gerbang Portal & Countdown Timer */}
+            <div className="flex items-center justify-between mb-3 border-b border-[#E1E5DC] pb-3">
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-[#355B45]/10 text-[#355B45] text-xs font-bold uppercase tracking-wider">
-                  Gerbang Aljabar • {currentQuestion.level}
+                <span className="w-7 h-7 rounded-xl bg-[#355B45] text-white flex items-center justify-center font-mono font-extrabold text-xs">
+                  Ω
                 </span>
-                <span className="text-xs text-[#707A70] font-medium hidden sm:inline">
-                  {currentQuestion.topic}
-                </span>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-extrabold text-[#28332C]">
+                      Algebra Portal #{gateNumber}
+                    </span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-sage/20 text-[#355B45] uppercase">
+                      {currentQuestion.level}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[#707A70] block leading-tight">
+                    {currentQuestion.topic}
+                  </span>
+                </div>
               </div>
 
-              {/* Countdown Timer */}
+              {/* Countdown Timer Bar/Pill */}
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F6F5EF] border border-[#E1E5DC]">
-                <Zap className={`w-4 h-4 ${questionTimer <= 3 ? 'text-red-500 animate-bounce' : 'text-[#D58B68]'}`} />
-                <span className={`text-sm font-black ${questionTimer <= 3 ? 'text-red-600' : 'text-[#28332C]'}`}>
+                <Zap className={`w-3.5 h-3.5 ${questionTimer <= 3 ? 'text-red-500 animate-bounce' : 'text-[#D58B68]'}`} />
+                <span className={`text-xs font-black ${questionTimer <= 3 ? 'text-red-600' : 'text-[#28332C]'}`}>
                   {questionTimer}s
                 </span>
               </div>
             </div>
 
+            {/* Timer Progress Indicator Line */}
+            <div className="w-full h-1 bg-[#E1E5DC] rounded-full overflow-hidden mb-3">
+              <div
+                className={`h-full transition-all duration-1000 ${
+                  questionTimer <= 3 ? 'bg-red-500' : 'bg-[#355B45]'
+                }`}
+                style={{ width: `${(questionTimer / 10) * 100}%` }}
+              />
+            </div>
+
             {/* Pertanyaan Soal */}
-            <div className="text-center py-2 mb-4">
-              <p className="text-base sm:text-lg font-bold text-[#28332C] mb-2 leading-snug">
+            <div className="text-center py-1 mb-3">
+              <p className="text-sm sm:text-base font-bold text-[#28332C] mb-2 leading-snug">
                 {currentQuestion.question}
               </p>
               {currentQuestion.katex && (
-                <div className="inline-block px-4 py-2 bg-[#F6F5EF] rounded-xl border border-[#E1E5DC] text-lg font-mono text-[#355B45]">
+                <div className="inline-block px-4 py-1.5 bg-[#F6F5EF] rounded-xl border border-[#E1E5DC] text-base font-mono text-[#355B45] shadow-2xs">
                   <MathView math={currentQuestion.katex} />
                 </div>
               )}
             </div>
 
             {/* Pilihan Ganda (A, B, C, D) */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-2 gap-2.5 mb-3">
               {currentQuestion.options.map((option, idx) => {
                 const label = ['A', 'B', 'C', 'D'][idx];
                 const isSelected = selectedAnswer === option;
@@ -1212,11 +1377,11 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
 
                 if (questionResult !== null) {
                   if (isCorrect) {
-                    btnStyle = 'bg-emerald-100 border-emerald-500 text-emerald-800 font-bold';
+                    btnStyle = 'bg-emerald-100 border-emerald-500 text-emerald-800 font-bold scale-[1.02] shadow-sm';
                   } else if (isSelected && !isCorrect) {
                     btnStyle = 'bg-rose-100 border-rose-400 text-rose-800 font-bold';
                   } else {
-                    btnStyle = 'bg-gray-100 border-gray-200 text-gray-400 opacity-60';
+                    btnStyle = 'bg-gray-100 border-gray-200 text-gray-400 opacity-50';
                   }
                 }
 
@@ -1225,19 +1390,19 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
                     key={idx}
                     disabled={questionResult !== null}
                     onClick={() => handleOptionClick(idx)}
-                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 text-left font-semibold transition-all ${btnStyle}`}
+                    className={`flex items-center justify-between p-3 rounded-xl border-2 text-left font-semibold transition-all ${btnStyle}`}
                   >
                     <span className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-white/80 border border-current text-xs font-bold flex items-center justify-center">
+                      <span className="w-6 h-6 rounded-lg bg-white/80 border border-current text-[11px] font-bold flex items-center justify-center shrink-0">
                         {label}
                       </span>
-                      <span className="text-sm sm:text-base font-mono">{option}</span>
+                      <span className="text-xs sm:text-sm font-mono truncate">{option}</span>
                     </span>
                     {questionResult !== null && isCorrect && (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     )}
                     {questionResult !== null && isSelected && !isCorrect && (
-                      <XCircle className="w-5 h-5 text-rose-600" />
+                      <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
                     )}
                   </button>
                 );
@@ -1246,27 +1411,28 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
 
             {/* Umpan Balik Socratic NORA Jika Salah / Waktu Habis */}
             {(questionResult === 'wrong' || questionResult === 'timeout') && (
-              <div className="p-4 rounded-2xl bg-[#F6F5EF] border border-[#D58B68]/30 mb-4 animate-fade-in">
+              <div className="p-3.5 rounded-2xl bg-[#F6F5EF] border border-[#D58B68]/30 mb-2 animate-fade-in text-left">
                 <div className="flex items-start gap-2.5">
-                  <div className="w-6 h-6 rounded-full bg-[#D58B68] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-[#D58B68] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                     N
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-[#D58B68] uppercase tracking-wider mb-1">
-                      {questionResult === 'timeout' ? 'Waktu Habis!' : 'Kurang Tepat, Perhatikan Polanya:'}
+                  <div className="flex-1">
+                    <h4 className="text-[11px] font-bold text-[#D58B68] uppercase tracking-wider mb-0.5">
+                      {questionResult === 'timeout' ? 'Waktu Habis!' : 'Ulasan Konsep NORA:'}
                     </h4>
-                    <p className="text-xs sm:text-sm text-[#28332C] leading-relaxed">
+                    <p className="text-xs text-[#28332C] leading-relaxed">
                       {currentQuestion.explanation}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-3 flex justify-end">
+                <div className="mt-2.5 flex justify-end">
                   <button
                     onClick={handleContinueAfterWrong}
-                    className="px-4 py-2 bg-[#355B45] text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-[#28332C] transition shadow-sm"
+                    className="px-4 py-1.5 bg-[#355B45] text-white text-xs font-bold rounded-xl hover:bg-[#28332C] transition shadow-xs flex items-center gap-1"
                   >
-                    Lanjutkan Lari →
+                    <span>Lanjutkan Lari</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -1274,9 +1440,9 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
 
             {/* Status Pesan Jika Benar */}
             {questionResult === 'correct' && (
-              <div className="flex items-center justify-center gap-2 text-emerald-700 font-bold text-sm sm:text-base animate-bounce py-2">
-                <Sparkles className="w-5 h-5" />
-                <span>Luar Biasa! Gerbang Terbuka (+{Math.round(150 * comboMultiplier)} Poin)</span>
+              <div className="flex items-center justify-center gap-2 text-emerald-700 font-bold text-xs sm:text-sm animate-bounce py-1">
+                <Sparkles className="w-4 h-4" />
+                <span>Portal Terbuka! Melesat Maju (+{Math.round(150 * comboMultiplier)} Poin)</span>
               </div>
             )}
           </div>
@@ -1287,7 +1453,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       {gameState === 'menu' && (
         <div className="absolute inset-0 bg-[#F6F5EF]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 z-30">
           <div className="max-w-md w-full text-center">
-            {/* Title & Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#A7BCA8]/20 border border-[#A7BCA8] text-[#355B45] text-xs font-bold uppercase tracking-widest mb-3">
               <Sparkles className="w-3.5 h-3.5" />
               <span>NUMORA SPACE v1.6</span>
@@ -1298,7 +1463,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
             </h1>
 
             <p className="text-sm text-[#707A70] mb-6 leading-relaxed">
-              Endless Runner Matematika — Hindari rintangan, kumpulkan koin, dan tembus gerbang persamaan aljabar!
+              Endless Runner Matematika — Hindari rintangan, kumpulkan koin, dan tembus gerbang portal aljabar futuristik!
             </p>
 
             {/* Level Selector */}
@@ -1435,4 +1600,3 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     </div>
   );
 }
-
