@@ -1,19 +1,28 @@
+
 # Dependencies
 node_modules/
 backend/venv/
+backend/.venv/
+venv/
+.venv/
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Environment variables & local configurations
+# Environment variables & secrets
 .env
-*.env.local
+.env.*
+!.env.example
 backend/.env
 frontend/.env
+*.env.local
+*.pem
+*.key
 
 # Build outputs
 frontend/dist/
 frontend/build/
+backend/dist/
 *.egg-info/
 .pytest_cache/
 
@@ -31,3 +40,11 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
+# Python cache and test artifacts
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# OS files
+Desktop.ini
