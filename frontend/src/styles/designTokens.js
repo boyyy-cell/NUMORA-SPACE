@@ -1,41 +1,58 @@
 /**
- * NUMORA Space — Centralized Design Tokens (v1.5)
- * Premium Futuristic Palette & Layout Geometry
+ * NUMORA Space — Centralized Design Tokens (v1.6)
+ * Design Concept: MIDNIGHT ORCHID
+ *
+ * Core Palette:
+ * - Midnight Plum: #19151F (Primary canvas background)
+ * - Deep Aubergine: #28222F (Sidebar, navbar, panel surfaces)
+ * - Soft Orchid: #B69AD9 (Primary brand & conceptual accent)
+ * - Warm Apricot: #F0A77E (Interaction, highlights, CTA, negative tokens)
+ * - Sage Green: #A8BFA9 (Success, equilibrium, completed progress)
+ * - Ivory White: #F5EFE5 (High-contrast readable text & symbols)
+ * - Muted Lavender: #C8B9C9 (Secondary text, metadata, subtle borders)
  */
 
 export const designTokens = {
   colors: {
+    // Canvas & Surface
     bg: {
-      primary: '#0B1426',    // Dark Navy Base
-      secondary: '#111F34',  // Elevated Navy Surface
-      card: '#16243A',       // Card Surface
-      subtle: '#0E192E',     // Deep inset
+      primary: '#19151F',       // Midnight Plum
+      secondary: '#28222F',     // Deep Aubergine
+      card: '#221C29',          // Elevated card surface
+      inset: '#14101A',         // Deeper dark inset
     },
+    // Accents
     accent: {
-      cyan: '#62D9F5',       // Soft Cyan (Hero & Primary Focus)
-      violet: '#8875F8',     // Soft Violet (Secondary Accent)
-      cyanGlow: 'rgba(98, 217, 245, 0.25)',
-      violetGlow: 'rgba(136, 117, 248, 0.25)',
+      orchid: '#B69AD9',        // Soft Orchid
+      apricot: '#F0A77E',       // Warm Apricot
+      sage: '#A8BFA9',          // Sage Green
+      orchidGlow: 'rgba(182, 154, 217, 0.20)',
+      apricotGlow: 'rgba(240, 167, 126, 0.25)',
+      sageGlow: 'rgba(168, 191, 169, 0.25)',
     },
+    // Typography
     text: {
-      white: '#F3F6FC',      // Cloud White (Heading & Body)
-      muted: '#A8B6CA',      // Muted Slate Text (Subtitles & Meta)
-      dim: '#6C7D93',        // Inactive / Disabled
+      primary: '#F5EFE5',       // Ivory White
+      secondary: '#C8B9C9',     // Muted Lavender
+      dim: '#857787',           // Inactive / Disabled
     },
+    // Semantics
     semantic: {
-      success: '#54C9A4',    // Soft Jade Green
-      warning: '#E8B66C',    // Warm Amber
-      error: '#E87989',      // Soft Coral Red
-      info: '#62D9F5',
+      success: '#A8BFA9',       // Sage Green
+      warning: '#F0A77E',       // Warm Apricot
+      error: '#E87989',         // Muted Coral
+      info: '#B69AD9',          // Soft Orchid
     },
+    // Borders
     border: {
-      subtle: 'rgba(255, 255, 255, 0.08)',
-      cyan: 'rgba(98, 217, 245, 0.25)',
-      violet: 'rgba(136, 117, 248, 0.25)',
+      subtle: 'rgba(200, 185, 201, 0.12)',
+      orchid: 'rgba(182, 154, 217, 0.30)',
+      apricot: 'rgba(240, 167, 126, 0.35)',
+      sage: 'rgba(168, 191, 169, 0.35)',
     }
   },
   typography: {
-    fontSans: "'Inter', system-ui, -apple-system, sans-serif",
+    fontSans: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     fontMono: "'JetBrains Mono', monospace",
   },
   radius: {
@@ -46,9 +63,9 @@ export const designTokens = {
     full: '9999px',
   },
   shadows: {
-    soft: '0 10px 30px -10px rgba(0, 0, 0, 0.5)',
-    glowCyan: '0 0 25px -5px rgba(98, 217, 245, 0.25)',
-    glowViolet: '0 0 25px -5px rgba(136, 117, 248, 0.25)',
+    soft: '0 10px 30px -10px rgba(10, 7, 14, 0.7)',
+    glowOrchid: '0 0 25px -5px rgba(182, 154, 217, 0.22)',
+    glowApricot: '0 0 25px -5px rgba(240, 167, 126, 0.25)',
+    cardSoft: '0 12px 32px -8px rgba(14, 10, 19, 0.65)',
   }
 };
-

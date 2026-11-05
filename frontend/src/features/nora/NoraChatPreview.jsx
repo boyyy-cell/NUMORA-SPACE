@@ -141,38 +141,38 @@ export default function NoraChatPreview({ compact = false }) {
   };
 
   return (
-    <div className={`glass-card rounded-2xl flex flex-col overflow-hidden border border-numora-cyan/30 shadow-card-soft ${compact ? 'h-[500px]' : 'h-[640px]'}`}>
+    <div className={`glass-card rounded-2xl flex flex-col overflow-hidden border border-orchid-500/20 shadow-card-soft ${compact ? 'h-[500px]' : 'h-[640px]'}`}>
       {/* NORA Header */}
-      <div className="p-4 bg-numora-surface/90 border-b border-white/10 flex items-center justify-between">
+      <div className="p-4 bg-aubergine-900/90 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-numora-cyan to-numora-violet flex items-center justify-center p-0.5 shadow-glow-cyan">
-              <div className="w-full h-full rounded-full bg-numora-bg flex items-center justify-center">
-                <Bot className="w-5 h-5 text-numora-cyan" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orchid-400 to-apricot-400 flex items-center justify-center p-0.5 shadow-glow-orchid">
+              <div className="w-full h-full rounded-full bg-plum-950 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-orchid-300" />
               </div>
             </div>
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-numora-success rounded-full border-2 border-numora-bg" />
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-sage-400 rounded-full border-2 border-plum-900" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-numora-white text-sm">NORA Socratic AI Tutor</h3>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-numora-cyan/15 text-numora-cyan border border-numora-cyan/30">
-                Socratic Loop v1.5
+              <h3 className="font-semibold text-ivory-100 text-sm">NORA Socratic AI Tutor</h3>
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-orchid-500/15 text-orchid-300 border border-orchid-500/30">
+                Socratic Loop v1.6
               </span>
             </div>
-            <p className="text-[11px] text-numora-muted">Bimbingan Daya Nalar Aljabar Berbahasa Indonesia</p>
+            <p className="text-[11px] text-lavender-300">Bimbingan Daya Nalar Aljabar Berbahasa Indonesia</p>
           </div>
         </div>
 
         {/* Guardrail Info */}
-        <div className="hidden sm:flex items-center gap-1.5 text-xs text-numora-muted bg-numora-bg/60 px-2.5 py-1 rounded-xl border border-white/5">
-          <ShieldAlert className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-lavender-300 bg-plum-900/60 px-2.5 py-1 rounded-xl border border-white/5">
+          <ShieldAlert className="w-3.5 h-3.5 text-sage-400" />
           <span>Anti-Spoiler Guardrail Active</span>
         </div>
       </div>
 
       {/* Mode Selector & Hint Tiers */}
-      <div className="px-4 py-2.5 bg-numora-bg/60 border-b border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div className="px-4 py-2.5 bg-plum-950/60 border-b border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-1.5 overflow-x-auto">
           {MODES.map((mode) => {
             const Icon = mode.icon;
@@ -183,11 +183,11 @@ export default function NoraChatPreview({ compact = false }) {
                 onClick={() => setSelectedMode(mode.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap transition-all ${
                   isActive
-                    ? 'bg-gradient-to-r from-numora-cyan/20 to-numora-violet/20 border border-numora-cyan/40 text-numora-white font-medium shadow-sm'
-                    : 'text-numora-muted hover:text-numora-white hover:bg-white/5 border border-transparent'
+                    ? 'bg-orchid-500/20 border border-orchid-400/40 text-ivory-100 font-medium shadow-sm'
+                    : 'text-lavender-300 hover:text-ivory-100 hover:bg-white/5 border border-transparent'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-numora-cyan' : ''}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-orchid-300' : ''}`} />
                 <span>{mode.label}</span>
               </button>
             );
@@ -196,16 +196,16 @@ export default function NoraChatPreview({ compact = false }) {
 
         {/* If Mode is Hint: Show 3 Tiers */}
         {selectedMode === 'hint' && (
-          <div className="flex items-center gap-1 bg-numora-surface/80 p-1 rounded-lg border border-white/10 text-[11px]">
-            <span className="text-numora-muted px-1">Tahap:</span>
+          <div className="flex items-center gap-1 bg-aubergine-800/80 p-1 rounded-lg border border-white/10 text-[11px]">
+            <span className="text-lavender-300 px-1">Tahap:</span>
             {[1, 2, 3].map((t) => (
               <button
                 key={t}
                 onClick={() => setHintTier(t)}
                 className={`px-2 py-0.5 rounded font-mono ${
                   hintTier === t
-                    ? 'bg-numora-cyan text-numora-bg font-bold'
-                    : 'text-numora-muted hover:text-white'
+                    ? 'bg-apricot-400 text-plum-950 font-bold'
+                    : 'text-lavender-300 hover:text-ivory-100'
                 }`}
               >
                 {t}
@@ -223,38 +223,38 @@ export default function NoraChatPreview({ compact = false }) {
             className={`flex items-start gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}
           >
             {msg.sender === 'nora' ? (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-numora-cyan to-numora-violet flex items-center justify-center shrink-0">
-                <Bot className="w-4 h-4 text-numora-bg" />
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orchid-400 to-apricot-400 flex items-center justify-center shrink-0">
+                <Bot className="w-4 h-4 text-plum-950" />
               </div>
             ) : (
-              <div className="w-8 h-8 rounded-full bg-numora-surface border border-white/20 flex items-center justify-center shrink-0">
-                <User className="w-4 h-4 text-numora-muted" />
+              <div className="w-8 h-8 rounded-full bg-aubergine-700 border border-orchid-500/20 flex items-center justify-center shrink-0">
+                <User className="w-4 h-4 text-lavender-300" />
               </div>
             )}
 
             <div
               className={`max-w-[85%] rounded-2xl p-3.5 shadow-sm space-y-2 ${
                 msg.sender === 'user'
-                  ? 'bg-gradient-to-r from-numora-violet/30 to-numora-cyan/20 border border-numora-violet/30 text-numora-white rounded-tr-none'
-                  : 'bg-numora-surface/90 border border-white/10 text-numora-white/95 rounded-tl-none'
+                  ? 'bg-orchid-500/20 border border-orchid-400/30 text-ivory-100 rounded-tr-none'
+                  : 'bg-aubergine-900/90 border border-orchid-500/20 text-ivory-100/95 rounded-tl-none'
               }`}
             >
               <p className="whitespace-pre-line text-xs sm:text-sm leading-relaxed">{msg.text}</p>
 
               {msg.math && (
-                <div className="p-2 rounded-lg bg-numora-bg/70 border border-white/5 text-center my-1.5">
-                  <MathView math={msg.math} block={true} className="text-numora-cyan" />
+                <div className="p-2 rounded-lg bg-plum-950/70 border border-orchid-500/20 text-center my-1.5">
+                  <MathView math={msg.math} block={true} className="text-orchid-300" />
                 </div>
               )}
 
               {msg.flag && (
-                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-center gap-1.5">
+                <div className="p-2 rounded-lg bg-apricot-500/10 border border-apricot-500/30 text-[11px] text-apricot-300 flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                   <span>{msg.flag}</span>
                 </div>
               )}
 
-              <div className="flex items-center justify-between text-[10px] text-numora-muted pt-1 border-t border-white/5">
+              <div className="flex items-center justify-between text-[10px] text-lavender-300 pt-1 border-t border-white/5">
                 <div className="flex items-center gap-2">
                   <span>{msg.sender === 'nora' ? 'NORA' : 'Kamu'}</span>
                   <span>• {msg.timestamp}</span>
@@ -263,13 +263,13 @@ export default function NoraChatPreview({ compact = false }) {
                 {msg.sender === 'nora' && (
                   <button
                     onClick={() => handleSpeak(msg.id, msg.spokenText || msg.text)}
-                    className="flex items-center gap-1 text-numora-cyan hover:underline p-1 rounded hover:bg-white/5"
+                    className="flex items-center gap-1 text-orchid-300 hover:text-apricot-300 hover:underline p-1 rounded hover:bg-white/5"
                     title="Dengarkan Suara NORA"
                   >
                     {activeSpeakingId === msg.id ? (
                       <>
-                        <VolumeX className="w-3.5 h-3.5 text-numora-error" />
-                        <span className="text-[10px] text-numora-error">Berhenti</span>
+                        <VolumeX className="w-3.5 h-3.5 text-rose-400" />
+                        <span className="text-[10px] text-rose-400">Berhenti</span>
                       </>
                     ) : (
                       <>
@@ -286,14 +286,14 @@ export default function NoraChatPreview({ compact = false }) {
 
         {isTyping && (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-numora-cyan to-numora-violet flex items-center justify-center shrink-0">
-              <Bot className="w-4 h-4 text-numora-bg" />
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orchid-400 to-apricot-400 flex items-center justify-center shrink-0">
+              <Bot className="w-4 h-4 text-plum-950" />
             </div>
-            <div className="p-3 rounded-2xl bg-numora-surface/90 border border-white/10 text-numora-muted text-xs flex items-center gap-2">
+            <div className="p-3 rounded-2xl bg-aubergine-900/90 border border-orchid-500/20 text-lavender-300 text-xs flex items-center gap-2">
               <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-numora-cyan animate-bounce" />
-                <span className="w-1.5 h-1.5 rounded-full bg-numora-cyan animate-bounce [animation-delay:0.2s]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-numora-cyan animate-bounce [animation-delay:0.4s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-orchid-400 animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-orchid-400 animate-bounce [animation-delay:0.2s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-orchid-400 animate-bounce [animation-delay:0.4s]" />
               </div>
               <span>NORA sedang menganalisis alur penalaran...</span>
             </div>
@@ -302,27 +302,27 @@ export default function NoraChatPreview({ compact = false }) {
       </div>
 
       {/* Input Field */}
-      <form onSubmit={handleSend} className="p-3 bg-numora-surface/90 border-t border-white/10">
+      <form onSubmit={handleSend} className="p-3 bg-aubergine-900/90 border-t border-white/5">
         <div className="flex items-center gap-2">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Tanyakan konsep aljabar, misal: 'Apa koefisien dari -5x?'"
-            className="flex-1 bg-numora-bg/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-numora-white placeholder-numora-muted/60 focus:outline-none focus:border-numora-cyan/50 focus:ring-1 focus:ring-numora-cyan/50 transition-all"
+            className="flex-1 bg-plum-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-ivory-100 placeholder-lavender-300/60 focus:outline-none focus:border-orchid-400/50 focus:ring-1 focus:ring-orchid-400/50 transition-all"
           />
           <button
             type="submit"
             disabled={!inputValue.trim() || isTyping}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-numora-cyan to-numora-violet text-numora-bg font-bold text-xs hover:opacity-95 transition-opacity disabled:opacity-40 flex items-center justify-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-orchid-400 to-apricot-400 text-plum-950 font-bold text-xs hover:opacity-95 transition-opacity disabled:opacity-40 flex items-center justify-center gap-1.5 shadow-sm"
           >
-            <Send className="w-4 h-4 text-numora-bg" />
+            <Send className="w-4 h-4 text-plum-950" />
             <span className="hidden sm:inline">Kirim</span>
           </button>
         </div>
-        <div className="flex items-center justify-between mt-2 text-[10px] text-numora-muted px-1">
+        <div className="flex items-center justify-between mt-2 text-[10px] text-lavender-300 px-1">
           <span>🛡️ Protokol Sokratik: NORA membimbing tanpa membocorkan jawaban langsung.</span>
-          <span className="font-mono text-numora-cyan/80">Active Socratic Mode</span>
+          <span className="font-mono text-orchid-300/80">Active Socratic Mode</span>
         </div>
       </form>
     </div>

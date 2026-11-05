@@ -87,26 +87,26 @@ export default function MathematicalChallenge() {
   };
 
   return (
-    <div className="glass-card rounded-2xl p-6 border border-white/10 space-y-6">
+    <div className="glass-card rounded-2xl p-6 border border-orchid-500/20 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-numora-cyan flex items-center gap-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-orchid-300 flex items-center gap-1">
               <Award className="w-3.5 h-3.5" />
               Tantangan Literasi Matematis
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-numora-violet/20 text-numora-violet border border-numora-violet/30">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-apricot-500/15 text-apricot-300 border border-apricot-500/30">
               PISA Framework
             </span>
           </div>
-          <h3 className="text-lg font-bold text-numora-white mt-1">
+          <h3 className="text-lg font-bold text-ivory-100 mt-1">
             {currentChallenge.title}
           </h3>
         </div>
 
         <button
           onClick={() => handleVoice(`${currentChallenge.context} ${currentChallenge.question}`)}
-          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-numora-cyan border border-white/10 flex items-center gap-1.5 text-xs self-start sm:self-auto"
+          className="p-2 rounded-xl bg-plum-900/60 hover:bg-plum-800/80 text-orchid-300 border border-orchid-500/20 flex items-center gap-1.5 text-xs self-start sm:self-auto transition-colors"
         >
           <Volume2 className="w-4 h-4" />
           <span>Bacakan Soal</span>
@@ -114,12 +114,12 @@ export default function MathematicalChallenge() {
       </div>
 
       {/* Context Scenario */}
-      <div className="p-4 rounded-xl bg-numora-bg/80 border border-white/5 space-y-3 text-xs leading-relaxed">
-        <p className="text-numora-muted">{currentChallenge.context}</p>
-        <div className="p-3 rounded-lg bg-numora-surface border border-numora-cyan/20 text-center font-mono text-numora-cyan font-bold text-sm">
+      <div className="p-4 rounded-xl bg-plum-950/70 border border-white/5 space-y-3 text-xs leading-relaxed">
+        <p className="text-lavender-300">{currentChallenge.context}</p>
+        <div className="p-3 rounded-lg bg-aubergine-900 border border-orchid-500/30 text-center font-mono text-orchid-300 font-bold text-sm">
           <MathView math={currentChallenge.expression} />
         </div>
-        <p className="font-semibold text-numora-white">{currentChallenge.question}</p>
+        <p className="font-semibold text-ivory-100">{currentChallenge.question}</p>
       </div>
 
       {/* Answer Form */}
@@ -130,12 +130,12 @@ export default function MathematicalChallenge() {
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
             placeholder="Tuliskan jawaban analisismu..."
-            className="flex-1 bg-numora-bg/90 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-numora-white placeholder-numora-muted/60 focus:outline-none focus:border-numora-cyan/50 focus:ring-1 focus:ring-numora-cyan/50"
+            className="flex-1 bg-plum-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-ivory-100 placeholder-lavender-300/60 focus:outline-none focus:border-orchid-400/50 focus:ring-1 focus:ring-orchid-400/50 transition-all"
           />
           <button
             type="submit"
             disabled={isLoading || !userAnswer.trim()}
-            className="px-6 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-numora-cyan to-numora-violet text-numora-bg hover:opacity-90 disabled:opacity-40"
+            className="px-6 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-orchid-400 to-apricot-400 text-plum-950 hover:opacity-90 disabled:opacity-40 transition-opacity shadow-sm"
           >
             {isLoading ? 'Menganalisis...' : 'Periksa Jawaban'}
           </button>
@@ -146,16 +146,16 @@ export default function MathematicalChallenge() {
       {feedback && (
         <div className={`p-4 rounded-xl border space-y-2 text-xs animate-in fade-in duration-300 ${
           feedback.is_correct
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-            : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+            ? 'bg-sage-500/15 border-sage-500/30 text-sage-300'
+            : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
         }`}>
           <div className="flex items-center gap-2 font-bold">
-            {feedback.is_correct ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <AlertCircle className="w-5 h-5 text-rose-400" />}
+            {feedback.is_correct ? <CheckCircle2 className="w-5 h-5 text-sage-400" /> : <AlertCircle className="w-5 h-5 text-rose-400" />}
             <span>Diagnosis: {feedback.diagnosed_type}</span>
           </div>
-          <p className="text-numora-white/90 leading-relaxed">{feedback.feedback}</p>
+          <p className="text-ivory-100/90 leading-relaxed">{feedback.feedback}</p>
           {feedback.recommended_hint && (
-            <div className="p-2.5 rounded-lg bg-numora-bg/60 border border-white/5 text-[11px] text-numora-cyan">
+            <div className="p-2.5 rounded-lg bg-plum-950/70 border border-orchid-500/20 text-[11px] text-orchid-300">
               💡 {feedback.recommended_hint}
             </div>
           )}
@@ -164,7 +164,7 @@ export default function MathematicalChallenge() {
             <div className="pt-2">
               <button
                 onClick={handleNext}
-                className="px-4 py-1.5 rounded-lg bg-emerald-500 text-numora-bg font-bold text-xs flex items-center gap-1.5 hover:opacity-90"
+                className="px-4 py-1.5 rounded-lg bg-sage-400 text-plum-950 font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-opacity"
               >
                 <span>Lanjut ke Tantangan Berikutnya</span>
                 <ArrowRight className="w-3.5 h-3.5" />

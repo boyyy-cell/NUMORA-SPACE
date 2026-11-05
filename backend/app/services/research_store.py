@@ -9,7 +9,8 @@ from backend.app.schemas.research import (
 
 class ResearchStore:
     def __init__(self):
-        # Strictly 2 subjects for the experimental small-scale study protocol
+        # S-001 dan S-002 adalah label anonim protokol riset komparatif 2 subjek,
+        # BUKAN klaim bukti partisipasi empiris yang telah terlaksana.
         self._subjects: Dict[str, ResearchSubject] = {
             "S-001": ResearchSubject(
                 subject_id="S-001",
@@ -22,7 +23,8 @@ class ResearchStore:
                 posttest_status="Belum Dilaksanakan (Scheduled)",
                 posttest_score=None,
                 cognitive_load_status="NOT CONFIGURED (Belum Diukur)",
-                total_sessions_logged=1,
+                total_sessions_logged=0,
+                data_source="PROTOCOL_TEMPLATE",
             ),
             "S-002": ResearchSubject(
                 subject_id="S-002",
@@ -35,32 +37,37 @@ class ResearchStore:
                 posttest_status="Belum Dilaksanakan (Scheduled)",
                 posttest_score=None,
                 cognitive_load_status="NOT CONFIGURED (Belum Diukur)",
-                total_sessions_logged=1,
+                total_sessions_logged=0,
+                data_source="PROTOCOL_TEMPLATE",
             ),
         }
 
+        # Sesi di bawah adalah DEMO_SEED (template simulasi) untuk pengujian UI dashboard,
+        # secara eksplisit BUKAN data riil hasil observasi siswa lapangan.
         self._sessions: List[ResearchSessionLog] = [
             ResearchSessionLog(
-                session_id="SES-001-ORIENT",
+                session_id="SEED-001-ORIENT",
                 subject_id="S-001",
                 timestamp=datetime.utcnow(),
                 module_id="mod_variables",
-                concept_studied="Wadah Nilai Variabel (Tatap Muka)",
+                concept_studied="Wadah Nilai Variabel (Template Simulasi)",
                 duration_minutes=25.0,
                 hints_used=2,
-                misconceptions_detected=["Awalnya menganggap x hanya inisial nama"],
-                notes="Sesi orientasi konsep dasar bersama peneliti."
+                misconceptions_detected=["Contoh: Awalnya menganggap x hanya inisial nama"],
+                notes="Data simulasi antarmuka — belum ada sesi riil lapangan.",
+                data_source="DEMO_SEED"
             ),
             ResearchSessionLog(
-                session_id="SES-002-ORIENT",
+                session_id="SEED-002-ORIENT",
                 subject_id="S-002",
                 timestamp=datetime.utcnow(),
                 module_id="mod_variables",
-                concept_studied="Laboratorium Visual 2D Variabel x",
+                concept_studied="Laboratorium Visual 2D Variabel x (Template Simulasi)",
                 duration_minutes=22.5,
                 hints_used=1,
-                misconceptions_detected=["Mencoba memasukkan bilangan desimal pada wadah x"],
-                notes="Siswa mengeksplorasi slider nilai x secara mandiri di NUMORA Space."
+                misconceptions_detected=["Contoh: Eksplorasi bilangan desimal pada wadah x"],
+                notes="Data simulasi antarmuka — belum ada sesi riil lapangan.",
+                data_source="DEMO_SEED"
             )
         ]
 
@@ -70,7 +77,8 @@ class ResearchStore:
             extraneous_load_status="NOT CONFIGURED (Menunggu Sesi Pengukuran Lapangan)",
             germane_load_status="NOT CONFIGURED (Menunggu Sesi Pengukuran Lapangan)",
             scale_type="10-Point Likert Scale (0 = Sangat Ringan, 10 = Sangat Berat)",
-            verification_status="Instrumen sedang diverifikasi untuk konteks siswa SMP kelas VII."
+            verification_status="Instrumen belum diisi oleh subjek penelitian riil.",
+            data_source="INSTRUMENT_SPECIFICATION"
         )
 
     def get_all_subjects(self) -> List[ResearchSubject]:
@@ -89,4 +97,3 @@ class ResearchStore:
 
 
 research_store = ResearchStore()
-

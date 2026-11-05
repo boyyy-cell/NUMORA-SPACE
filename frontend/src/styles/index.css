@@ -2,60 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-plum: #19151F;
+  --color-aubergine: #28222F;
+  --color-orchid: #B69AD9;
+  --color-apricot: #F0A77E;
+  --color-sage: #A8BFA9;
+  --color-ivory: #F5EFE5;
+  --color-lavender: #C8B9C9;
+}
+
 @layer base {
   body {
-    background-color: #0B1426;
-    color: #F3F6FC;
+    background-color: #19151F;
+    color: #F5EFE5;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
   }
+
+  /* Selection highlight using Soft Orchid */
+  ::selection {
+    background-color: rgba(182, 154, 217, 0.35);
+    color: #F5EFE5;
+  }
 }
 
-/* Glassmorphism helpers */
+/* Glassmorphism helpers — Midnight Orchid Theme */
 .glass-panel {
-  background: rgba(17, 31, 52, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(40, 34, 47, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(200, 185, 201, 0.12);
 }
 
 .glass-card {
-  background: rgba(22, 36, 58, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(98, 217, 245, 0.12);
+  background: rgba(34, 28, 41, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(182, 154, 217, 0.18);
 }
 
 .glass-card-interactive {
-  background: rgba(22, 36, 58, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(34, 28, 41, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(200, 185, 201, 0.12);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card-interactive:hover {
-  border-color: rgba(98, 217, 245, 0.4);
+  border-color: rgba(182, 154, 217, 0.45);
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(98, 217, 245, 0.15);
+  box-shadow: 0 12px 28px -6px rgba(182, 154, 217, 0.18);
 }
 
-/* Custom subtle scrollbar */
+/* Elegant warm dark scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B1426;
+  background: #19151F;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1E314F;
+  background: #3B3245;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2A456E;
+  background: #5A4E68;
 }
-
