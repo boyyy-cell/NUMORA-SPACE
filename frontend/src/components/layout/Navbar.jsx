@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import BrandLogo from '../common/BrandLogo';
 import BackendStatusBadge from '../common/BackendStatusBadge';
 import { useBackendStatus } from '../../hooks/useBackendStatus';
-import { Menu, X, ArrowRight, Sparkles, Microscope } from 'lucide-react';
+import { Menu, X, ArrowRight, Sparkles, Microscope, Gamepad2 } from 'lucide-react';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -17,13 +17,17 @@ export default function Navbar() {
         <BrandLogo showTagline={false} size="default" />
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-secondary-text">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-secondary-text">
           <a href="#features" className="hover:text-charcoal transition-colors">
             Fitur Utama
           </a>
           <a href="#preview-modules" className="hover:text-charcoal transition-colors">
             Modul Aljabar
           </a>
+          <Link to="/numora-run" className="hover:text-forest text-[#D58B68] font-bold transition-colors flex items-center gap-1.5">
+            <Gamepad2 className="w-4 h-4" />
+            NUMORA RUN
+          </Link>
           <a href="#preview-nora" className="hover:text-forest transition-colors flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-forest" />
             NORA AI
@@ -85,6 +89,14 @@ export default function Navbar() {
             >
               Modul Pembelajaran Aljabar
             </a>
+            <Link
+              to="/numora-run"
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-2 px-3 rounded-lg hover:bg-ivory text-[#D58B68] font-bold flex items-center gap-2"
+            >
+              <Gamepad2 className="w-4 h-4" />
+              NUMORA RUN (Game 3D)
+            </Link>
             <a
               href="#preview-nora"
               onClick={() => setMobileMenuOpen(false)}

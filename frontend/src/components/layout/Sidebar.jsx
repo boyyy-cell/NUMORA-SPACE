@@ -9,6 +9,7 @@ import {
   Bot,
   Sliders,
   Award,
+  Gamepad2,
   Microscope,
   GraduationCap,
   Home,
@@ -23,11 +24,12 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
   const location = useLocation();
   const { status, checkNow, baseUrl, error } = useBackendStatus();
 
-  // Simplified 5 primary navigation tabs for Student Space
+  // Simplified navigation tabs for Student Space
   const studentLinks = [
     { id: 'overview', label: 'Beranda', icon: LayoutDashboard },
     { id: 'modules', label: 'Materi', icon: BookOpen },
     { id: 'lab', label: 'Algebra Lab', icon: Sliders },
+    { id: 'run', label: 'NUMORA RUN', icon: Gamepad2, badge: 'GAME' },
     { id: 'nora', label: 'NORA', icon: Bot },
     { id: 'challenge', label: 'Evaluasi', icon: Award },
   ];
@@ -106,14 +108,23 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
                     setActiveTab?.(item.id);
                     setIsOpen?.(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition-all ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all ${
                     isActive
                       ? 'bg-forest text-pure-white font-semibold shadow-subtle'
                       : 'text-secondary-text hover:text-charcoal hover:bg-ivory font-medium'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-pure-white' : 'text-secondary-text'}`} />
-                  <span>{item.label}</span>
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-pure-white' : 'text-secondary-text'}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider ${
+                      isActive ? 'bg-pure-white/20 text-pure-white' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}

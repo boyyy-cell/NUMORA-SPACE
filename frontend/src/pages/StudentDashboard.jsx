@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import NoraChatPreview from '../features/nora/NoraChatPreview';
 import AlgebraLab from '../features/learning/AlgebraLab';
 import MathematicalChallenge from '../features/learning/MathematicalChallenge';
+import NumoraRunner3D from '../features/runner/NumoraRunner3D';
 import { MODULES_DATA } from '../features/learning/AlgebraModulePreview';
 import MathView from '../components/common/MathView';
 import {
@@ -15,6 +17,8 @@ import {
   Play,
   CheckCircle2,
   Sliders,
+  Gamepad2,
+  Maximize2,
   X
 } from 'lucide-react';
 
@@ -101,7 +105,7 @@ export default function StudentDashboard() {
                   </p>
                 </div>
 
-                {/* Satu Tombol Utama: Lanjutkan Belajar */}
+                {/* Tombol Utama */}
                 <div className="pt-1 flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => setActiveTab('lab')}
@@ -109,6 +113,14 @@ export default function StudentDashboard() {
                   >
                     <Play className="w-4 h-4 fill-current" />
                     <span>Lanjutkan Belajar</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('run')}
+                    className="px-5 py-3 rounded-xl text-xs sm:text-sm font-semibold bg-[#D58B68] text-pure-white hover:bg-[#D58B68]/90 transition-colors flex items-center gap-2 shadow-subtle"
+                  >
+                    <Gamepad2 className="w-4 h-4" />
+                    <span>Main NUMORA RUN</span>
                   </button>
 
                   <button
@@ -283,6 +295,41 @@ export default function StudentDashboard() {
                 </p>
               </div>
               <AlgebraLab />
+            </div>
+          )}
+
+          {/* TAB 3.5: NUMORA RUN — ENDLESS RUNNER GAME */}
+          {activeTab === 'run' && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-charcoal">
+                      NUMORA RUN
+                    </h2>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#D58B68]/15 text-[#D58B68] uppercase">
+                      Game Aljabar
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-secondary-text">
+                    Kendalikan pelari 3D di 3 jalur, kumpulkan koin, hindari rintangan, dan tembus gerbang aljabar!
+                  </p>
+                </div>
+
+                <Link
+                  to="/numora-run"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-ivory text-charcoal hover:bg-sage/20 border border-border-clean self-start sm:self-auto transition"
+                  title="Buka Halaman Penuh"
+                >
+                  <Maximize2 className="w-3.5 h-3.5 text-forest" />
+                  <span>Mode Layar Penuh</span>
+                </Link>
+              </div>
+
+              {/* 3D Runner Component */}
+              <div className="bg-pure-white rounded-2xl p-2 sm:p-4 border border-border-clean shadow-card-clean">
+                <NumoraRunner3D />
+              </div>
             </div>
           )}
 

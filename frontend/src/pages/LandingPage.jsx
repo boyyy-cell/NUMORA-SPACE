@@ -11,7 +11,8 @@ import {
   ArrowRight,
   CheckCircle2,
   Volume2,
-  LogIn
+  LogIn,
+  Gamepad2
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -57,7 +58,7 @@ export default function LandingPage() {
                 Platform pembelajaran interaktif yang membantu siswa kelas VII memvisualisasikan variabel, menguji persamaan, dan berdiskusi bersama tutor AI NORA.
               </p>
 
-              {/* Action Buttons: Mulai Belajar & Masuk */}
+              {/* Action Buttons: Mulai Belajar, Main NUMORA RUN, & Masuk */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
                 <Link
                   to="/student-dashboard"
@@ -65,6 +66,14 @@ export default function LandingPage() {
                 >
                   <span>Mulai Belajar</span>
                   <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  to="/numora-run"
+                  className="w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-sm bg-[#D58B68] text-pure-white hover:bg-[#D58B68]/90 transition-colors flex items-center justify-center gap-2 shadow-subtle"
+                >
+                  <Gamepad2 className="w-4 h-4" />
+                  <span>Main NUMORA RUN</span>
                 </Link>
 
                 <Link
