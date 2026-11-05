@@ -1,10 +1,11 @@
 import React from 'react';
 import BrandLogo from '../common/BrandLogo';
+import { MathText } from '../common/MathView';
 import { Sparkles, GraduationCap, Microscope } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-pure-white border-t border-[#28332C]/14 pt-12 pb-8 mt-16">
+    <footer className="bg-pure-white border-t border-[#28332C]/20 pt-12 pb-8 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand Col */}
@@ -26,10 +27,10 @@ export default function Footer() {
               Fondasi Aljabar
             </h4>
             <ul className="space-y-1.5 text-xs text-secondary-text">
-              <li>1. Variabel ($x, y$)</li>
-              <li>2. Koefisien ($ax$)</li>
-              <li>3. Konstanta ($c$)</li>
-              <li>4. Bentuk Aljabar ($ax + b$)</li>
+              <li><MathText text="1. Variabel ($x, y$)" /></li>
+              <li><MathText text="2. Koefisien ($ax$)" /></li>
+              <li><MathText text="3. Konstanta ($c$)" /></li>
+              <li><MathText text="4. Bentuk Aljabar ($ax + b$)" /></li>
             </ul>
           </div>
 
@@ -49,12 +50,12 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-6 border-t border-[#28332C]/14 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-secondary-text">
+        <div className="pt-6 border-t border-[#28332C]/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-secondary-text">
           <div>
             © {new Date().getFullYear()} NUMORA Space. Tagline: <span className="text-forest font-semibold">Algebra, Beyond Formulas.</span>
           </div>
           <div className="flex items-center gap-2 text-[11px]">
-            <span className="px-2 py-0.5 rounded bg-ivory border border-[#28332C]/14 text-charcoal">
+            <span className="px-2 py-0.5 rounded bg-ivory border border-[#28332C]/20 text-charcoal">
               Sage & Ivory
             </span>
             <span>Platform Pembelajaran Matematika SMP Kelas VII</span>

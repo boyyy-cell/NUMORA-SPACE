@@ -65,8 +65,8 @@ export default {
           900: "#131915",
         },
         'secondary-text': "#707A70",
-        'border-clean': "rgba(40, 51, 44, 0.14)",
-        'border-soft': "#D8DDD2",
+        'border-clean': "rgba(40, 51, 44, 0.20)",
+        'border-soft': "#CCD3C8",
         'pure-white': "#FFFFFF",
 
         // Backward compatibility mappings

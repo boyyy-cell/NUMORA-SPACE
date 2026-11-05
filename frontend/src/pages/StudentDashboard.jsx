@@ -6,7 +6,8 @@ import AlgebraLab from '../features/learning/AlgebraLab';
 import MathematicalChallenge from '../features/learning/MathematicalChallenge';
 import NumoraRunner3D from '../features/runner/NumoraRunner3D';
 import { MODULES_DATA } from '../features/learning/AlgebraModulePreview';
-import MathView from '../components/common/MathView';
+import ModuleLearningModal from '../features/learning/ModuleLearningModal';
+import MathView, { MathText } from '../components/common/MathView';
 import { useAuth } from '../context/AuthContext';
 import {
   Menu,
@@ -53,11 +54,11 @@ export default function StudentDashboard() {
       {/* Main Content Area */}
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 h-16 sm:h-18 bg-pure-white/95 backdrop-blur-sm border-b border-[#28332C]/14 px-4 sm:px-8 flex items-center justify-between shadow-xs">
+        <header className="sticky top-0 z-30 h-16 sm:h-18 bg-pure-white/95 backdrop-blur-sm border-b border-[#28332C]/20 px-4 sm:px-8 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="btn-interactive lg:hidden p-2 rounded-xl bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/14"
+              className="btn-interactive lg:hidden p-2 rounded-xl bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/20"
               aria-label="Buka Menu"
             >
               <Menu className="w-5 h-5" />
@@ -80,7 +81,7 @@ export default function StudentDashboard() {
 
           {/* Student Profile Pill & Logout */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full bg-ivory border border-[#28332C]/14">
+            <div className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full bg-ivory border border-[#28332C]/20">
               <div className="w-7 h-7 rounded-full bg-forest text-pure-white flex items-center justify-center font-bold text-xs">
                 S
               </div>
@@ -96,7 +97,7 @@ export default function StudentDashboard() {
 
             <button
               onClick={handleLogout}
-              className="btn-interactive p-2 rounded-xl text-rose-700 hover:text-rose-800 hover:bg-rose-50 border border-[#28332C]/14 transition-colors"
+              className="btn-interactive p-2 rounded-xl text-rose-700 hover:text-rose-800 hover:bg-rose-50 border border-[#28332C]/20 transition-colors"
               title="Sign Out / Keluar"
             >
               <LogOut className="w-4 h-4" />
@@ -110,7 +111,7 @@ export default function StudentDashboard() {
           {activeTab === 'overview' && (
             <div className="space-y-6 animate-fade-page">
               {/* Single Hero Card: Sapaan Singkat, Materi Terakhir, Satu Tombol Utama */}
-              <div className="rounded-2xl p-6 sm:p-8 bg-pure-white border border-[#28332C]/14 shadow-card-clean space-y-5">
+              <div className="rounded-2xl p-6 sm:p-8 bg-pure-white border border-[#28332C]/20 shadow-card-clean space-y-5">
                 <div className="space-y-2">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sage/20 text-xs font-semibold text-forest">
                     <Sparkles className="w-3.5 h-3.5" />
@@ -120,7 +121,7 @@ export default function StudentDashboard() {
                     Materi Terakhir: Memahami Koefisien
                   </h2>
                   <p className="text-xs sm:text-sm text-secondary-text leading-relaxed max-w-2xl">
-                    Pelajari bagaimana bilangan di depan variabel $x$ melipatgandakan nilai wadah aljabar secara visual.
+                    <MathText text="Pelajari bagaimana bilangan di depan variabel $x$ melipatgandakan nilai wadah aljabar secara visual." />
                   </p>
                 </div>
 
@@ -144,7 +145,7 @@ export default function StudentDashboard() {
 
                   <button
                     onClick={() => setActiveTab('nora')}
-                    className="btn-interactive px-4 py-3 rounded-xl text-xs sm:text-sm font-medium bg-pure-white hover:bg-ivory text-charcoal border border-[#28332C]/14 hover:border-forest/40 flex items-center gap-2 transition-colors"
+                    className="btn-interactive px-4 py-3 rounded-xl text-xs sm:text-sm font-medium bg-pure-white hover:bg-ivory text-charcoal border border-[#28332C]/20 hover:border-forest/40 flex items-center gap-2 transition-colors"
                   >
                     <Bot className="w-4 h-4 text-forest" />
                     <span>Tanya NORA</span>
@@ -152,12 +153,12 @@ export default function StudentDashboard() {
                 </div>
 
                 {/* Progress Bar Bersih (Hanya Data Nyata) */}
-                <div className="pt-4 border-t border-[#28332C]/14 space-y-2 max-w-md">
+                <div className="pt-4 border-t border-[#28332C]/20 space-y-2 max-w-md">
                   <div className="flex items-center justify-between text-xs font-medium">
                     <span className="text-secondary-text">Progres Modul Aljabar:</span>
                     <span className="font-semibold text-forest">1 dari 4 Selesai (25%)</span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-ivory overflow-hidden border border-[#28332C]/14">
+                  <div className="w-full h-2 rounded-full bg-ivory overflow-hidden border border-[#28332C]/20">
                     <div className="h-full bg-forest rounded-full" style={{ width: '25%' }} />
                   </div>
                 </div>
@@ -187,7 +188,7 @@ export default function StudentDashboard() {
                       <div
                         key={mod.id}
                         onClick={() => setSelectedModuleModal(mod)}
-                        className="btn-interactive bg-pure-white rounded-xl p-4 border border-[#28332C]/14 hover:border-forest transition-colors cursor-pointer space-y-3 shadow-subtle"
+                        className="btn-interactive bg-pure-white rounded-xl p-4 border border-[#28332C]/20 hover:border-forest transition-colors cursor-pointer space-y-3 shadow-subtle"
                       >
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-[11px] font-semibold text-secondary-text">
@@ -249,11 +250,11 @@ export default function StudentDashboard() {
                   return (
                     <div
                       key={mod.id}
-                      className="bg-pure-white rounded-2xl p-5 border border-[#28332C]/14 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-subtle hover:border-forest transition-colors"
+                      className="bg-pure-white rounded-2xl p-5 border border-[#28332C]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-subtle hover:border-forest transition-colors"
                     >
                       <div className="space-y-1.5 max-w-xl">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-ivory text-secondary-text border border-[#28332C]/14">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-ivory text-secondary-text border border-[#28332C]/20">
                             Modul 0{index + 1}
                           </span>
                           {isDone && (
@@ -290,7 +291,7 @@ export default function StudentDashboard() {
                         </button>
                         <button
                           onClick={() => setActiveTab('lab')}
-                          className="btn-interactive px-3.5 py-2 rounded-xl text-xs font-medium bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/14 transition-colors"
+                          className="btn-interactive px-3.5 py-2 rounded-xl text-xs font-medium bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/20 transition-colors"
                         >
                           Uji di Lab
                         </button>
@@ -337,7 +338,7 @@ export default function StudentDashboard() {
 
                 <Link
                   to="/numora-run"
-                  className="btn-interactive inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/14 self-start sm:self-auto transition"
+                  className="btn-interactive inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/20 self-start sm:self-auto transition"
                   title="Buka Halaman Penuh"
                 >
                   <Maximize2 className="w-3.5 h-3.5 text-forest" />
@@ -346,7 +347,7 @@ export default function StudentDashboard() {
               </div>
 
               {/* 3D Runner Component */}
-              <div className="bg-pure-white rounded-2xl p-2 sm:p-4 border border-[#28332C]/14 shadow-card-clean">
+              <div className="bg-pure-white rounded-2xl p-2 sm:p-4 border border-[#28332C]/20 shadow-card-clean">
                 <NumoraRunner3D />
               </div>
             </div>
@@ -384,54 +385,16 @@ export default function StudentDashboard() {
         </main>
       </div>
 
-      {/* DETAIL MODAL MATERI */}
+      {/* DETAIL MODAL MATERI — DEDICATED LEARNING VIEW */}
       {selectedModuleModal && (
-        <div className="fixed inset-0 z-50 bg-charcoal/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-elevated space-y-4 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between border-b border-[#28332C]/14 pb-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-forest">
-                  Modul Pembelajaran
-                </span>
-                <h3 className="text-lg font-bold text-charcoal">
-                  {selectedModuleModal.subtitle}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedModuleModal(null)}
-                className="btn-interactive p-1.5 rounded-lg hover:bg-ivory text-secondary-text hover:text-charcoal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-xs text-secondary-text leading-relaxed">
-              {selectedModuleModal.description}
-            </p>
-
-            <div className="p-3 rounded-xl bg-ivory border border-[#28332C]/14 text-center font-mono text-sm font-semibold text-forest">
-              <MathView math={selectedModuleModal.math} block={true} />
-            </div>
-
-            <div className="pt-2 flex items-center justify-end gap-2">
-              <button
-                onClick={() => setSelectedModuleModal(null)}
-                className="btn-interactive px-4 py-2 rounded-xl text-xs font-medium bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/14"
-              >
-                Tutup
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedModuleModal(null);
-                  setActiveTab('lab');
-                }}
-                className="btn-interactive px-5 py-2 rounded-xl text-xs font-semibold bg-forest text-pure-white hover:bg-forest-600 transition-colors shadow-subtle"
-              >
-                Buka di Algebra Lab
-              </button>
-            </div>
-          </div>
-        </div>
+        <ModuleLearningModal
+          currentModuleId={selectedModuleModal.id}
+          onClose={() => setSelectedModuleModal(null)}
+          onOpenLab={() => {
+            setSelectedModuleModal(null);
+            setActiveTab('lab');
+          }}
+        />
       )}
     </div>
   );

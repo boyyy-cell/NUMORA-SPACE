@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MathView from '../../components/common/MathView';
+import MathView, { MathText } from '../../components/common/MathView';
 import AlgebraBalance3D from './AlgebraBalance3D';
 import { voiceService } from '../../services/voiceService';
 import { apiService } from '../../services/api';
@@ -105,9 +105,9 @@ export default function AlgebraLab() {
   ];
 
   return (
-    <div className="bg-pure-white rounded-2xl p-5 sm:p-7 border border-[#28332C]/14 shadow-card-clean space-y-6">
+    <div className="bg-pure-white rounded-2xl p-5 sm:p-7 border border-[#28332C]/20 shadow-card-clean space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/14 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/20 pb-4">
         <div>
           <h3 className="text-xl font-bold text-charcoal">
             Laboratorium Aljabar Interaktif
@@ -232,7 +232,7 @@ export default function AlgebraLab() {
           <div className="p-4 rounded-xl bg-pure-white border border-border-clean space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <p className="text-charcoal leading-relaxed font-medium">
-                Variabel $x$ bertindak sebagai wadah penampung bilangan. Angka di dalam wadah dapat bernilai positif (token hijau) maupun negatif (token oranye).
+                <MathText text="Variabel $x$ bertindak sebagai wadah penampung bilangan. Angka di dalam wadah dapat bernilai positif (token hijau) maupun negatif (token oranye)." />
               </p>
               <button
                 onClick={() => handleSpeakExplanation(`Variabel adalah simbol atau wadah penampung nilai numerik. Saat ini nilai x adalah ${xVal}.`)}
@@ -261,7 +261,7 @@ export default function AlgebraLab() {
             <div className="flex flex-wrap items-center justify-center gap-3 py-2 max-w-xl min-h-[100px]">
               {coeffA === 0 ? (
                 <div className="p-5 rounded-xl bg-pure-white border border-border-clean text-xs text-secondary-text text-center">
-                  Koefisien 0: Tidak ada wadah ($0 \times x = 0$).
+                  <MathText text="Koefisien 0: Tidak ada wadah ($0 \times x = 0$)." />
                 </div>
               ) : (
                 Array.from({ length: Math.min(Math.abs(coeffA), 6) }).map((_, idx) => (
@@ -289,7 +289,7 @@ export default function AlgebraLab() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg pt-2 border-t border-border-clean">
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs text-secondary-text">
-                  <span className="font-medium text-charcoal">Koefisien ($a$):</span>
+                  <span className="font-medium text-charcoal"><MathText text="Koefisien ($a$):" /></span>
                   <span className="font-bold font-mono text-charcoal text-sm">{coeffA}</span>
                 </div>
                 <input
@@ -304,7 +304,7 @@ export default function AlgebraLab() {
 
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs text-secondary-text">
-                  <span className="font-medium text-charcoal">Isi Wadah ($x$):</span>
+                  <span className="font-medium text-charcoal"><MathText text="Isi Wadah ($x$):" /></span>
                   <span className="font-bold font-mono text-forest text-sm">{coeffX}</span>
                 </div>
                 <input
@@ -375,7 +375,7 @@ export default function AlgebraLab() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg pt-2 border-t border-border-clean">
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs text-secondary-text">
-                  <span className="font-medium text-charcoal">Nilai $x$:</span>
+                  <span className="font-medium text-charcoal"><MathText text="Nilai $x$:" /></span>
                   <span className="font-bold font-mono text-forest text-sm">{constX}</span>
                 </div>
                 <input
@@ -390,7 +390,7 @@ export default function AlgebraLab() {
 
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs text-secondary-text">
-                  <span className="font-medium text-charcoal">Nilai Konstanta ($c$):</span>
+                  <span className="font-medium text-charcoal"><MathText text="Nilai Konstanta ($c$):" /></span>
                   <span className="font-bold font-mono text-terracotta text-sm">{constC}</span>
                 </div>
                 <input
@@ -408,7 +408,7 @@ export default function AlgebraLab() {
           <div className="p-4 rounded-xl bg-pure-white border border-border-clean space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <p className="text-charcoal leading-relaxed font-medium">
-                Konstanta adalah suku aljabar yang nilainya mandiri dan tidak terpengaruh oleh variabel. Contoh: biaya dasar Rp 5.000 selalu tetap berapapun jumlah $x$.
+                <MathText text="Konstanta adalah suku aljabar yang nilainya mandiri dan tidak terpengaruh oleh variabel. Contoh: biaya dasar Rp 5.000 selalu tetap berapapun jumlah $x$." />
               </p>
               <button
                 onClick={() => handleSpeakExplanation(`Konstanta adalah suku aljabar yang nilainya mandiri dan tidak dipengaruhi oleh perubahan variabel.`)}
@@ -525,7 +525,7 @@ export default function AlgebraLab() {
             {/* Integrated Controls & Real-time Indicator */}
             <div className="p-5 rounded-2xl bg-pure-white border border-border-clean space-y-3 max-w-xl mx-auto shadow-subtle">
               <div className="flex justify-between items-center text-xs sm:text-sm">
-                <span className="text-charcoal font-medium">Uji Nilai Variabel ($x$):</span>
+                <span className="text-charcoal font-medium"><MathText text="Uji Nilai Variabel ($x$):" /></span>
                 <span className="font-bold font-mono text-forest text-base">x = {balanceX}</span>
               </div>
               <input
@@ -555,11 +555,12 @@ export default function AlgebraLab() {
           <div className="p-4 rounded-xl bg-pure-white border border-border-clean space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <p className="text-charcoal leading-relaxed font-medium">
-                Persamaan aljabar bekerja layaknya neraca dua lengan. Nilai $x$ adalah solusi yang membuat timbangan berada dalam keadaan seimbang (*equilibrium*).
+                <MathText text="Persamaan aljabar bekerja layaknya neraca dua lengan. Nilai $x$ adalah solusi yang membuat timbangan berada dalam keadaan seimbang (equilibrium)." />
               </p>
               <button
                 onClick={() => handleSpeakExplanation(`Persamaan aljabar bekerja seperti neraca timbangan dua lengan. Kedua ruas harus memiliki beban yang sama persis agar seimbang.`)}
                 className="p-1.5 rounded-lg bg-ivory text-forest hover:bg-sage/20 transition-colors ml-3 shrink-0"
+                title="Dengarkan Penjelasan"
               >
                 <Volume2 className="w-4 h-4" />
               </button>
@@ -600,7 +601,7 @@ export default function AlgebraLab() {
 
               <div className="space-y-2 pt-2 border-t border-border-clean">
                 <div className="flex justify-between text-xs text-secondary-text">
-                  <span className="font-medium text-charcoal">Jumlah Buku ($x$):</span>
+                  <span className="font-medium text-charcoal"><MathText text="Jumlah Buku ($x$):" /></span>
                   <span className="font-bold font-mono text-forest text-sm">{bookCount} Buku</span>
                 </div>
                 <input
@@ -618,7 +619,7 @@ export default function AlgebraLab() {
           <div className="p-4 rounded-xl bg-pure-white border border-border-clean space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <p className="text-charcoal leading-relaxed font-medium">
-                Model matematika $B = 5000x + 3000$ menghubungkan harga satuan buku (variabel $x$) dengan biaya tetap kotak pensil secara kontekstual.
+                <MathText text="Model matematika $B = 5000x + 3000$ menghubungkan harga satuan buku (variabel $x$) dengan biaya tetap kotak pensil secara kontekstual." />
               </p>
               <button
                 onClick={() => handleSpeakExplanation(`Model matematika membantu menghitung total belanja dengan rumus 5000 dikali jumlah buku ditambah biaya kotak pensil 3000 rupiah.`)}
