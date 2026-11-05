@@ -105,9 +105,9 @@ export default function AlgebraLab() {
   ];
 
   return (
-    <div className="bg-pure-white rounded-2xl p-5 sm:p-7 border border-border-clean shadow-card-clean space-y-6">
+    <div className="bg-pure-white rounded-2xl p-5 sm:p-7 border border-[#28332C]/10 shadow-card-clean space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-clean pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/10 pb-4">
         <div>
           <h3 className="text-xl font-bold text-charcoal">
             Laboratorium Aljabar Interaktif
@@ -119,10 +119,10 @@ export default function AlgebraLab() {
 
         <button
           onClick={handleMuteToggle}
-          className={`p-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors border self-start sm:self-auto ${
+          className={`btn-interactive p-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors border self-start sm:self-auto ${
             isMuted
               ? 'bg-rose-50 text-rose-700 border-rose-200'
-              : 'bg-ivory text-charcoal hover:bg-sage/20 border-border-clean'
+              : 'bg-ivory text-charcoal hover:bg-sage/20 border-border-clean hover:border-forest/40'
           }`}
           title={isMuted ? 'Suara Dinonaktifkan' : 'Suara Aktif'}
         >
@@ -144,10 +144,10 @@ export default function AlgebraLab() {
                 voiceService.stop();
                 setIsSpeaking(false);
               }}
-              className={`p-3 rounded-xl text-left transition-all border flex flex-col justify-between space-y-1.5 ${
+              className={`btn-interactive p-3 rounded-xl text-left transition-all border flex flex-col justify-between space-y-1.5 ${
                 isActive
                   ? 'bg-forest text-pure-white border-forest shadow-subtle'
-                  : 'bg-pure-white text-secondary-text hover:text-charcoal hover:bg-ivory border-border-clean'
+                  : 'bg-pure-white text-secondary-text hover:text-charcoal hover:bg-ivory border-border-clean hover:border-forest/40'
               }`}
             >
               <div className="flex items-center justify-between">

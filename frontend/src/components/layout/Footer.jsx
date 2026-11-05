@@ -4,7 +4,7 @@ import { Sparkles, GraduationCap, Microscope } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-pure-white border-t border-border-clean pt-12 pb-8 mt-16">
+    <footer className="bg-pure-white border-t border-[#28332C]/10 pt-12 pb-8 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand Col */}
@@ -49,7 +49,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-6 border-t border-border-clean flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-secondary-text">
+        <div className="pt-6 border-t border-[#28332C]/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-secondary-text">
           <div>
             © {new Date().getFullYear()} NUMORA Space. Tagline: <span className="text-forest font-semibold">Algebra, Beyond Formulas.</span>
           </div>

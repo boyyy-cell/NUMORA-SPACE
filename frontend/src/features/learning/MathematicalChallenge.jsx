@@ -84,8 +84,8 @@ export default function MathematicalChallenge() {
   };
 
   return (
-    <div className="bg-pure-white rounded-2xl p-6 border border-border-clean shadow-card-clean space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-clean pb-4">
+    <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/10 shadow-card-clean space-y-5 animate-fade-page">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/10 pb-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-forest flex items-center gap-1">
@@ -103,7 +103,7 @@ export default function MathematicalChallenge() {
 
         <button
           onClick={() => handleVoice(`${currentChallenge.context} ${currentChallenge.question}`)}
-          className="p-2 rounded-xl bg-ivory hover:bg-sage/20 text-forest border border-border-clean flex items-center gap-1.5 text-xs self-start sm:self-auto transition-colors"
+          className="btn-interactive p-2 rounded-xl bg-ivory hover:bg-sage/20 text-forest border border-[#28332C]/10 flex items-center gap-1.5 text-xs self-start sm:self-auto transition-colors"
         >
           <Volume2 className="w-4 h-4" />
           <span>Bacakan Soal</span>
@@ -111,9 +111,9 @@ export default function MathematicalChallenge() {
       </div>
 
       {/* Context Scenario */}
-      <div className="p-4 rounded-xl bg-ivory border border-border-clean space-y-3 text-xs leading-relaxed">
+      <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/10 space-y-3 text-xs leading-relaxed">
         <p className="text-secondary-text">{currentChallenge.context}</p>
-        <div className="p-2.5 rounded-lg bg-pure-white border border-border-clean text-center font-mono text-forest font-bold text-sm shadow-subtle">
+        <div className="p-2.5 rounded-lg bg-pure-white border border-[#28332C]/10 text-center font-mono text-forest font-bold text-sm shadow-subtle">
           <MathView math={currentChallenge.expression} />
         </div>
         <p className="font-semibold text-charcoal">{currentChallenge.question}</p>
@@ -127,12 +127,12 @@ export default function MathematicalChallenge() {
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
             placeholder="Tuliskan jawaban analisismu..."
-            className="flex-1 bg-ivory/60 border border-border-clean rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest transition-all"
+            className="input-interactive flex-1 bg-ivory/60 border border-[#28332C]/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 transition-all"
           />
           <button
             type="submit"
             disabled={isLoading || !userAnswer.trim()}
-            className="px-5 py-2.5 rounded-xl font-semibold text-xs bg-forest text-pure-white hover:bg-forest-600 disabled:opacity-40 transition-colors shadow-subtle"
+            className="btn-interactive px-5 py-2.5 rounded-xl font-semibold text-xs bg-forest text-pure-white hover:bg-forest-600 disabled:opacity-40 transition-colors shadow-subtle"
           >
             {isLoading ? 'Menganalisis...' : 'Periksa Jawaban'}
           </button>
@@ -152,7 +152,7 @@ export default function MathematicalChallenge() {
           </div>
           <p className="text-charcoal leading-relaxed">{feedback.feedback}</p>
           {feedback.recommended_hint && (
-            <div className="p-2.5 rounded-lg bg-pure-white border border-border-clean text-[11px] text-forest font-medium">
+            <div className="p-2.5 rounded-lg bg-pure-white border border-[#28332C]/10 text-[11px] text-forest font-medium">
               💡 {feedback.recommended_hint}
             </div>
           )}
@@ -161,7 +161,7 @@ export default function MathematicalChallenge() {
             <div className="pt-1">
               <button
                 onClick={handleNext}
-                className="px-4 py-1.5 rounded-lg bg-forest text-pure-white font-semibold text-xs flex items-center gap-1.5 hover:bg-forest-600 transition-colors"
+                className="btn-interactive px-4 py-1.5 rounded-lg bg-forest text-pure-white font-semibold text-xs flex items-center gap-1.5 hover:bg-forest-600 transition-colors"
               >
                 <span>Lanjut ke Tantangan Berikutnya</span>
                 <ArrowRight className="w-3.5 h-3.5" />

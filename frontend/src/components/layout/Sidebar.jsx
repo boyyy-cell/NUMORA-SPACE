@@ -56,7 +56,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-pure-white border-r border-border-clean flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-pure-white border-r border-[#28332C]/10 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -67,7 +67,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
           </div>
 
           {/* Current Role Indicator */}
-          <div className="p-2.5 rounded-xl bg-ivory border border-border-clean flex items-center justify-between">
+          <div className="p-2.5 rounded-xl bg-ivory border border-[#28332C]/10 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {role === 'researcher' ? (
                 <Microscope className="w-4 h-4 text-forest" />
@@ -86,7 +86,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
 
             <Link
               to={role === 'researcher' ? '/student-dashboard' : '/researcher-dashboard'}
-              className="text-[11px] text-forest font-semibold hover:underline"
+              className="text-[11px] text-forest font-semibold hover:underline btn-interactive"
               title="Ganti ke peran lain"
             >
               Ganti
@@ -108,7 +108,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
                     setActiveTab?.(item.id);
                     setIsOpen?.(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all ${
+                  className={`btn-interactive w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all ${
                     isActive
                       ? 'bg-forest text-pure-white font-semibold shadow-subtle'
                       : 'text-secondary-text hover:text-charcoal hover:bg-ivory font-medium'
@@ -132,13 +132,13 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
         </div>
 
         {/* Sidebar Footer: Backend status & links */}
-        <div className="p-4 border-t border-border-clean space-y-3 bg-ivory/50">
+        <div className="p-4 border-t border-[#28332C]/10 space-y-3 bg-ivory/50">
           <BackendStatusBadge status={status} checkNow={checkNow} baseUrl={baseUrl} error={error} />
 
           <div className="flex items-center justify-between pt-1 text-xs">
             <Link
               to="/"
-              className="flex items-center gap-1.5 text-secondary-text hover:text-charcoal transition-colors font-medium"
+              className="btn-interactive flex items-center gap-1.5 text-secondary-text hover:text-charcoal transition-colors font-medium"
             >
               <Home className="w-3.5 h-3.5" />
               <span>Beranda</span>
@@ -146,7 +146,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
 
             <Link
               to="/login"
-              className="flex items-center gap-1.5 text-rose-700 hover:text-rose-800 transition-colors font-medium"
+              className="btn-interactive flex items-center gap-1.5 text-rose-700 hover:text-rose-800 transition-colors font-medium"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Keluar</span>

@@ -76,3 +76,108 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #A7BCA8;
 }
+
+/* Micro-interaction & Visual Divider Utilities */
+.divider-subtle {
+  border-color: rgba(40, 51, 44, 0.08);
+}
+
+.divider-subtle-t {
+  border-top: 1px solid rgba(40, 51, 44, 0.08);
+}
+
+.divider-subtle-b {
+  border-bottom: 1px solid rgba(40, 51, 44, 0.08);
+}
+
+.divider-subtle-r {
+  border-right: 1px solid rgba(40, 51, 44, 0.08);
+}
+
+.divider-subtle-l {
+  border-left: 1px solid rgba(40, 51, 44, 0.08);
+}
+
+/* Interactive Button Behaviors */
+.btn-interactive {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.btn-interactive:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-interactive:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-interactive:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Interactive Input Fields */
+.input-interactive {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.input-interactive:focus {
+  outline: none;
+  border-color: #355B45 !important;
+  box-shadow: 0 0 0 3px rgba(53, 91, 69, 0.12) !important;
+}
+
+/* Interactive Tabs & Items */
+.tab-interactive {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tab-interactive:hover:not(:disabled) {
+  color: #355B45;
+}
+
+.tab-interactive:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Lightweight Page & Bubble Transitions */
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-page {
+  animation: pageFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes msgFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-msg-enter {
+  animation: msgFadeIn 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Accessibility: Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

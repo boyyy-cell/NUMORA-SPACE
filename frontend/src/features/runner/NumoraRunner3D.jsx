@@ -1215,7 +1215,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
 
             <button
               onClick={handleToggleMute}
-              className="p-1.5 text-[#707A70] hover:text-[#28332C] hover:bg-[#F6F5EF] rounded-lg transition"
+              className="btn-interactive p-1.5 text-[#707A70] hover:text-[#28332C] hover:bg-[#F6F5EF] rounded-lg transition"
               title={isMuted ? 'Nyalakan Suara' : 'Matikan Suara'}
             >
               {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -1224,7 +1224,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
             {gameState === 'playing' ? (
               <button
                 onClick={() => setGameState('paused')}
-                className="p-1.5 text-[#707A70] hover:text-[#28332C] hover:bg-[#F6F5EF] rounded-lg transition"
+                className="btn-interactive p-1.5 text-[#707A70] hover:text-[#28332C] hover:bg-[#F6F5EF] rounded-lg transition"
                 title="Jeda (Pause)"
               >
                 <Pause className="w-4 h-4" />
@@ -1232,7 +1232,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
             ) : gameState === 'paused' ? (
               <button
                 onClick={() => setGameState('playing')}
-                className="p-1.5 text-[#355B45] hover:bg-[#A7BCA8]/20 rounded-lg transition font-semibold"
+                className="btn-interactive p-1.5 text-[#355B45] hover:bg-[#A7BCA8]/20 rounded-lg transition font-semibold"
                 title="Lanjutkan"
               >
                 <Play className="w-4 h-4" />
@@ -1249,14 +1249,14 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
             <button
               onTouchStart={(e) => { e.preventDefault(); moveLeft(); }}
               onClick={moveLeft}
-              className="w-14 h-14 rounded-2xl bg-white/80 backdrop-blur-md border border-[#E1E5DC] text-[#28332C] flex items-center justify-center active:bg-[#355B45] active:text-white shadow-md transition"
+              className="btn-interactive w-14 h-14 rounded-2xl bg-white/80 backdrop-blur-md border border-[#E1E5DC] text-[#28332C] flex items-center justify-center active:bg-[#355B45] active:text-white shadow-md transition"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
             <button
               onTouchStart={(e) => { e.preventDefault(); moveRight(); }}
               onClick={moveRight}
-              className="w-14 h-14 rounded-2xl bg-white/80 backdrop-blur-md border border-[#E1E5DC] text-[#28332C] flex items-center justify-center active:bg-[#355B45] active:text-white shadow-md transition"
+              className="btn-interactive w-14 h-14 rounded-2xl bg-white/80 backdrop-blur-md border border-[#E1E5DC] text-[#28332C] flex items-center justify-center active:bg-[#355B45] active:text-white shadow-md transition"
             >
               <ArrowRight className="w-6 h-6" />
             </button>
@@ -1266,14 +1266,14 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
             <button
               onTouchStart={(e) => { e.preventDefault(); triggerSlide(); }}
               onClick={triggerSlide}
-              className="w-14 h-14 rounded-2xl bg-white/80 backdrop-blur-md border border-[#E1E5DC] text-[#28332C] flex items-center justify-center active:bg-[#D58B68] active:text-white shadow-md transition"
+              className="btn-interactive w-14 h-14 rounded-2xl bg-white/80 backdrop-blur-md border border-[#E1E5DC] text-[#28332C] flex items-center justify-center active:bg-[#D58B68] active:text-white shadow-md transition"
             >
               <ArrowDown className="w-6 h-6" />
             </button>
             <button
               onTouchStart={(e) => { e.preventDefault(); triggerJump(); }}
               onClick={triggerJump}
-              className="w-14 h-14 rounded-2xl bg-[#355B45] text-white flex items-center justify-center active:scale-95 shadow-md transition"
+              className="btn-interactive w-14 h-14 rounded-2xl bg-[#355B45] text-white flex items-center justify-center shadow-md transition"
             >
               <ArrowUp className="w-6 h-6" />
             </button>
@@ -1452,7 +1452,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
                   <button
                     key={lvl.id}
                     onClick={() => setSelectedLevel(lvl.id)}
-                    className={`p-2.5 rounded-xl border text-left transition ${
+                    className={`btn-interactive p-2.5 rounded-xl border text-left transition ${
                       selectedLevel === lvl.id
                         ? 'border-[#355B45] bg-[#355B45]/5 text-[#355B45] font-bold shadow-xs'
                         : 'border-[#E1E5DC] text-[#707A70] hover:bg-[#F6F5EF]'
@@ -1477,7 +1477,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
             {/* Tombol Play */}
             <button
               onClick={() => handleStartGame(selectedLevel)}
-              className="w-full py-4 rounded-2xl bg-[#355B45] hover:bg-[#28332C] text-white font-extrabold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 transform active:scale-98"
+              className="btn-interactive w-full py-4 rounded-2xl bg-[#355B45] hover:bg-[#28332C] text-white font-extrabold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 transform active:scale-98"
             >
               <Play className="w-5 h-5 fill-white" />
               <span>Mulai Berlari</span>

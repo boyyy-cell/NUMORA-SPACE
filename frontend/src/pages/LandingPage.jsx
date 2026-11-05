@@ -62,7 +62,7 @@ export default function LandingPage() {
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
                 <Link
                   to="/student-dashboard"
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold text-sm bg-forest text-pure-white hover:bg-forest-600 transition-colors flex items-center justify-center gap-2 shadow-subtle"
+                  className="btn-interactive w-full sm:w-auto px-6 py-3 rounded-xl font-semibold text-sm bg-forest text-pure-white hover:bg-forest-600 transition-colors flex items-center justify-center gap-2 shadow-subtle"
                 >
                   <span>Mulai Belajar</span>
                   <ArrowRight className="w-4 h-4" />
@@ -70,7 +70,7 @@ export default function LandingPage() {
 
                 <Link
                   to="/numora-run"
-                  className="w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-sm bg-[#D58B68] text-pure-white hover:bg-[#D58B68]/90 transition-colors flex items-center justify-center gap-2 shadow-subtle"
+                  className="btn-interactive w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-sm bg-[#D58B68] text-pure-white hover:bg-[#D58B68]/90 transition-colors flex items-center justify-center gap-2 shadow-subtle"
                 >
                   <Gamepad2 className="w-4 h-4" />
                   <span>Main NUMORA RUN</span>
@@ -78,7 +78,7 @@ export default function LandingPage() {
 
                 <Link
                   to="/login"
-                  className="w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-sm bg-pure-white hover:bg-ivory text-charcoal border border-border-clean transition-colors flex items-center justify-center gap-2 shadow-subtle"
+                  className="btn-interactive w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-sm bg-pure-white hover:bg-ivory text-charcoal border border-[#28332C]/10 hover:border-forest/40 transition-colors flex items-center justify-center gap-2 shadow-subtle"
                 >
                   <LogIn className="w-4 h-4 text-secondary-text" />
                   <span>Masuk</span>
@@ -86,7 +86,7 @@ export default function LandingPage() {
 
                 <button
                   onClick={handleHeroVoice}
-                  className="w-full sm:w-auto px-4 py-3 rounded-xl font-medium text-xs text-secondary-text hover:text-charcoal bg-transparent hover:bg-pure-white transition-colors flex items-center justify-center gap-1.5"
+                  className="btn-interactive w-full sm:w-auto px-4 py-3 rounded-xl font-medium text-xs text-secondary-text hover:text-charcoal bg-transparent hover:bg-pure-white transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Volume2 className={`w-4 h-4 ${isPlayingHeroVoice ? 'text-forest animate-pulse' : 'text-secondary-text'}`} />
                   <span>{isPlayingHeroVoice ? 'Hentikan Audio' : 'Dengar Pengantar'}</span>
@@ -141,7 +141,7 @@ export default function LandingPage() {
         </section>
 
         {/* SECTION: INTERACTIVE ALGEBRA LAB SHOWCASE */}
-        <section id="preview-modules" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-border-clean">
+        <section id="preview-modules" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/10">
           <div className="text-center max-w-xl mx-auto space-y-1.5 mb-8">
             <span className="text-xs font-semibold uppercase tracking-wider text-forest">
               Laboratorium Matematika
@@ -158,7 +158,7 @@ export default function LandingPage() {
         </section>
 
         {/* SECTION: NORA AI TUTOR PREVIEW */}
-        <section id="preview-nora" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-border-clean">
+        <section id="preview-nora" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-5 space-y-4">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sage/20 text-xs font-semibold text-forest">
@@ -198,8 +198,8 @@ export default function LandingPage() {
         </section>
 
         {/* BOTTOM CALL TO ACTION */}
-        <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="rounded-2xl p-8 bg-pure-white border border-border-clean text-center space-y-4 shadow-card-clean max-w-2xl mx-auto">
+        <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/10">
+          <div className="rounded-2xl p-8 bg-pure-white border border-[#28332C]/10 text-center space-y-4 shadow-card-clean max-w-2xl mx-auto">
             <h2 className="text-xl sm:text-2xl font-bold text-charcoal">
               Siap Bereksplorasi di NUMORA Space?
             </h2>
@@ -210,13 +210,13 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
               <Link
                 to="/student-dashboard"
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm bg-forest text-pure-white hover:bg-forest-600 transition-colors shadow-subtle"
+                className="btn-interactive w-full sm:w-auto px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm bg-forest text-pure-white hover:bg-forest-600 transition-colors shadow-subtle"
               >
                 Mulai Belajar (Ruang Siswa)
               </Link>
               <Link
                 to="/login"
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-xs sm:text-sm bg-pure-white text-charcoal hover:bg-ivory border border-border-clean transition-colors"
+                className="btn-interactive w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-xs sm:text-sm bg-pure-white text-charcoal hover:bg-ivory border border-border-clean hover:border-forest/40 transition-colors"
               >
                 Halaman Masuk
               </Link>

@@ -56,14 +56,14 @@ export default function LoginPage() {
       <div className="absolute top-6 left-6">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-xs font-medium text-secondary-text hover:text-charcoal transition-colors bg-pure-white px-3 py-1.5 rounded-xl border border-border-clean shadow-subtle"
+          className="btn-interactive inline-flex items-center gap-2 text-xs font-medium text-secondary-text hover:text-charcoal transition-colors bg-pure-white px-3 py-1.5 rounded-xl border border-[#28332C]/10 shadow-subtle"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Kembali ke Beranda</span>
         </Link>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md space-y-5">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md space-y-5 animate-fade-page">
         <div className="text-center space-y-1.5">
           <div className="flex justify-center">
             <BrandLogo size="lg" linkTo={null} />
@@ -77,7 +77,7 @@ export default function LoginPage() {
         </div>
 
         {/* Notice Demo Mode */}
-        <div className="p-4 rounded-2xl bg-pure-white border border-border-clean text-xs space-y-2 shadow-subtle">
+        <div className="p-4 rounded-2xl bg-pure-white border border-[#28332C]/10 text-xs space-y-2 shadow-subtle">
           <div className="flex items-center gap-2 text-forest font-semibold">
             <Sparkles className="w-4 h-4 text-forest" />
             <span>Akses Demonstrasi Cepat</span>
@@ -89,7 +89,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleDemoFill('student')}
-              className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-ivory hover:bg-sage/20 border border-border-clean text-charcoal text-[11px] font-medium transition-colors"
+              className="btn-interactive flex items-center justify-center gap-1.5 p-2 rounded-xl bg-ivory hover:bg-sage/20 border border-[#28332C]/10 text-charcoal text-[11px] font-medium transition-colors"
             >
               <GraduationCap className="w-3.5 h-3.5 text-forest" />
               <span>Demo Siswa</span>
@@ -97,7 +97,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleDemoFill('researcher')}
-              className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-ivory hover:bg-sage/20 border border-border-clean text-charcoal text-[11px] font-medium transition-colors"
+              className="btn-interactive flex items-center justify-center gap-1.5 p-2 rounded-xl bg-ivory hover:bg-sage/20 border border-[#28332C]/10 text-charcoal text-[11px] font-medium transition-colors"
             >
               <Microscope className="w-3.5 h-3.5 text-terracotta" />
               <span>Demo Peneliti</span>
@@ -106,7 +106,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card Form */}
-        <div className="bg-pure-white rounded-2xl p-6 sm:p-7 border border-border-clean shadow-card-clean">
+        <div className="bg-pure-white rounded-2xl p-6 sm:p-7 border border-[#28332C]/10 shadow-card-clean">
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -128,7 +128,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="contoh: siswa.demo@numora.space"
-                  className="w-full pl-10 pr-3 py-2.5 bg-ivory/60 border border-border-clean rounded-xl text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest transition-all"
+                  className="input-interactive w-full pl-10 pr-3 py-2.5 bg-ivory/60 border border-[#28332C]/10 rounded-xl text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 transition-all"
                 />
               </div>
             </div>
@@ -151,12 +151,12 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-ivory/60 border border-border-clean rounded-xl text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest transition-all"
+                  className="input-interactive w-full pl-10 pr-10 py-2.5 bg-ivory/60 border border-[#28332C]/10 rounded-xl text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-secondary-text hover:text-charcoal"
+                  className="btn-interactive absolute inset-y-0 right-0 pr-3 flex items-center text-secondary-text hover:text-charcoal"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -169,7 +169,7 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-border-clean text-forest focus:ring-0"
+                  className="rounded border-[#28332C]/20 text-forest focus:ring-0"
                 />
                 <span>Ingat Sesi</span>
               </label>
@@ -182,7 +182,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 rounded-xl font-semibold text-xs sm:text-sm bg-forest text-pure-white hover:bg-forest-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2 shadow-subtle"
+              className="btn-interactive w-full py-2.5 rounded-xl font-semibold text-xs sm:text-sm bg-forest text-pure-white hover:bg-forest-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2 shadow-subtle"
             >
               {isLoading ? (
                 <>
@@ -196,14 +196,14 @@ export default function LoginPage() {
           </form>
 
           {/* Quick Direct Links */}
-          <div className="mt-5 pt-4 border-t border-border-clean flex flex-col gap-1.5 text-center">
+          <div className="mt-5 pt-4 border-t border-[#28332C]/10 flex flex-col gap-1.5 text-center">
             <span className="text-[11px] text-secondary-text">Atau langsung ke:</span>
             <div className="flex items-center justify-center gap-3">
-              <Link to="/student-dashboard" className="text-xs text-forest font-semibold hover:underline">
+              <Link to="/student-dashboard" className="btn-interactive text-xs text-forest font-semibold hover:underline">
                 → Ruang Siswa
               </Link>
-              <span className="text-border-clean">|</span>
-              <Link to="/researcher-dashboard" className="text-xs text-terracotta font-semibold hover:underline">
+              <span className="text-secondary-text/40">|</span>
+              <Link to="/researcher-dashboard" className="btn-interactive text-xs text-terracotta font-semibold hover:underline">
                 → Ruang Peneliti
               </Link>
             </div>
