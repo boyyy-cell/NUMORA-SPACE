@@ -123,3 +123,4 @@ Pengujian otomatis dijalankan dengan 12.477 asersi matematika dan simulasi seede
 - **Backend API Tests**: 9/9 unit tests lulus 100% (`test_api.py`).
 - **NORA Open AI Multi-Turn Tests**: 7/7 context tests lulus 100% (`test_nora_open_ai.py`).
 - **Zero Regression**: Timer, skor, nyawa, koin, rintangan, animasi portal, dan umpan balik Socratic NORA tetap bekerja normal.
+
