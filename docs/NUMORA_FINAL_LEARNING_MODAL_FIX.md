@@ -39,3 +39,4 @@ Pada tampilan sebelumnya, panel modal materi masih terasa transparan atau tembus
 3. **Backend Test Suite**:
    - `test_api.py`: 9/9 unit tests PASSED.
    - `test_nora_open_ai.py`: 7/7 multi-turn context tests PASSED.
+

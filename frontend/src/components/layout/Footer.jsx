@@ -1,7 +1,7 @@
 import React from 'react';
 import BrandLogo from '../common/BrandLogo';
 import { MathText } from '../common/MathView';
-import { Sparkles, GraduationCap, Microscope } from 'lucide-react';
+import { Sparkles, GraduationCap, Microscope, Instagram, Github } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -49,13 +49,45 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="pt-6 border-t border-[#28332C]/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-secondary-text">
-          <div>
-            © {new Date().getFullYear()} NUMORA Space. Tagline: <span className="text-forest font-semibold">Algebra, Beyond Formulas.</span>
+        {/* Bottom bar with Creator Identity */}
+        <div className="pt-6 border-t border-[#28332C]/20 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-secondary-text">
+          <div className="space-y-2 text-center md:text-left">
+            <div>
+              © {new Date().getFullYear()} NUMORA Space. Tagline: <span className="text-forest font-semibold">Algebra, Beyond Formulas.</span>
+            </div>
+
+            {/* Identitas Pembuat */}
+            <div className="flex items-center justify-center md:justify-start gap-2 text-xs flex-wrap">
+              <span className="text-charcoal font-semibold">Dikembangkan oleh Farid Syahputra</span>
+              <span className="text-secondary-text/40 hidden sm:inline">•</span>
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://www.instagram.com/frdsyhptraa/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-interactive inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-ivory hover:bg-sage/20 border border-[#28332C]/14 text-forest font-medium transition-colors"
+                  title="Instagram Farid Syahputra"
+                >
+                  <Instagram className="w-3.5 h-3.5" />
+                  <span>Instagram</span>
+                </a>
+                <span className="text-secondary-text/40">·</span>
+                <a
+                  href="https://github.com/boyyy-cell"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-interactive inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-ivory hover:bg-sage/20 border border-[#28332C]/14 text-forest font-medium transition-colors"
+                  title="GitHub Farid Syahputra"
+                >
+                  <Github className="w-3.5 h-3.5" />
+                  <span>GitHub</span>
+                </a>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="px-2 py-0.5 rounded bg-ivory border border-[#28332C]/20 text-charcoal">
+
+          <div className="flex items-center gap-2 text-[11px] shrink-0">
+            <span className="px-2.5 py-1 rounded-full bg-ivory border border-[#28332C]/20 text-charcoal font-medium">
               Sage & Ivory
             </span>
             <span>Platform Pembelajaran Matematika SMP Kelas VII</span>

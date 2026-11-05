@@ -165,7 +165,9 @@ export default function AlgebraModulePreview() {
           </div>
 
           <div className="pt-2 border-t border-border-clean flex items-center gap-3">
-            <span className="text-xs text-secondary-text whitespace-nowrap">Simulasi Nilai <MathText text="$x$:" /></span>
+            <span className="text-xs text-secondary-text whitespace-nowrap">
+              <MathText text="Simulasi Nilai $x$:" />
+            </span>
             <input
               type="range"
               min="1"

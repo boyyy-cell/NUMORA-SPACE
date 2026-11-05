@@ -4,7 +4,7 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import NoraChatPreview from '../features/nora/NoraChatPreview';
 import AlgebraLab from '../features/learning/AlgebraLab';
-import MathView from '../components/common/MathView';
+import MathView, { MathText } from '../components/common/MathView';
 import { voiceService } from '../services/voiceService';
 import {
   Sparkles,
@@ -127,7 +127,7 @@ export default function LandingPage() {
                   <div className="space-y-1">
                     <p className="text-base font-bold text-charcoal">Variabel sebagai Wadah</p>
                     <p className="text-xs text-secondary-text max-w-xs mx-auto leading-relaxed">
-                      Lambang $x$ bukan sekadar huruf asing, melainkan wadah yang menampung bilangan numerik.
+                      <MathText text="Lambang $x$ bukan sekadar huruf asing, melainkan wadah yang menampung bilangan numerik." />
                     </p>
                   </div>
                 </div>

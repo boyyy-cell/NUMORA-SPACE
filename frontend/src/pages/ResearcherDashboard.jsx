@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
+import Footer from '../components/layout/Footer';
 import { apiService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -536,6 +537,9 @@ export default function ResearcherDashboard() {
             </div>
           )}
         </main>
+
+        {/* Global Consistent Footer */}
+        <Footer />
       </div>
     </div>
   );

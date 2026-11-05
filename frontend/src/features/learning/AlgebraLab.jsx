@@ -322,7 +322,7 @@ export default function AlgebraLab() {
           <div className="p-4 rounded-xl bg-pure-white border border-border-clean space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <p className="text-charcoal leading-relaxed font-medium">
-                Koefisien adalah bilangan yang mengalikan variabel untuk melipatgandakan nilai wadah. Jika koefisien bernilai negatif seperti $-3x$, tanda negatif melekat pada angka pengalinya.
+                <MathText text="Koefisien adalah bilangan yang mengalikan variabel untuk melipatgandakan nilai wadah. Jika koefisien bernilai negatif seperti $-3x$, tanda negatif melekat pada angka pengalinya." />
               </p>
               <button
                 onClick={() => handleSpeakExplanation(`Koefisien adalah angka yang melipatgandakan variabel x. Pada bentuk ${coeffA} x, koefisiennya adalah ${coeffA}.`)}
@@ -440,10 +440,10 @@ export default function AlgebraLab() {
                     <span className="text-[10px] font-bold font-mono text-forest mr-2">
                       LANGKAH {step.step_number}:
                     </span>
-                    <span className="text-charcoal font-medium">{step.description}</span>
+                    <span className="text-charcoal font-medium"><MathText text={step.description} /></span>
                   </div>
                   <span className="font-mono text-forest font-bold bg-ivory px-2.5 py-1 rounded-lg border border-border-clean">
-                    {step.expression_state}
+                    <MathText text={step.expression_state} />
                   </span>
                 </div>
               ))}

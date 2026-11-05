@@ -18,7 +18,9 @@ import {
   Users,
   Activity,
   FileText,
-  Download
+  Download,
+  Instagram,
+  Github
 } from 'lucide-react';
 
 export default function Sidebar({ role = 'student', activeTab = 'overview', setActiveTab, isOpen, setIsOpen }) {
@@ -161,6 +163,36 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
             </button>
+          </div>
+
+          {/* Identitas Pembuat */}
+          <div className="pt-2 border-t border-[#28332C]/10 text-[10px] text-secondary-text text-center space-y-1">
+            <div className="leading-tight">
+              Dikembangkan oleh <strong className="text-charcoal font-semibold">Farid Syahputra</strong>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <a
+                href="https://www.instagram.com/frdsyhptraa/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-forest flex items-center gap-1 transition-colors"
+                title="Instagram Farid Syahputra"
+              >
+                <Instagram className="w-3 h-3 text-forest" />
+                <span>Instagram</span>
+              </a>
+              <span className="text-secondary-text/40">·</span>
+              <a
+                href="https://github.com/boyyy-cell"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-forest flex items-center gap-1 transition-colors"
+                title="GitHub Farid Syahputra"
+              >
+                <Github className="w-3 h-3 text-forest" />
+                <span>GitHub</span>
+              </a>
+            </div>
           </div>
         </div>
       </aside>

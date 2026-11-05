@@ -370,7 +370,7 @@ export default function ModuleLearningModal({
               {/* Slider Pengubah Nilai */}
               <div className="flex items-center gap-3 pt-2">
                 <span className="text-xs text-secondary-text whitespace-nowrap font-medium">
-                  Uji Nilai <MathText text="$x$:" />
+                  <MathText text="Uji Nilai $x$:" />
                 </span>
                 <input
                   type="range"

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
+import Footer from '../components/layout/Footer';
 import NoraChatPreview from '../features/nora/NoraChatPreview';
 import AlgebraLab from '../features/learning/AlgebraLab';
 import MathematicalChallenge from '../features/learning/MathematicalChallenge';
@@ -383,6 +384,9 @@ export default function StudentDashboard() {
             </div>
           )}
         </main>
+
+        {/* Global Consistent Footer */}
+        <Footer />
       </div>
 
       {/* DETAIL MODAL MATERI — DEDICATED LEARNING VIEW */}
