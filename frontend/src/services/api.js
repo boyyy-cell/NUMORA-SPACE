@@ -1,10 +1,10 @@
 /**
- * NUMORA Space API Client Service
+ * NUMORA Space API Client Service (v1.5)
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 4500) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -21,14 +21,15 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 4500) {
     clearTimeout(id);
 
     if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+      const errText = await response.text();
+      throw new Error(`HTTP Error: ${response.status} - ${errText}`);
     }
 
     return await response.json();
   } catch (error) {
     clearTimeout(id);
     if (error.name === 'AbortError') {
-      throw new Error('Permintaan waktu habis (Connection Timeout)');
+      throw new Error('Koneksi waktu habis (Timeout)');
     }
     throw error;
   }
@@ -49,6 +50,42 @@ export const apiService = {
 
   async getRoot() {
     return await fetchWithTimeout(`${API_BASE_URL}/`);
+  },
+
+  // Math Evaluation Engine
+  async evaluateExpression(expression, variables = { x: 4 }) {
+    return await fetchWithTimeout(`${API_BASE_URL}/api/v1/math/evaluate`, {
+      method: 'POST',
+      body: JSON.stringify({ expression, variables })
+    });
+  },
+
+  async diagnoseMisconception(question_type, expression, student_answer) {
+    return await fetchWithTimeout(`${API_BASE_URL}/api/v1/math/diagnose-misconception`, {
+      method: 'POST',
+      body: JSON.stringify({ question_type, expression, student_answer })
+    });
+  },
+
+  // Research Management
+  async getResearchSubjects() {
+    return await fetchWithTimeout(`${API_BASE_URL}/api/v1/research/subjects`);
+  },
+
+  async getResearchSessions(subject_id = null) {
+    const query = subject_id ? `?subject_id=${subject_id}` : '';
+    return await fetchWithTimeout(`${API_BASE_URL}/api/v1/research/sessions${query}`);
+  },
+
+  async getCognitiveLoadStatus() {
+    return await fetchWithTimeout(`${API_BASE_URL}/api/v1/research/cognitive-load-status`);
+  },
+
+  // NORA Socratic AI
+  async noraChat(message, mode = 'explain', hint_tier = 1) {
+    return await fetchWithTimeout(`${API_BASE_URL}/api/v1/nora/chat`, {
+      method: 'POST',
+      body: JSON.stringify({ message, mode, hint_tier })
+    });
   }
 };
-

@@ -12,9 +12,11 @@ import {
   GraduationCap,
   Home,
   LogOut,
-  Sparkles,
-  ChevronRight,
-  UserCheck
+  Sliders,
+  Award,
+  UserCheck,
+  Brain,
+  FileCheck2
 } from 'lucide-react';
 
 export default function Sidebar({ role = 'student', activeTab = 'overview', setActiveTab, isOpen, setIsOpen }) {
@@ -22,17 +24,19 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
   const { status, checkNow, baseUrl, error } = useBackendStatus();
 
   const studentLinks = [
-    { id: 'overview', label: 'Learning Overview', icon: LayoutDashboard },
+    { id: 'overview', label: 'Ringkasan Belajar', icon: LayoutDashboard },
     { id: 'modules', label: 'Modul Aljabar', icon: BookOpen },
-    { id: 'nora', label: 'NORA AI Tutor', icon: Bot, badge: 'DEMO' },
+    { id: 'lab', label: 'Algebra Lab & 3D', icon: Sliders, badge: 'NEW' },
+    { id: 'nora', label: 'NORA Socratic AI', icon: Bot, badge: 'SOCRATIC' },
+    { id: 'challenge', label: 'Tantangan PISA', icon: Award, badge: 'LITERASI' },
     { id: 'progress', label: 'Kemajuan Belajar', icon: BarChart3 },
   ];
 
   const researcherLinks = [
     { id: 'overview', label: 'Ringkasan Riset', icon: LayoutDashboard },
-    { id: 'subjects', label: 'Subjek & Sesi Demo', icon: UserCheck },
-    { id: 'cognitive', label: 'Beban Kognitif', icon: Microscope, badge: 'DEMO' },
-    { id: 'analytics', label: 'Analisis Pembelajaran', icon: BarChart3 },
+    { id: 'subjects', label: 'Subjek S-001 & S-002', icon: UserCheck, badge: '2 SUBJEK' },
+    { id: 'cognitive', label: 'Beban Kognitif (Leppink)', icon: Brain, badge: 'LEPPINK' },
+    { id: 'assessment', label: 'Pusat Asesmen', icon: FileCheck2 },
   ];
 
   const links = role === 'researcher' ? researcherLinks : studentLinks;
@@ -71,7 +75,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
                   {role === 'researcher' ? 'Portal Peneliti' : 'Portal Siswa'}
                 </span>
                 <span className="text-[9px] text-numora-muted font-mono">
-                  Phase 01 Demo
+                  NUMORA Space v1.5
                 </span>
               </div>
             </div>
@@ -111,7 +115,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-numora-cyan/10 text-numora-cyan border border-numora-cyan/20">
+                    <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-numora-cyan/10 text-numora-cyan border border-numora-cyan/20">
                       {item.badge}
                     </span>
                   )}
@@ -147,4 +151,3 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
     </>
   );
 }
-
