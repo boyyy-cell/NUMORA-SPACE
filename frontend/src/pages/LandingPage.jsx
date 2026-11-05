@@ -78,7 +78,7 @@ export default function LandingPage() {
 
                 <Link
                   to="/login"
-                  className="btn-interactive w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-sm bg-pure-white hover:bg-ivory text-charcoal border border-[#28332C]/10 hover:border-forest/40 transition-colors flex items-center justify-center gap-2 shadow-subtle"
+                  className="btn-interactive w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-sm bg-pure-white hover:bg-ivory text-charcoal border border-[#28332C]/14 hover:border-forest/40 transition-colors flex items-center justify-center gap-2 shadow-subtle"
                 >
                   <LogIn className="w-4 h-4 text-secondary-text" />
                   <span>Masuk</span>
@@ -141,7 +141,7 @@ export default function LandingPage() {
         </section>
 
         {/* SECTION: INTERACTIVE ALGEBRA LAB SHOWCASE */}
-        <section id="preview-modules" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/10">
+        <section id="preview-modules" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/14">
           <div className="text-center max-w-xl mx-auto space-y-1.5 mb-8">
             <span className="text-xs font-semibold uppercase tracking-wider text-forest">
               Laboratorium Matematika
@@ -158,7 +158,7 @@ export default function LandingPage() {
         </section>
 
         {/* SECTION: NORA AI TUTOR PREVIEW */}
-        <section id="preview-nora" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/10">
+        <section id="preview-nora" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/14">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-5 space-y-4">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sage/20 text-xs font-semibold text-forest">
@@ -198,8 +198,8 @@ export default function LandingPage() {
         </section>
 
         {/* BOTTOM CALL TO ACTION */}
-        <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/10">
-          <div className="rounded-2xl p-8 bg-pure-white border border-[#28332C]/10 text-center space-y-4 shadow-card-clean max-w-2xl mx-auto">
+        <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/14">
+          <div className="rounded-2xl p-8 bg-pure-white border border-[#28332C]/14 text-center space-y-4 shadow-card-clean max-w-2xl mx-auto">
             <h2 className="text-xl sm:text-2xl font-bold text-charcoal">
               Siap Bereksplorasi di NUMORA Space?
             </h2>

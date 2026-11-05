@@ -1,8 +1,9 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BrandLogo from '../common/BrandLogo';
 import BackendStatusBadge from '../common/BackendStatusBadge';
 import { useBackendStatus } from '../../hooks/useBackendStatus';
+import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard,
   BookOpen,
@@ -22,7 +23,14 @@ import {
 
 export default function Sidebar({ role = 'student', activeTab = 'overview', setActiveTab, isOpen, setIsOpen }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { status, checkNow, baseUrl, error } = useBackendStatus();
+  const { logout, user } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   // Simplified navigation tabs for Student Space
   const studentLinks = [
@@ -56,7 +64,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-pure-white border-r border-[#28332C]/10 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-pure-white border-r border-[#28332C]/14 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -67,7 +75,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
           </div>
 
           {/* Current Role Indicator */}
-          <div className="p-2.5 rounded-xl bg-ivory border border-[#28332C]/10 flex items-center justify-between">
+          <div className="p-2.5 rounded-xl bg-ivory border border-[#28332C]/14 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {role === 'researcher' ? (
                 <Microscope className="w-4 h-4 text-forest" />
@@ -79,18 +87,18 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
                   {role === 'researcher' ? 'Ruang Peneliti' : 'Ruang Siswa'}
                 </span>
                 <span className="text-[10px] text-secondary-text">
-                  Sage & Ivory v1.6
+                  {user ? user.subjectId || user.grade : 'Sage & Ivory v1.6'}
                 </span>
               </div>
             </div>
 
-            <Link
-              to={role === 'researcher' ? '/student-dashboard' : '/researcher-dashboard'}
-              className="text-[11px] text-forest font-semibold hover:underline btn-interactive"
-              title="Ganti ke peran lain"
+            <button
+              onClick={handleLogout}
+              className="text-[11px] text-rose-700 font-semibold hover:underline btn-interactive"
+              title="Ganti akun / Keluar"
             >
               Ganti
-            </Link>
+            </button>
           </div>
 
           {/* Navigation Links */}
@@ -132,25 +140,27 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
         </div>
 
         {/* Sidebar Footer: Backend status & links */}
-        <div className="p-4 border-t border-[#28332C]/10 space-y-3 bg-ivory/50">
+        <div className="p-4 border-t border-[#28332C]/14 space-y-3 bg-ivory/50">
           <BackendStatusBadge status={status} checkNow={checkNow} baseUrl={baseUrl} error={error} />
 
           <div className="flex items-center justify-between pt-1 text-xs">
             <Link
-              to="/"
+              to="/landing"
               className="btn-interactive flex items-center gap-1.5 text-secondary-text hover:text-charcoal transition-colors font-medium"
+              title="Buka Halaman Pengantar NUMORA"
             >
               <Home className="w-3.5 h-3.5" />
-              <span>Beranda</span>
+              <span>Info Produk</span>
             </Link>
 
-            <Link
-              to="/login"
-              className="btn-interactive flex items-center gap-1.5 text-rose-700 hover:text-rose-800 transition-colors font-medium"
+            <button
+              onClick={handleLogout}
+              className="btn-interactive flex items-center gap-1.5 text-rose-700 hover:text-rose-800 transition-colors font-medium cursor-pointer"
+              title="Akhiri sesi dan kembali ke Sign In"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Keluar</span>
-            </Link>
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
       </aside>

@@ -105,9 +105,9 @@ export default function AlgebraLab() {
   ];
 
   return (
-    <div className="bg-pure-white rounded-2xl p-5 sm:p-7 border border-[#28332C]/10 shadow-card-clean space-y-6">
+    <div className="bg-pure-white rounded-2xl p-5 sm:p-7 border border-[#28332C]/14 shadow-card-clean space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/14 pb-4">
         <div>
           <h3 className="text-xl font-bold text-charcoal">
             Laboratorium Aljabar Interaktif

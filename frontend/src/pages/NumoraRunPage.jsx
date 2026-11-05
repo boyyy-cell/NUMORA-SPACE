@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { 
   ArrowLeft, 
   Gamepad2, 
@@ -16,7 +17,10 @@ import { getRunnerStats } from '../features/runner/runnerStorage';
 
 export default function NumoraRunPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
+
+  const targetDashboard = user?.role === 'researcher' ? '/researcher-dashboard' : '/student-dashboard';
 
   useEffect(() => {
     setStats(getRunnerStats());
@@ -25,16 +29,16 @@ export default function NumoraRunPage() {
   return (
     <div className="min-h-screen bg-[#F6F5EF] text-[#28332C]">
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-[#E1E5DC] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-[#28332C]/14 px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/dashboard')}
-            className="p-2 text-[#707A70] hover:text-[#28332C] hover:bg-[#F6F5EF] rounded-xl transition flex items-center gap-1.5 text-sm font-semibold"
+            onClick={() => navigate(targetDashboard)}
+            className="btn-interactive p-2 text-[#707A70] hover:text-[#28332C] hover:bg-[#F6F5EF] rounded-xl transition flex items-center gap-1.5 text-sm font-semibold"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Kembali ke Dashboard</span>
           </button>
-          <div className="h-4 w-[1px] bg-[#E1E5DC] hidden sm:block" />
+          <div className="h-4 w-[1px] bg-[#28332C]/14 hidden sm:block" />
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-[#355B45] text-white flex items-center justify-center font-bold">
               <Gamepad2 className="w-4 h-4" />
@@ -50,30 +54,30 @@ export default function NumoraRunPage() {
 
         {/* Quick Stats Pill */}
         <div className="flex items-center gap-3 text-xs font-semibold">
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F6F5EF] border border-[#E1E5DC] text-[#28332C]">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F6F5EF] border border-[#28332C]/14 text-[#28332C]">
             <Trophy className="w-3.5 h-3.5 text-[#F59E0B]" />
             <span>Rekor: {Math.max(...Object.values(stats?.highScores || { beginner: 0 })).toLocaleString('id-ID')}</span>
           </div>
           <button
-            onClick={() => navigate('/lab')}
-            className="px-3 py-1.5 rounded-full bg-[#355B45]/10 text-[#355B45] hover:bg-[#355B45] hover:text-white transition text-xs font-bold flex items-center gap-1"
+            onClick={() => navigate(targetDashboard)}
+            className="btn-interactive px-3 py-1.5 rounded-full bg-[#355B45]/10 text-[#355B45] hover:bg-[#355B45] hover:text-white transition text-xs font-bold flex items-center gap-1"
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Buka Algebra Lab</span>
+            <span>Buka Ruang Belajar</span>
           </button>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 animate-fade-page">
         {/* The 3D Runner Stage */}
-        <section className="bg-white rounded-3xl p-3 sm:p-5 border border-[#E1E5DC] shadow-sm">
-          <NumoraRunner3D onBackToDashboard={() => navigate('/dashboard')} />
+        <section className="bg-white rounded-3xl p-3 sm:p-5 border border-[#28332C]/14 shadow-sm">
+          <NumoraRunner3D onBackToDashboard={() => navigate(targetDashboard)} />
         </section>
 
         {/* Gameplay Guide & Socratic Math Concept */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl p-5 border border-[#E1E5DC] shadow-xs">
+          <div className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
             <div className="w-9 h-9 rounded-xl bg-[#355B45]/10 text-[#355B45] flex items-center justify-center font-bold mb-3">
               1
             </div>
@@ -83,7 +87,7 @@ export default function NumoraRunPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-[#E1E5DC] shadow-xs">
+          <div className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
             <div className="w-9 h-9 rounded-xl bg-[#D58B68]/15 text-[#D58B68] flex items-center justify-center font-bold mb-3">
               2
             </div>
@@ -93,7 +97,7 @@ export default function NumoraRunPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-[#E1E5DC] shadow-xs">
+          <div className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
             <div className="w-9 h-9 rounded-xl bg-[#A7BCA8]/30 text-[#355B45] flex items-center justify-center font-bold mb-3">
               3
             </div>
@@ -106,7 +110,7 @@ export default function NumoraRunPage() {
 
         {/* Histori Belajar & Sesi Terakhir (Jujur di LocalStorage) */}
         {stats && stats.recentSessions && stats.recentSessions.length > 0 && (
-          <section className="bg-white rounded-2xl p-5 border border-[#E1E5DC] shadow-xs">
+          <section className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-[#355B45]" />
@@ -118,7 +122,7 @@ export default function NumoraRunPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-[#E1E5DC] text-[#707A70]">
+                  <tr className="border-b border-[#28332C]/14 text-[#707A70]">
                     <th className="py-2 font-bold">Waktu</th>
                     <th className="py-2 font-bold">Level</th>
                     <th className="py-2 font-bold">Skor</th>

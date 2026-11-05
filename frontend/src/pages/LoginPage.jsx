@@ -1,34 +1,51 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import BrandLogo from '../components/common/BrandLogo';
-import { Eye, EyeOff, Lock, Mail, ArrowLeft, GraduationCap, Microscope, AlertCircle, Sparkles } from 'lucide-react';
+import { useAuth, DEMO_ACCOUNTS } from '../context/AuthContext';
+import {
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  ArrowLeft,
+  GraduationCap,
+  Microscope,
+  AlertCircle,
+  ShieldCheck,
+  CheckCircle2
+} from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isLoading } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeAccountLabel, setActiveAccountLabel] = useState('');
 
   const handleDemoFill = (role) => {
     if (role === 'student') {
-      setEmail('siswa.demo@numora.space');
-      setPassword('demo-aljabar-7');
+      setEmail(DEMO_ACCOUNTS.student.email);
+      setPassword(DEMO_ACCOUNTS.student.password);
+      setActiveAccountLabel('Akun Siswa Demo (S-002)');
     } else {
-      setEmail('peneliti.demo@numora.space');
-      setPassword('demo-riset-2026');
+      setEmail(DEMO_ACCOUNTS.researcher.email);
+      setPassword(DEMO_ACCOUNTS.researcher.password);
+      setActiveAccountLabel('Akun Peneliti Demo (P-001)');
     }
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!email || !password) {
-      setError('Mohon isi email dan kata sandi terlebih dahulu.');
+      setError('Mohon isi alamat email dan kata sandi terlebih dahulu.');
       return;
     }
 
@@ -37,79 +54,106 @@ export default function LoginPage() {
       return;
     }
 
-    setIsLoading(true);
+    const result = await login(email, password);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      // Demonstration Auth routing
-      if (email.toLowerCase().includes('peneliti') || email.toLowerCase().includes('researcher')) {
-        navigate('/researcher-dashboard');
+    if (result.success) {
+      // Periksa apakah ada rute asal yang diminta pengunjung
+      const destination = location.state?.from?.pathname;
+      if (destination && !destination.startsWith('/login')) {
+        navigate(destination, { replace: true });
+      } else if (result.user.role === 'researcher') {
+        navigate('/researcher-dashboard', { replace: true });
       } else {
-        navigate('/student-dashboard');
+        navigate('/student-dashboard', { replace: true });
       }
-    }, 500);
+    } else {
+      setError(result.error || 'Autentikasi gagal.');
+    }
   };
 
   return (
     <div className="min-h-screen bg-ivory text-charcoal flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
-      {/* Top return link */}
+      {/* Top navigation link to product presentation */}
       <div className="absolute top-6 left-6">
         <Link
-          to="/"
-          className="btn-interactive inline-flex items-center gap-2 text-xs font-medium text-secondary-text hover:text-charcoal transition-colors bg-pure-white px-3 py-1.5 rounded-xl border border-[#28332C]/10 shadow-subtle"
+          to="/landing"
+          className="btn-interactive inline-flex items-center gap-2 text-xs font-medium text-secondary-text hover:text-charcoal transition-colors bg-pure-white px-3.5 py-1.5 rounded-xl border border-[#28332C]/14 shadow-subtle"
+          title="Buka Halaman Presentasi NUMORA Space"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Kembali ke Beranda</span>
+          <span>Lihat Pengantar Produk</span>
         </Link>
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md space-y-5 animate-fade-page">
+        {/* Brand Header */}
         <div className="text-center space-y-1.5">
           <div className="flex justify-center">
             <BrandLogo size="lg" linkTo={null} />
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-charcoal pt-2">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-charcoal pt-2">
             Masuk ke NUMORA Space
           </h2>
           <p className="text-xs text-secondary-text">
-            Pilih demo ruang siswa atau ruang peneliti
+            Sistem Pembelajaran Aljabar SMP Kelas VII — Kurikulum Merdeka
           </p>
         </div>
 
-        {/* Notice Demo Mode */}
-        <div className="p-4 rounded-2xl bg-pure-white border border-[#28332C]/10 text-xs space-y-2 shadow-subtle">
-          <div className="flex items-center gap-2 text-forest font-semibold">
-            <Sparkles className="w-4 h-4 text-forest" />
-            <span>Akses Demonstrasi Cepat</span>
+        {/* Demo Protocol Access Notice */}
+        <div className="p-4 rounded-2xl bg-pure-white border border-[#28332C]/14 text-xs space-y-2.5 shadow-subtle">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-forest font-semibold">
+              <ShieldCheck className="w-4 h-4 text-forest" />
+              <span>Akses Demonstrasi Penelitian v1.6</span>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sage/20 text-forest">
+              Resmi
+            </span>
           </div>
+
           <p className="text-secondary-text text-[11px] leading-relaxed">
-            Klik salah satu tombol di bawah untuk mengisi formulir demo secara otomatis:
+            Pada rilis evaluasi v1.6, akses dibatasi khusus untuk dua akun protokol penelitian. Klik tombol di bawah untuk mengisi kredensial resmi secara terverifikasi:
           </p>
-          <div className="grid grid-cols-2 gap-2 pt-1">
+
+          <div className="grid grid-cols-2 gap-2 pt-0.5">
             <button
               type="button"
               onClick={() => handleDemoFill('student')}
-              className="btn-interactive flex items-center justify-center gap-1.5 p-2 rounded-xl bg-ivory hover:bg-sage/20 border border-[#28332C]/10 text-charcoal text-[11px] font-medium transition-colors"
+              className="btn-interactive flex flex-col items-center justify-center p-2.5 rounded-xl bg-ivory hover:bg-sage/20 border border-[#28332C]/14 text-charcoal transition-colors text-center"
             >
-              <GraduationCap className="w-3.5 h-3.5 text-forest" />
-              <span>Demo Siswa</span>
+              <div className="flex items-center gap-1.5 font-bold text-xs text-forest">
+                <GraduationCap className="w-4 h-4 text-forest" />
+                <span>Demo Siswa</span>
+              </div>
+              <span className="text-[10px] text-secondary-text mt-0.5">Kelas VII (S-002)</span>
             </button>
+
             <button
               type="button"
               onClick={() => handleDemoFill('researcher')}
-              className="btn-interactive flex items-center justify-center gap-1.5 p-2 rounded-xl bg-ivory hover:bg-sage/20 border border-[#28332C]/10 text-charcoal text-[11px] font-medium transition-colors"
+              className="btn-interactive flex flex-col items-center justify-center p-2.5 rounded-xl bg-ivory hover:bg-sage/20 border border-[#28332C]/14 text-charcoal transition-colors text-center"
             >
-              <Microscope className="w-3.5 h-3.5 text-terracotta" />
-              <span>Demo Peneliti</span>
+              <div className="flex items-center gap-1.5 font-bold text-xs text-terracotta">
+                <Microscope className="w-4 h-4 text-terracotta" />
+                <span>Demo Peneliti</span>
+              </div>
+              <span className="text-[10px] text-secondary-text mt-0.5">Evaluator (P-001)</span>
             </button>
           </div>
+
+          {activeAccountLabel && (
+            <div className="flex items-center gap-1.5 text-[11px] text-forest font-semibold pt-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{activeAccountLabel} siap dimasukkan.</span>
+            </div>
+          )}
         </div>
 
         {/* Login Card Form */}
-        <div className="bg-pure-white rounded-2xl p-6 sm:p-7 border border-[#28332C]/10 shadow-card-clean">
+        <div className="bg-pure-white rounded-2xl p-6 sm:p-7 border border-[#28332C]/14 shadow-card-clean">
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2 text-xs text-rose-700 leading-relaxed">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
@@ -117,7 +161,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-charcoal mb-1.5">
-                Alamat Email
+                Alamat Email Protokol
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-secondary-text">
@@ -127,8 +171,8 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="contoh: siswa.demo@numora.space"
-                  className="input-interactive w-full pl-10 pr-3 py-2.5 bg-ivory/60 border border-[#28332C]/10 rounded-xl text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 transition-all"
+                  placeholder="siswa.demo@numora.space"
+                  className="input-interactive w-full pl-10 pr-3 py-2.5 bg-ivory/60 border border-[#28332C]/14 rounded-xl text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 transition-all"
                 />
               </div>
             </div>
@@ -139,7 +183,7 @@ export default function LoginPage() {
                   Kata Sandi
                 </label>
                 <span className="text-[10px] text-secondary-text">
-                  Bebas untuk demo
+                  Wajib sesuai protokol demo
                 </span>
               </div>
               <div className="relative">
@@ -151,7 +195,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input-interactive w-full pl-10 pr-10 py-2.5 bg-ivory/60 border border-[#28332C]/10 rounded-xl text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 transition-all"
+                  className="input-interactive w-full pl-10 pr-10 py-2.5 bg-ivory/60 border border-[#28332C]/14 rounded-xl text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 transition-all"
                 />
                 <button
                   type="button"
@@ -171,7 +215,7 @@ export default function LoginPage() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="rounded border-[#28332C]/20 text-forest focus:ring-0"
                 />
-                <span>Ingat Sesi</span>
+                <span>Simpan sesi peramban</span>
               </label>
 
               <span className="text-secondary-text text-[11px]">
@@ -187,7 +231,7 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
-                  <span>Memverifikasi Sesi...</span>
+                  <span>Memverifikasi Akun...</span>
                 </>
               ) : (
                 <span>Masuk Sekarang</span>
@@ -195,18 +239,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Direct Links */}
-          <div className="mt-5 pt-4 border-t border-[#28332C]/10 flex flex-col gap-1.5 text-center">
-            <span className="text-[11px] text-secondary-text">Atau langsung ke:</span>
-            <div className="flex items-center justify-center gap-3">
-              <Link to="/student-dashboard" className="btn-interactive text-xs text-forest font-semibold hover:underline">
-                → Ruang Siswa
-              </Link>
-              <span className="text-secondary-text/40">|</span>
-              <Link to="/researcher-dashboard" className="btn-interactive text-xs text-terracotta font-semibold hover:underline">
-                → Ruang Peneliti
-              </Link>
-            </div>
+          {/* Quick Notice Info */}
+          <div className="mt-5 pt-4 border-t border-[#28332C]/14 text-center">
+            <p className="text-[11px] text-secondary-text leading-relaxed">
+              Belum memiliki akun penelitian? Hubungi tim pengembang di{' '}
+              <span className="font-mono text-charcoal font-semibold">riset@numora.space</span>
+            </p>
           </div>
         </div>
       </div>

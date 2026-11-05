@@ -156,9 +156,9 @@ export default function NoraChatPreview({ compact = false }) {
   };
 
   return (
-    <div className={`bg-pure-white rounded-3xl flex flex-col overflow-hidden border border-[#28332C]/10 shadow-card-clean ${compact ? 'h-[500px]' : 'h-[620px]'}`}>
+    <div className={`bg-pure-white rounded-3xl flex flex-col overflow-hidden border border-[#28332C]/14 shadow-card-clean ${compact ? 'h-[500px]' : 'h-[620px]'}`}>
       {/* NORA Header */}
-      <div className="p-4 sm:px-6 bg-pure-white border-b border-[#28332C]/10 flex items-center justify-between">
+      <div className="p-4 sm:px-6 bg-pure-white border-b border-[#28332C]/14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="w-10 h-10 rounded-2xl bg-forest/10 border border-forest/20 flex items-center justify-center text-forest shadow-xs">
@@ -183,7 +183,7 @@ export default function NoraChatPreview({ compact = false }) {
         <div className="flex items-center gap-2">
           <button
             onClick={handleNewChat}
-            className="btn-interactive flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#707A70] hover:text-[#28332C] hover:bg-ivory border border-[#28332C]/10 transition"
+            className="btn-interactive flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#707A70] hover:text-[#28332C] hover:bg-ivory border border-[#28332C]/14 transition"
             title="Mulai Percakapan Baru"
           >
             <Plus className="w-3.5 h-3.5 text-forest" />
@@ -193,7 +193,7 @@ export default function NoraChatPreview({ compact = false }) {
       </div>
 
       {/* Mode Bar (Optional Contextual Shortcuts) */}
-      <div className="px-4 sm:px-6 py-2 bg-ivory/60 border-b border-[#28332C]/10 flex items-center justify-between gap-2 text-xs overflow-x-auto">
+      <div className="px-4 sm:px-6 py-2 bg-ivory/60 border-b border-[#28332C]/14 flex items-center justify-between gap-2 text-xs overflow-x-auto">
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="text-[10px] font-bold uppercase tracking-wider text-secondary-text mr-1">
             Gaya Bimbingan:
@@ -213,7 +213,7 @@ export default function NoraChatPreview({ compact = false }) {
                 className={`btn-interactive flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition ${
                   active
                     ? 'bg-forest text-pure-white font-semibold shadow-xs'
-                    : 'text-secondary-text hover:text-charcoal hover:bg-pure-white border border-transparent hover:border-[#28332C]/10'
+                    : 'text-secondary-text hover:text-charcoal hover:bg-pure-white border border-transparent hover:border-[#28332C]/14'
                 }`}
               >
                 <Icon className="w-3 h-3" />
@@ -224,7 +224,7 @@ export default function NoraChatPreview({ compact = false }) {
         </div>
 
         {selectedMode === 'hint' && (
-          <div className="flex items-center gap-1 bg-pure-white px-2 py-0.5 rounded-lg border border-[#28332C]/10 text-[10px] shrink-0">
+          <div className="flex items-center gap-1 bg-pure-white px-2 py-0.5 rounded-lg border border-[#28332C]/14 text-[10px] shrink-0">
             <span className="text-secondary-text font-semibold">Tahap:</span>
             {[1, 2, 3].map((t) => (
               <button
@@ -262,7 +262,7 @@ export default function NoraChatPreview({ compact = false }) {
               className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-4 space-y-2 shadow-xs leading-relaxed ${
                 msg.role === 'user'
                   ? 'bg-forest text-pure-white rounded-tr-none'
-                  : 'bg-pure-white border border-[#28332C]/10 text-charcoal rounded-tl-none'
+                  : 'bg-pure-white border border-[#28332C]/14 text-charcoal rounded-tl-none'
               }`}
             >
               <div className="whitespace-pre-line text-xs sm:text-sm">
@@ -273,7 +273,7 @@ export default function NoraChatPreview({ compact = false }) {
                 <div className={`p-2.5 rounded-xl text-center font-mono my-2 border ${
                   msg.role === 'user'
                     ? 'bg-forest-600 text-pure-white border-forest-500'
-                    : 'bg-ivory text-forest font-semibold border-[#28332C]/10'
+                    : 'bg-ivory text-forest font-semibold border-[#28332C]/14'
                 }`}>
                   <MathView math={msg.math} block={true} />
                 </div>
@@ -288,7 +288,7 @@ export default function NoraChatPreview({ compact = false }) {
 
               {/* Message Footer: Timestamp & Audio */}
               <div className={`flex items-center justify-between text-[10px] pt-1.5 border-t ${
-                msg.role === 'user' ? 'border-forest-600/60 text-pure-white/70' : 'border-[#28332C]/10 text-secondary-text'
+                msg.role === 'user' ? 'border-forest-600/60 text-pure-white/70' : 'border-[#28332C]/14 text-secondary-text'
               }`}>
                 <span>{msg.role === 'assistant' ? 'NORA' : 'Kamu'} • {msg.timestamp}</span>
 
@@ -322,7 +322,7 @@ export default function NoraChatPreview({ compact = false }) {
             <div className="w-8 h-8 rounded-xl bg-forest/15 text-forest flex items-center justify-center shrink-0 border border-forest/20">
               <Bot className="w-4 h-4" />
             </div>
-            <div className="p-3.5 rounded-2xl bg-pure-white border border-[#28332C]/10 text-secondary-text text-xs flex items-center gap-2 shadow-xs rounded-tl-none">
+            <div className="p-3.5 rounded-2xl bg-pure-white border border-[#28332C]/14 text-secondary-text text-xs flex items-center gap-2 shadow-xs rounded-tl-none">
               <div className="flex gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-forest animate-bounce" />
                 <span className="w-2 h-2 rounded-full bg-forest animate-bounce [animation-delay:0.2s]" />
@@ -336,7 +336,7 @@ export default function NoraChatPreview({ compact = false }) {
 
       {/* Quick Prompts Suggestions (Jika pesan masih sedikit) */}
       {messages.length <= 2 && (
-        <div className="px-4 sm:px-6 py-2 bg-ivory/40 border-t border-[#28332C]/10 flex items-center gap-2 overflow-x-auto text-xs">
+        <div className="px-4 sm:px-6 py-2 bg-ivory/40 border-t border-[#28332C]/14 flex items-center gap-2 overflow-x-auto text-xs">
           <span className="text-[10px] font-bold text-secondary-text shrink-0 uppercase tracking-wider">
             Saran:
           </span>
@@ -345,7 +345,7 @@ export default function NoraChatPreview({ compact = false }) {
               key={i}
               type="button"
               onClick={() => handleSend(prompt)}
-              className="btn-interactive px-3 py-1 rounded-full bg-pure-white border border-[#28332C]/10 text-charcoal hover:border-forest hover:bg-forest/5 text-[11px] whitespace-nowrap transition"
+              className="btn-interactive px-3 py-1 rounded-full bg-pure-white border border-[#28332C]/14 text-charcoal hover:border-forest hover:bg-forest/5 text-[11px] whitespace-nowrap transition"
             >
               {prompt}
             </button>
@@ -354,7 +354,7 @@ export default function NoraChatPreview({ compact = false }) {
       )}
 
       {/* Free-form Chat Input Bar */}
-      <form onSubmit={handleSubmit} className="p-3 sm:p-4 bg-pure-white border-t border-[#28332C]/10">
+      <form onSubmit={handleSubmit} className="p-3 sm:p-4 bg-pure-white border-t border-[#28332C]/14">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -363,7 +363,7 @@ export default function NoraChatPreview({ compact = false }) {
             onKeyDown={handleKeyDown}
             disabled={isTyping}
             placeholder="Ketik pertanyaan bebas untuk NORA (misal: 'Jika x = 4, berapa hasil 3x + 5?')..."
-            className="input-interactive flex-1 bg-ivory border border-[#28332C]/10 rounded-2xl px-4 py-3 text-xs sm:text-sm text-charcoal placeholder-secondary-text/70 transition"
+            className="input-interactive flex-1 bg-ivory border border-[#28332C]/14 rounded-2xl px-4 py-3 text-xs sm:text-sm text-charcoal placeholder-secondary-text/70 transition"
           />
           <button
             type="submit"

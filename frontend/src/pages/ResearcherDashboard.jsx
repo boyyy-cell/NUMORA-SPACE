@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import { apiService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import {
   Menu,
   Users,
@@ -12,10 +14,13 @@ import {
   FileSpreadsheet,
   FileCode,
   CheckCircle2,
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
 
 export default function ResearcherDashboard() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); // overview, subjects (Partisipan), monitoring, instruments, analytics (Analisis & Ekspor)
   const [subjects, setSubjects] = useState([]);
@@ -23,6 +28,11 @@ export default function ResearcherDashboard() {
   const [cogStatus, setCogStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exportMessage, setExportMessage] = useState('');
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -137,11 +147,11 @@ export default function ResearcherDashboard() {
       {/* Main Area */}
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 h-16 sm:h-18 bg-pure-white/95 backdrop-blur-sm border-b border-[#28332C]/10 px-4 sm:px-8 flex items-center justify-between shadow-xs">
+        <header className="sticky top-0 z-30 h-16 sm:h-18 bg-pure-white/95 backdrop-blur-sm border-b border-[#28332C]/14 px-4 sm:px-8 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="btn-interactive lg:hidden p-2 rounded-xl bg-ivory text-charcoal hover:bg-sage/20 border border-border-clean"
+              className="btn-interactive lg:hidden p-2 rounded-xl bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/14"
               aria-label="Buka Menu"
             >
               <Menu className="w-5 h-5" />
@@ -162,25 +172,35 @@ export default function ResearcherDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full bg-ivory border border-[#28332C]/10">
-            <div className="w-7 h-7 rounded-full bg-forest text-pure-white flex items-center justify-center font-bold text-xs">
-              P
-            </div>
-            <div className="text-left hidden sm:block">
-              <div className="text-xs font-semibold text-charcoal leading-tight">
-                Tim Peneliti
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full bg-ivory border border-[#28332C]/14">
+              <div className="w-7 h-7 rounded-full bg-forest text-pure-white flex items-center justify-center font-bold text-xs">
+                P
               </div>
-              <div className="text-[10px] text-secondary-text">
-                Pendidikan Matematika
+              <div className="text-left hidden sm:block">
+                <div className="text-xs font-semibold text-charcoal leading-tight">
+                  {user?.name || 'Tim Peneliti'}
+                </div>
+                <div className="text-[10px] text-secondary-text">
+                  {user?.grade || 'Pendidikan Matematika'}
+                </div>
               </div>
             </div>
+
+            <button
+              onClick={handleLogout}
+              className="btn-interactive p-2 rounded-xl text-rose-700 hover:text-rose-800 hover:bg-rose-50 border border-[#28332C]/14 transition-colors"
+              title="Sign Out / Keluar"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </header>
 
         {/* Content Body */}
         <main className="flex-1 p-4 sm:p-7 space-y-6 max-w-6xl mx-auto w-full">
           {/* Collapsible Protocol Transparency Section */}
-          <details className="group p-4 rounded-xl bg-pure-white border border-[#28332C]/10 shadow-subtle text-xs">
+          <details className="group p-4 rounded-xl bg-pure-white border border-[#28332C]/14 shadow-subtle text-xs">
             <summary className="flex items-center justify-between cursor-pointer font-semibold text-charcoal">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-forest" />
@@ -192,7 +212,7 @@ export default function ResearcherDashboard() {
               <span className="text-secondary-text text-[11px] group-open:hidden">Buka Detail ▾</span>
               <span className="text-secondary-text text-[11px] hidden group-open:inline">Tutup ▴</span>
             </summary>
-            <div className="mt-3 pt-3 border-t border-[#28332C]/10 text-secondary-text leading-relaxed space-y-2">
+            <div className="mt-3 pt-3 border-t border-[#28332C]/14 text-secondary-text leading-relaxed space-y-2">
               <p>
                 Penelitian ini menerapkan studi komparatif berskala kecil dengan <strong>dua subjek anonim</strong>:
               </p>
@@ -211,7 +231,7 @@ export default function ResearcherDashboard() {
             <div className="space-y-6 animate-fade-page">
               {/* 4 Clean Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/10 shadow-subtle space-y-1">
+                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
                   <span className="text-xs text-secondary-text">Subjek Riset</span>
                   <div className="text-2xl font-bold font-mono text-charcoal">2 Siswa</div>
                   <span className="text-[11px] text-forest font-semibold flex items-center gap-1">
@@ -220,7 +240,7 @@ export default function ResearcherDashboard() {
                   </span>
                 </div>
 
-                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/10 shadow-subtle space-y-1">
+                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
                   <span className="text-xs text-secondary-text">Sesi Observasi</span>
                   <div className="text-2xl font-bold font-mono text-charcoal">0 Sesi</div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
@@ -229,7 +249,7 @@ export default function ResearcherDashboard() {
                   </span>
                 </div>
 
-                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/10 shadow-subtle space-y-1">
+                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
                   <span className="text-xs text-secondary-text">Pre/Post-Test</span>
                   <div className="text-lg font-bold text-charcoal">Terjadwal</div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
@@ -238,7 +258,7 @@ export default function ResearcherDashboard() {
                   </span>
                 </div>
 
-                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/10 shadow-subtle space-y-1">
+                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
                   <span className="text-xs text-secondary-text">Beban Kognitif</span>
                   <div className="text-lg font-bold text-secondary-text">Belum Diukur</div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
@@ -264,7 +284,7 @@ export default function ResearcherDashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {subjects.map((sub) => (
-                    <div key={sub.subject_id} className="btn-interactive bg-pure-white rounded-2xl p-5 border border-[#28332C]/10 space-y-3 shadow-subtle">
+                    <div key={sub.subject_id} className="btn-interactive bg-pure-white rounded-2xl p-5 border border-[#28332C]/14 space-y-3 shadow-subtle">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="w-8 h-8 rounded-xl bg-forest/10 text-forest font-bold font-mono text-xs flex items-center justify-center">
@@ -284,7 +304,7 @@ export default function ResearcherDashboard() {
                         {sub.method || sub.role_description}
                       </p>
 
-                      <div className="pt-2 border-t border-[#28332C]/10 flex items-center justify-between text-xs text-secondary-text">
+                      <div className="pt-2 border-t border-[#28332C]/14 flex items-center justify-between text-xs text-secondary-text">
                         <span>Modul: <strong className="text-charcoal">{sub.active_module}</strong></span>
                         <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-ivory text-secondary-text">
                           {sub.data_source || 'PROTOCOL_TEMPLATE'}
@@ -311,8 +331,8 @@ export default function ResearcherDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {subjects.map((sub) => (
-                  <div key={sub.subject_id} className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/10 shadow-subtle space-y-4">
-                    <div className="flex items-center justify-between border-b border-[#28332C]/10 pb-3">
+                  <div key={sub.subject_id} className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#28332C]/14 pb-3">
                       <div className="flex items-center gap-2.5">
                         <span className="w-9 h-9 rounded-xl bg-forest text-pure-white font-bold font-mono text-sm flex items-center justify-center">
                           {sub.subject_id}
@@ -331,7 +351,7 @@ export default function ResearcherDashboard() {
                       {sub.method || sub.role_description}
                     </p>
 
-                    <div className="space-y-2 pt-2 border-t border-[#28332C]/10 text-xs">
+                    <div className="space-y-2 pt-2 border-t border-[#28332C]/14 text-xs">
                       <div className="flex justify-between">
                         <span className="text-secondary-text">Modul Target:</span>
                         <span className="font-semibold text-charcoal">{sub.active_module}</span>
@@ -367,7 +387,7 @@ export default function ResearcherDashboard() {
                 </p>
               </div>
 
-              <div className="bg-pure-white rounded-2xl p-8 border border-[#28332C]/10 shadow-subtle text-center space-y-3">
+              <div className="bg-pure-white rounded-2xl p-8 border border-[#28332C]/14 shadow-subtle text-center space-y-3">
                 <Activity className="w-8 h-8 text-forest mx-auto" />
                 <h3 className="text-sm font-bold text-charcoal">Belum Ada Sesi Lapangan</h3>
                 <p className="text-xs text-secondary-text max-w-md mx-auto leading-relaxed">
@@ -390,8 +410,8 @@ export default function ResearcherDashboard() {
               </div>
 
               {/* Leppink Multidimensional Scale */}
-              <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/10 shadow-subtle space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#28332C]/10 pb-3">
+              <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#28332C]/14 pb-3">
                   <div>
                     <h3 className="text-sm font-bold text-charcoal flex items-center gap-2">
                       <Brain className="w-4 h-4 text-forest" />
@@ -401,27 +421,27 @@ export default function ResearcherDashboard() {
                       Mengukur 3 dimensi beban pemrosesan kognitif siswa dalam pembelajaran aljabar.
                     </p>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-ivory text-secondary-text border border-[#28332C]/10">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-ivory text-secondary-text border border-[#28332C]/14">
                     STATUS: BELUM DIUKUR
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/10 space-y-1">
+                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
                     <span className="font-bold text-forest block">1. Intrinsic Load (ICL)</span>
                     <p className="text-[11px] text-secondary-text leading-relaxed">
                       Beban dari kesulitan alami materi aljabar (variabel, notasi negatif).
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/10 space-y-1">
+                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
                     <span className="font-bold text-forest block">2. Extraneous Load (ECL)</span>
                     <p className="text-[11px] text-secondary-text leading-relaxed">
                       Beban dari antarmuka. Diminimalkan melalui desain Sage & Ivory yang bersih.
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/10 space-y-1">
+                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
                     <span className="font-bold text-forest block">3. Germane Load (GCL)</span>
                     <p className="text-[11px] text-secondary-text leading-relaxed">
                       Beban produktif yang digunakan siswa untuk membangun pemahaman konsep.
@@ -431,22 +451,22 @@ export default function ResearcherDashboard() {
               </div>
 
               {/* Pre/Post-Test Blueprint */}
-              <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/10 shadow-subtle space-y-3">
+              <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-3">
                 <h3 className="text-sm font-bold text-charcoal flex items-center gap-2">
                   <FileCheck2 className="w-4 h-4 text-forest" />
                   <span>Cetak Biru Pengujian</span>
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                  <div className="p-3.5 rounded-xl bg-ivory border border-[#28332C]/10 space-y-1">
+                  <div className="p-3.5 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
                     <span className="font-semibold text-charcoal block">Pre-Test Diagnostik</span>
                     <p className="text-[11px] text-secondary-text">Pemahaman awal sebelum sesi aljabar.</p>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-ivory border border-[#28332C]/10 space-y-1">
+                  <div className="p-3.5 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
                     <span className="font-semibold text-charcoal block">Formatif Lab</span>
                     <p className="text-[11px] text-secondary-text">Evaluasi adaptif di setiap akhir modul.</p>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-ivory border border-[#28332C]/10 space-y-1">
+                  <div className="p-3.5 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
                     <span className="font-semibold text-charcoal block">Post-Test Komparasi</span>
                     <p className="text-[11px] text-secondary-text">Pengukuran hasil belajar S-001 vs S-002.</p>
                   </div>
@@ -475,7 +495,7 @@ export default function ResearcherDashboard() {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/10 shadow-subtle space-y-4">
+                <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
                   <div className="w-10 h-10 rounded-xl bg-forest/10 border border-forest/20 flex items-center justify-center text-forest">
                     <FileSpreadsheet className="w-5 h-5" />
                   </div>
@@ -494,7 +514,7 @@ export default function ResearcherDashboard() {
                   </button>
                 </div>
 
-                <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/10 shadow-subtle space-y-4">
+                <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
                   <div className="w-10 h-10 rounded-xl bg-forest/10 border border-forest/20 flex items-center justify-center text-forest">
                     <FileCode className="w-5 h-5" />
                   </div>
@@ -506,7 +526,7 @@ export default function ResearcherDashboard() {
                   </div>
                   <button
                     onClick={handleExportJSON}
-                    className="btn-interactive w-full py-2.5 rounded-xl font-semibold text-xs bg-pure-white hover:bg-ivory text-charcoal border border-[#28332C]/10 hover:border-forest/40 transition-colors flex items-center justify-center gap-2 shadow-subtle"
+                    className="btn-interactive w-full py-2.5 rounded-xl font-semibold text-xs bg-pure-white hover:bg-ivory text-charcoal border border-[#28332C]/14 hover:border-forest/40 transition-colors flex items-center justify-center gap-2 shadow-subtle"
                   >
                     <Download className="w-4 h-4 text-forest" />
                     <span>Unduh JSON Lengkap (.json)</span>

@@ -32,21 +32,21 @@
 .clean-panel,
 .glass-panel {
   background: #FFFFFF;
-  border: 1px solid #E1E5DC;
+  border: 1.5px solid rgba(40, 51, 44, 0.14);
   box-shadow: 0 1px 3px rgba(40, 51, 44, 0.04);
 }
 
 .clean-card,
 .glass-card {
   background: #FFFFFF;
-  border: 1px solid #E1E5DC;
+  border: 1.5px solid rgba(40, 51, 44, 0.14);
   box-shadow: 0 2px 8px -2px rgba(40, 51, 44, 0.05);
 }
 
 .clean-card-interactive,
 .glass-card-interactive {
   background: #FFFFFF;
-  border: 1px solid #E1E5DC;
+  border: 1.5px solid rgba(40, 51, 44, 0.14);
   box-shadow: 0 2px 8px -2px rgba(40, 51, 44, 0.05);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -77,25 +77,25 @@
   background: #A7BCA8;
 }
 
-/* Micro-interaction & Visual Divider Utilities */
+/* Micro-interaction & Visual Divider Utilities — 1.5px Defined Borders */
 .divider-subtle {
-  border-color: rgba(40, 51, 44, 0.08);
+  border-color: rgba(40, 51, 44, 0.14);
 }
 
 .divider-subtle-t {
-  border-top: 1px solid rgba(40, 51, 44, 0.08);
+  border-top: 1.5px solid rgba(40, 51, 44, 0.14);
 }
 
 .divider-subtle-b {
-  border-bottom: 1px solid rgba(40, 51, 44, 0.08);
+  border-bottom: 1.5px solid rgba(40, 51, 44, 0.14);
 }
 
 .divider-subtle-r {
-  border-right: 1px solid rgba(40, 51, 44, 0.08);
+  border-right: 1.5px solid rgba(40, 51, 44, 0.14);
 }
 
 .divider-subtle-l {
-  border-left: 1px solid rgba(40, 51, 44, 0.08);
+  border-left: 1.5px solid rgba(40, 51, 44, 0.14);
 }
 
 /* Interactive Button Behaviors */

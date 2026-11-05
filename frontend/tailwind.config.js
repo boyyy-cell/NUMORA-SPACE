@@ -65,7 +65,8 @@ export default {
           900: "#131915",
         },
         'secondary-text': "#707A70",
-        'border-clean': "#E1E5DC",
+        'border-clean': "rgba(40, 51, 44, 0.14)",
+        'border-soft': "#D8DDD2",
         'pure-white': "#FFFFFF",
 
         // Backward compatibility mappings
@@ -113,6 +114,14 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+      },
+      borderWidth: {
+        DEFAULT: '1.5px',
+        '0': '0',
+        '1': '1px',
+        '1.5': '1.5px',
+        '2': '2px',
+        '3': '3px',
       },
       boxShadow: {
         'subtle': '0 1px 3px 0 rgba(40, 51, 44, 0.05), 0 1px 2px -1px rgba(40, 51, 44, 0.05)',
