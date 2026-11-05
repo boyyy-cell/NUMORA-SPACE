@@ -92,7 +92,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     nextGateDistance: GATE_INTERVAL,
     nextSpawnDistance: 25,
     gateCounter: 0,
-    isApproachingGate: false,
     // Camera default target positions
     cameraDefaultY: 3.6,
     cameraDefaultZ: 6.2,
@@ -447,7 +446,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
       nextGateDistance: GATE_INTERVAL,
       nextSpawnDistance: 25,
       gateCounter: 0,
-      isApproachingGate: false,
     };
 
     // Resize handler
@@ -707,11 +705,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
 
         // Kecepatan normal meningkat bertahap
         e.normalTargetSpeed = Math.min(BASE_SPEED + e.distanceTravelled * 0.008, 26.0);
-
-        // Jika tidak sedang mendekati portal, lerp kecepatan ke normal
-        if (!e.isApproachingGate) {
-          e.speed += (e.normalTargetSpeed - e.speed) * (4.0 * dt);
-        }
+        e.speed = e.normalTargetSpeed;
 
         // 2. Transisi Jalur (Smooth Horizontal Lerp)
         e.charGroup.position.x += (e.targetLaneX - e.charGroup.position.x) * (14.0 * dt);
@@ -873,17 +867,16 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
 
           // Animasi Cincin Energi Portal Berputar
           if (u.ringOuter) {
-            u.ringOuter.rotation.z += (e.isApproachingGate ? 6.5 : 2.2) * dt;
+            u.ringOuter.rotation.z += 3.5 * dt;
           }
           if (u.ringInner) {
-            u.ringInner.rotation.z -= (e.isApproachingGate ? 8.2 : 2.8) * dt;
+            u.ringInner.rotation.z -= 4.2 * dt;
           }
 
           // Animasi Partikel Matematika Mengorbit
           if (u.orbitNodes) {
-            u.orbitNodes.forEach((node, idx) => {
-              const speedMult = e.isApproachingGate ? 4.0 : 1.5;
-              const angle = node.baseAngle + (currentTime * 0.001 * speedMult);
+            u.orbitNodes.forEach((node) => {
+              const angle = node.baseAngle + (currentTime * 0.002);
               node.mesh.position.x = Math.cos(angle) * node.radius;
               node.mesh.position.y = 2.6 + Math.sin(angle) * (node.radius * 0.8);
               node.mesh.rotation.x += 2.0 * dt;
@@ -897,20 +890,8 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
             u.coreDisc.rotation.z += 1.2 * dt;
           }
 
-          // FASE 1: Karakter mulai mendekati portal (Z di antara -26 dan -5.5)
-          if (!u.triggered && portal.position.z >= -26 && portal.position.z < -4.8) {
-            e.isApproachingGate = true;
-            // Melambat secara halus (smooth deceleration)
-            e.speed = THREE.MathUtils.lerp(e.speed, 2.2, 3.2 * dt);
-
-            // Transisi Kamera Halus mendekat ke portal (Cinematic zoom in)
-            e.camera.position.x += (e.charGroup.position.x * 0.3 - e.camera.position.x) * (3.0 * dt);
-            e.camera.position.y += (2.9 - e.camera.position.y) * (3.0 * dt);
-            e.camera.position.z += (4.8 - e.camera.position.z) * (3.0 * dt);
-          }
-
-          // FASE 2: Berhenti tepat di depan portal dan buka tantangan soal
-          if (!u.triggered && portal.position.z >= -4.8) {
+          // DETEKSI TITIK PEMICU PORTAL (Tegas dan Tanpa Slow Motion)
+          if (!u.triggered && portal.position.z >= -4.5) {
             u.triggered = true;
             e.speed = 0;
             triggerAlgebraChallenge();
@@ -920,13 +901,7 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
           if (portal.position.z > 14) {
             e.scene.remove(portal);
             e.activeGateInWorld = null;
-            e.isApproachingGate = false;
           }
-        } else {
-          // Reset posisi kamera normal saat berlari bebas
-          e.camera.position.x += (0 - e.camera.position.x) * (4.0 * dt);
-          e.camera.position.y += (e.cameraDefaultY - e.camera.position.y) * (4.0 * dt);
-          e.camera.position.z += (e.cameraDefaultZ - e.camera.position.z) * (4.0 * dt);
         }
       }
 
@@ -1004,18 +979,16 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
         portal.userData.coreDisc.scale.set(1.5, 1.5, 1.5);
       }
 
-      // Resume permainan secara otomatis setelah 1 detik animasi kemenangan
+      // Resume permainan secara responsif setelah animasi kilau kemenangan
       setTimeout(() => {
         if (portal) {
-          // Gerakkan portal melewati karakter
-          portal.position.z = 2.0;
+          portal.position.z = 2.5;
         }
-        e.isApproachingGate = false;
         e.speed = e.normalTargetSpeed;
         setGameState('playing');
         setCurrentQuestion(null);
         setQuestionResult(null);
-      }, 1000);
+      }, 650);
     } else {
       // JAWABAN SALAH!
       sounds.playWrong();
@@ -1090,9 +1063,8 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     } else {
       const e = engineRef.current;
       if (e.activeGateInWorld) {
-        e.activeGateInWorld.position.z = 2.0;
+        e.activeGateInWorld.position.z = 2.5;
       }
-      e.isApproachingGate = false;
       e.speed = e.normalTargetSpeed;
       setGameState('playing');
       setCurrentQuestion(null);
@@ -1161,7 +1133,6 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     e.nextGateDistance = GATE_INTERVAL;
     e.nextSpawnDistance = 25;
     e.gateCounter = 0;
-    e.isApproachingGate = false;
     e.lastTime = performance.now();
 
     // Bersihkan rintangan lama

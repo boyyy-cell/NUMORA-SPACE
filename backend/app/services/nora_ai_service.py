@@ -7,18 +7,17 @@ from backend.app.services.math_engine import MathEngine
 
 SYSTEM_PROMPT = """Kamu adalah NORA (Numerical Optimization and Reasoning Assistant), tutor AI pendamping pembelajaran matematika aljabar untuk siswa SMP Kelas VII di NUMORA Space.
 Karakter dan aturan pedagogis NORA:
-1. Ramah, hangat, menyemangati, dan sabar seperti kakak tutor yang suportif.
-2. Gunakan Bahasa Indonesia yang luwes, alami, dan mudah dipahami siswa SMP (hindari jargon yang terlalu rumit).
-3. Gunakan analogi konkret dalam menjelaskan konsep:
-   - Variabel: seperti sebuah wadah/kotak transparan yang bisa diisi sembarang bilangan.
-   - Koefisien: faktor pengali berapa wadah yang kita punya (tanda minus ikut melekat pada bilangannya).
-   - Konstanta: bilangan mandiri yang nilainya tetap tanpa variabel.
-   - Persamaan Aljabar: seperti timbangan neraca seimbang, di mana perlakuan adil di ruas kiri harus sama dengan ruas kanan.
-4. Kamu dapat menjawab pertanyaan matematika dari dasar hingga lanjut, dan juga pertanyaan umum di luar matematika (sains, teknologi, sejarah aljabar, atau topik umum lain) secara edukatif dan mudah dicerna.
-5. Pahami konteks percakapan sebelumnya untuk menjawab pertanyaan lanjutan secara konsisten.
-6. PENTING (Guardrail Asesmen): Jika siswa meminta membocorkan atau mengerjakan soal instrumen penelitian, pre-test, atau post-test mandiri, tolak secara halus dan berikan motivasi agar mereka mencoba sendiri demi kejujuran riset.
-7. Jika memberikan rumus matematika, tuliskan secara jelas atau gunakan format LaTeX jika relevan.
-8. Berikan penjelasan yang padat, terstruktur, dan tidak bertele-tele (sekitar 2–5 kalimat yang kaya makna)."""
+1. Ramah, to the point, langsung menjawab inti pertanyaan siswa terlebih dahulu sebelum memberi penjelasan tambahan.
+2. Gunakan Bahasa Indonesia yang alami, bersahabat, dan mudah dipahami siswa SMP.
+3. Hindari pengulangan salam (seperti "Halo!", "Senang sekali...") di setiap giliran pesan lanjutan. Langsung jawab pertanyaannya.
+4. Pahami konteks percakapan sebelumnya secara menyeluruh:
+   - Jika siswa bertanya "kenapa?", jelaskan langkah perhitungan dari jawaban sebelumnya.
+   - Jika siswa bertanya "kalau x = 5?", gunakan bentuk aljabar yang sedang dibahas sebelumnya dan hitung hasilnya.
+   - Jika siswa bertanya "kalau dikurangi 2?", jelaskan baik untuk hasil numerik maupun penyederhanaan aljabar, dan minta klarifikasi jika belum jelas.
+   - Jika siswa bertanya "itu hasilnya berapa", berikan hasil akhirnya secara langsung.
+5. Gunakan analogi konkret (seperti 'wadah penampung nilai' untuk variabel, 'timbangan seimbang' untuk persamaan).
+6. PENTING (Guardrail Asesmen): Tolak secara halus dan edukatif jika siswa meminta membocorkan atau mengerjakan soal pre-test / post-test instrumen penelitian demi kejujuran riset.
+7. Tidak bertele-tele dan tidak memberikan jawaban template umum jika siswa menanyakan hal spesifik."""
 
 
 class NoraAIService:
@@ -31,7 +30,7 @@ class NoraAIService:
         history = payload.history or []
 
         # 1. GUARDRAIL ASESMEN PENELITIAN (Strict Assessment Protection)
-        if any(k in msg_lower for k in ["pre-test", "post-test", "soal evaluasi riset", "bocorkan jawaban", "kunci jawaban tes"]):
+        if any(k in msg_lower for k in ["pre-test", "post-test", "soal evaluasi riset", "bocorkan jawaban", "kunci jawaban tes", "kunci jawaban post"]):
             reply = (
                 "Maaf ya, untuk instrumen penelitian atau tes mandiri (Pre-Test / Post-Test), "
                 "NORA tidak diperkenankan memberikan jawaban langsung. Ini penting agar Bapak/Ibu Peneliti "
@@ -49,11 +48,13 @@ class NoraAIService:
                 is_generative=False
             )
 
-        # 2. VERIFIED MATH ENGINE HOOK
-        # Periksa apakah ada ekspresi matematika aljabar untuk verifikasi kepastian numerik
-        verified_data = cls._verify_math_if_applicable(message)
+        # 2. EKSTRAKSI KONTEKS PERCAKAPAN LALU (Conversation Context Tracking)
+        context = cls._extract_conversation_context(history)
 
-        # 3. ATTEMPT GENERATIVE AI IF API KEY IS CONFIGURED
+        # 3. VERIFIED MATH ENGINE HOOK (Analisis Formula Aljabar di Pesan & Konteks)
+        verified_data = cls._verify_math_with_context(message, context)
+
+        # 4. JIKA GENERATIVE AI API TERSEDIA, GUNAKAN LLM
         if settings.GEMINI_API_KEY:
             try:
                 gen_reply, math_latex = await cls._call_gemini(message, history, verified_data)
@@ -69,8 +70,7 @@ class NoraAIService:
                         verified_math=verified_data,
                         is_generative=True
                     )
-            except Exception as e:
-                # Fallback to local adaptive engine gracefully
+            except Exception:
                 pass
 
         if settings.OPENAI_API_KEY:
@@ -88,44 +88,114 @@ class NoraAIService:
                         verified_math=verified_data,
                         is_generative=True
                     )
-            except Exception as e:
+            except Exception:
                 pass
 
-        # 4. ADAPTIVE SOCRATIC KNOWLEDGE ENGINE (High-Intelligence Dynamic Local Engine)
-        return cls._generate_adaptive_socratic_response(message, mode, tier, history, verified_data)
+        # 5. ADAPTIVE SOCRATIC KNOWLEDGE ENGINE (Deep Context Awareness)
+        return cls._generate_adaptive_socratic_response(message, mode, tier, history, context, verified_data)
 
     @classmethod
-    def _verify_math_if_applicable(cls, text: str) -> Optional[Dict[str, Any]]:
+    def _extract_conversation_context(cls, history: List[NoraMessage]) -> Dict[str, Any]:
         """
-        Mendeteksi formula aljabar dan memverifikasi perhitungan menggunakan MathEngine
+        Menyusuri riwayat percakapan dari belakang untuk mengekstrak bentuk aljabar,
+        nilai variabel x, hasil perhitungan terakhir, dan topik yang sedang dibahas.
+        """
+        ctx: Dict[str, Any] = {
+            "last_expression": None,
+            "last_x": None,
+            "last_result": None,
+            "last_topic": None,
+        }
+
+        for msg in reversed(history):
+            content = msg.content
+            cl = content.lower()
+
+            # Cari nilai x
+            if ctx["last_x"] is None:
+                xm = re.search(r"x\s*=\s*(-?\d+(?:\.\d+)?)", cl)
+                if xm:
+                    try:
+                        ctx["last_x"] = float(xm.group(1))
+                    except ValueError:
+                        pass
+
+            # Cari ekspresi aljabar (seperti 3x + 5, 5x, -3x, 4x + 6, 7x - 4)
+            if ctx["last_expression"] is None:
+                # Bersihkan bagian 'x = N' agar tidak rancu
+                no_x_val = re.sub(r"x\s*=\s*-?\d+", "", cl)
+                em = re.search(r"([+-]?\s*\d*x(?:\s*[+-]\s*\d+)?)", no_x_val)
+                if em:
+                    cand = em.group(1).replace(" ", "")
+                    # Pastikan ekspresi valid aljabar
+                    if len(cand) >= 2 and "x" in cand:
+                        ctx["last_expression"] = cand
+
+            # Cari angka hasil perhitungan
+            if ctx["last_result"] is None:
+                rm = re.search(r"(?:hasilnya\s*(?:adalah|=)?|hasil\s*=\s*|=\s*|\badalah\s*)(-?\d+(?:\.\d+)?)", cl)
+                if rm:
+                    try:
+                        ctx["last_result"] = float(rm.group(1))
+                    except ValueError:
+                        pass
+
+            # Cari topik
+            if ctx["last_topic"] is None:
+                if "koefisien" in cl:
+                    ctx["last_topic"] = "koefisien"
+                elif "variabel" in cl:
+                    ctx["last_topic"] = "variabel"
+                elif "konstanta" in cl:
+                    ctx["last_topic"] = "konstanta"
+                elif any(k in cl for k in ["persamaan", "neraca", "timbangan", "seimbang"]):
+                    ctx["last_topic"] = "persamaan"
+
+        return ctx
+
+    @classmethod
+    def _verify_math_with_context(cls, text: str, context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Mendeteksi formula aljabar pada pesan terkini atau memanfaatkan konteks percakapan sebelumnya.
         """
         tl = text.lower()
 
-        # Deteksi nilai x jika ada: misal "x = 4" atau "x = -2"
+        # 1. Cari apakah ada nilai x pada pesan saat ini
         x_match = re.search(r"x\s*=\s*(-?\d+)", tl)
-        if x_match:
-            x_val = float(x_match.group(1))
-            # Hapus bagian 'x = N' dari string agar tidak tertukar dengan variabel aljabar
-            cleaned = re.sub(r"x\s*=\s*-?\d+", "", tl)
-            expr_match = re.search(r"([+-]?\s*\d*x(?:\s*[+-]\s*\d+)?)", cleaned)
-            if expr_match:
-                expr_candidate = expr_match.group(1).replace(" ", "")
-                if len(expr_candidate) >= 2:
-                    try:
-                        eval_res = MathEngine.evaluate_linear_expression(expr_candidate, {"x": x_val})
-                        return {
-                            "type": "substitution",
-                            "expression": expr_candidate,
-                            "x": x_val,
-                            "result": eval_res.result,
-                            "latex": eval_res.formatted_latex,
-                            "steps": [s.description for s in eval_res.steps]
-                        }
-                    except Exception:
-                        pass
+        current_x = float(x_match.group(1)) if x_match else None
 
-        # Pola koefisien spesifik
-        coeff_match = re.search(r"koefisien\s*(?:dari|pada)?\s*([+-]?\d*)x", text.lower())
+        # 2. Cari apakah ada ekspresi aljabar pada pesan saat ini
+        cleaned = re.sub(r"x\s*=\s*-?\d+", "", tl) if x_match else tl
+        expr_match = re.search(r"([+-]?\s*\d*x(?:\s*[+-]\s*\d+)?)", cleaned)
+        current_expr = None
+        if expr_match:
+            cand = expr_match.group(1).replace(" ", "")
+            if len(cand) >= 2 and "x" in cand:
+                current_expr = cand
+
+        # Resolusi: jika salah satu ada di pesan saat ini dan pasangannya ada di konteks
+        eval_expr = current_expr or context.get("last_expression")
+        eval_x = current_x if current_x is not None else context.get("last_x")
+
+        # Jika pengguna menyebut x baru (misal "Kalau x = 5?"), gunakan eval_expr dari konteks!
+        if eval_expr and eval_x is not None:
+            # Hanya jalankan jika pesan saat ini memuat x atau memuat ekspresi aljabar
+            if current_x is not None or current_expr is not None:
+                try:
+                    eval_res = MathEngine.evaluate_linear_expression(eval_expr, {"x": eval_x})
+                    return {
+                        "type": "substitution",
+                        "expression": eval_expr,
+                        "x": eval_x,
+                        "result": eval_res.result,
+                        "latex": eval_res.formatted_latex,
+                        "steps": [s.description for s in eval_res.steps]
+                    }
+                except Exception:
+                    pass
+
+        # 3. Deteksi pertanyaan koefisien spesifik
+        coeff_match = re.search(r"koefisien\s*(?:dari|pada)?\s*([+-]?\d*)x", tl)
         if coeff_match:
             raw_c = coeff_match.group(1).replace(" ", "")
             if raw_c in ("", "+"):
@@ -151,25 +221,22 @@ class NoraAIService:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.DEFAULT_AI_MODEL}:generateContent?key={settings.GEMINI_API_KEY}"
         
         contents = []
-        # Tambahkan instruksi sistem
         contents.append({
             "role": "user",
             "parts": [{"text": f"SYSTEM INSTRUCTION: {SYSTEM_PROMPT}"}]
         })
         contents.append({
             "role": "model",
-            "parts": [{"text": "Dimengerti. Saya NORA, tutor pendamping aljabar SMP Kelas VII yang ramah, analogis, dan akurat."}]
+            "parts": [{"text": "Dimengerti. Saya NORA, asisten AI percakapan terbuka yang to-the-point, memahami konteks riwayat obrolan, dan akurat secara matematis."}]
         })
 
-        # Tambahkan history percakapan
-        for h in history[-8:]:
+        for h in history[-10:]:
             role = "user" if h.role == "user" else "model"
             contents.append({"role": role, "parts": [{"text": h.content}]})
 
-        # Tambahkan verified math context jika ada
         user_prompt = message
         if verified:
-            user_prompt += f"\n[CATATAN MESIN MATEMATIKA TERVERIFIKASI: Hasil perhitungan terbukti matematis adalah {verified}. Pastikan penjelasanmu konsisten dengan hasil ini.]"
+            user_prompt += f"\n[CATATAN MESIN MATEMATIKA TERVERIFIKASI: Hasil perhitungan terbukti matematis adalah {verified}. Pastikan jawabanmu konsisten dengan hasil ini.]"
 
         contents.append({"role": "user", "parts": [{"text": user_prompt}]})
 
@@ -178,7 +245,6 @@ class NoraAIService:
             if resp.status_code == 200:
                 data = resp.json()
                 text = data["candidates"][0]["content"]["parts"][0]["text"]
-                # Ekstrak LaTeX jika ada tanda $$ atau $
                 latex_match = re.search(r"\$([^$]+)\$", text)
                 latex = latex_match.group(1) if latex_match else None
                 return text.strip(), latex
@@ -191,12 +257,12 @@ class NoraAIService:
         headers = {"Authorization": f"Bearer {settings.OPENAI_API_KEY}"}
 
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        for h in history[-8:]:
+        for h in history[-10:]:
             messages.append({"role": "user" if h.role == "user" else "assistant", "content": h.content})
 
         user_content = message
         if verified:
-            user_content += f"\n[VERIFIED MATH ENGINE: Perhitungan terverifikasi adalah {verified}. Gunakan hasil ini.]"
+            user_content += f"\n[VERIFIED MATH ENGINE: Perhitungan terverifikasi adalah {verified}.]"
         messages.append({"role": "user", "content": user_content})
 
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -221,88 +287,237 @@ class NoraAIService:
         mode: str,
         tier: int,
         history: List[NoraMessage],
+        context: Dict[str, Any],
         verified: Optional[Dict[str, Any]]
     ) -> NoraChatResponse:
         """
-        Adaptive local engine yang meniru percakapan terbuka multi-turn dengan pemahaman konteks aljabar SMP dan pengetahuan umum.
+        Adaptive engine multi-turn dengan fokus pada jawaban langsung, relevan,
+        dan pemahaman konteks pertanyaan sebelumnya.
         """
         msg_l = message.lower().strip()
-        last_user_msgs = [h.content.lower() for h in history if h.role == "user"]
-        last_bot_msgs = [h.content.lower() for h in history if h.role in ("assistant", "nora")]
+        is_first_turn = (len(history) == 0)
 
-        # Kasus 1: Pertanyaan umum tentang kemampuan NORA di luar matematika
+        # KASUS A: PERTANYAAN LANJUTAN "KENAPA?" / "MENGAPA?" / "DARI MANA HASILNYA?"
+        if any(msg_l == k or msg_l.startswith(k + " ") or msg_l.endswith(" " + k) or msg_l == (k + "?") for k in ["kenapa", "mengapa", "kok bisa", "dari mana", "jelaskan caranya", "cara hitungnya"]):
+            last_expr = context.get("last_expression")
+            last_x = context.get("last_x")
+            last_res = context.get("last_result")
+
+            if last_expr and last_x is not None:
+                x_str = str(int(last_x)) if last_x.is_integer() else str(last_x)
+                res_str = str(int(last_res)) if (last_res is not None and last_res.is_integer()) else (str(last_res) if last_res is not None else "")
+                
+                # Evaluasi langkah-langkah
+                try:
+                    eval_res = MathEngine.evaluate_linear_expression(last_expr, {"x": last_x})
+                    res_val = int(eval_res.result) if eval_res.result.is_integer() else eval_res.result
+                    reply = (
+                        f"Karena pada bentuk {last_expr}, kita mengganti nilai variabel x dengan {x_str}.\n\n"
+                        f"Langkah perhitungannya:\n"
+                        f"1. Kalikan terlebih dahulu: suku aljabarnya dihitung ({last_expr.replace('x', f' × {x_str}')})\n"
+                        f"2. Jumlahkan atau selesaikan operasinya sehingga menghasilkan {res_val}."
+                    )
+                    return NoraChatResponse(
+                        reply=reply,
+                        mode_used=mode,
+                        math_latex=eval_res.formatted_latex,
+                        voice_spoken_text=f"Karena variabel x kita ganti dengan {x_str}, lalu dikalikan dan dijumlahkan sehingga hasilnya {res_val}.",
+                        hint_tier=tier,
+                        demo_mode=True,
+                        is_generative=False
+                    )
+                except Exception:
+                    pass
+
+            # Jika konteks adalah koefisien
+            if context.get("last_topic") == "koefisien":
+                reply = (
+                    "Karena koefisien adalah faktor pengali yang melekat langsung di depan variabel. "
+                    "Jika di depan angka terdapat tanda negatif (-), maka tanda tersebut adalah bagian utuh dari koefisiennya."
+                )
+                return NoraChatResponse(
+                    reply=reply,
+                    mode_used=mode,
+                    math_latex=None,
+                    voice_spoken_text="Karena koefisien adalah faktor pengali di depan variabel, dan tanda negatif ikut melekat padanya.",
+                    hint_tier=tier,
+                    demo_mode=True,
+                    is_generative=False
+                )
+
+        # KASUS B: PERTANYAAN LANJUTAN DENGAN OPERASI ("Kalau dikurangi 2?", "Gimana kalau ditambah 3?")
+        op_match = re.search(r"(?:kalau|bagaimana kalau|gimana kalau)?\s*(dikurangi|ditambah|dikali|dibagi)\s*(\d+)", msg_l)
+        if op_match:
+            op_type = op_match.group(1)
+            op_num = float(op_match.group(2))
+            op_num_str = str(int(op_num)) if op_num.is_integer() else str(op_num)
+
+            last_res = context.get("last_result")
+            last_expr = context.get("last_expression")
+
+            if last_res is not None:
+                res_int = int(last_res) if last_res.is_integer() else last_res
+                if op_type == "dikurangi":
+                    new_val = last_res - op_num
+                    op_symbol = "-"
+                elif op_type == "ditambah":
+                    new_val = last_res + op_num
+                    op_symbol = "+"
+                elif op_type == "dikali":
+                    new_val = last_res * op_num
+                    op_symbol = "×"
+                else:
+                    new_val = last_res / op_num if op_num != 0 else last_res
+                    op_symbol = "÷"
+
+                new_val_str = str(int(new_val)) if new_val.is_integer() else str(new_val)
+
+                reply = (
+                    f"Tergantung bagian mana yang dimaksud:\n\n"
+                    f"1. Jika hasil sebelumnya ({res_int}) {op_type} {op_num_str}, maka nilainya adalah {new_val_str} ({res_int} {op_symbol} {op_num_str} = {new_val_str}).\n"
+                )
+                if last_expr:
+                    reply += (
+                        f"2. Jika yang dimaksud adalah bentuk aljabarnya ({last_expr}) {op_symbol} {op_num_str}, "
+                        f"maka konstantanya dioperasikan dengan {op_num_str}.\n\n"
+                        f"Apakah yang kamu maksud adalah operasi pada hasil akhirnya atau pada bentuk aljabarnya?"
+                    )
+                return NoraChatResponse(
+                    reply=reply,
+                    mode_used=mode,
+                    math_latex=f"{res_int} {op_symbol} {op_num_str} = {new_val_str}",
+                    voice_spoken_text=f"Jika hasil sebelumnya {op_type} {op_num_str}, maka nilainya adalah {new_val_str}.",
+                    hint_tier=tier,
+                    demo_mode=True,
+                    is_generative=False
+                )
+
+        # KASUS C: PERHITUNGAN TERVERIFIKASI (Langsung Jawab Inti Hasilnya!)
+        if verified and verified["type"] == "substitution":
+            expr = verified["expression"]
+            x = verified["x"]
+            res = int(verified["result"]) if verified["result"].is_integer() else verified["result"]
+            x_str = str(int(x)) if x.is_integer() else str(x)
+
+            reply = (
+                f"Hasilnya adalah {res}.\n\n"
+                f"Penjelasannya: kita substitusi x = {x_str} ke dalam {expr}:\n"
+                f"{expr.replace('x', f'({x_str})')} = {res}."
+            )
+            return NoraChatResponse(
+                reply=reply,
+                mode_used=mode,
+                math_latex=verified["latex"],
+                voice_spoken_text=f"Hasilnya adalah {res}. Didapat dari memasukkan nilai x sama dengan {x_str} ke bentuk {expr}.",
+                hint_tier=tier,
+                demo_mode=True,
+                verified_math=verified,
+                is_generative=False
+            )
+
+        # KASUS D: PERTANYAAN "ITU HASILNYA BRP?" / "BERAPA HASILNYA?"
+        if any(k in msg_l for k in ["hasilnya brp", "hasilnya berapa", "berapa hasilnya", "jadi berapa hasilnya", "berapa nilainya"]):
+            last_res = context.get("last_result")
+            last_expr = context.get("last_expression")
+            last_x = context.get("last_x")
+
+            if last_res is not None:
+                res_str = str(int(last_res)) if last_res.is_integer() else str(last_res)
+                reply = f"Hasilnya adalah {res_str}."
+                if last_expr and last_x is not None:
+                    x_str = str(int(last_x)) if last_x.is_integer() else str(last_x)
+                    reply += f" (didapat dari evaluasi {last_expr} dengan x = {x_str})."
+                return NoraChatResponse(
+                    reply=reply,
+                    mode_used=mode,
+                    math_latex=f"{last_expr} = {res_str}" if last_expr else None,
+                    voice_spoken_text=f"Hasilnya adalah {res_str}.",
+                    hint_tier=tier,
+                    demo_mode=True,
+                    is_generative=False
+                )
+            else:
+                reply = "Bisa sebutkan bentuk aljabar dan nilai x yang ingin kamu hitung hasilnya?"
+                return NoraChatResponse(
+                    reply=reply,
+                    mode_used=mode,
+                    math_latex=None,
+                    voice_spoken_text=reply,
+                    hint_tier=tier,
+                    demo_mode=True,
+                    is_generative=False
+                )
+
+        # KASUS E: PERTANYAAN UMUM DI LUAR MATEMATIKA
         if any(k in msg_l for k in ["di luar matematika", "bisa jawab apa saja", "topik lain", "selain matematika", "bisa bantu yang lain"]):
             reply = (
                 "Tentu saja! Selain matematika aljabar, kamu bisa berdiskusi tentang sains, teknologi, "
                 "sejarah peradaban (seperti asal-usul aljabar oleh ilmuwan Al-Khawarizmi), cara kerja komputer, "
-                "atau rasa ingin tahu umum lainnya. Aku siap membantu menjelaskannya dengan bahasa yang asyik dan mudah kamu pahami."
+                "atau topik umum lainnya. Aku siap membantu menjelaskannya dengan bahasa yang mudah kamu pahami."
             )
             return NoraChatResponse(
                 reply=reply,
                 mode_used=mode,
                 math_latex=None,
-                voice_spoken_text="Tentu saja! Selain matematika aljabar, kamu bisa berdiskusi tentang sains, teknologi, sejarah, atau rasa ingin tahu umum lainnya.",
+                voice_spoken_text="Tentu saja! Selain matematika aljabar, kamu bisa berdiskusi tentang sains, teknologi, atau topik umum lainnya.",
                 hint_tier=tier,
                 demo_mode=True,
                 is_generative=False
             )
 
-        # Kasus 2: Sapaan atau Perkenalan
-        if any(msg_l.startswith(k) for k in ["halo", "hai", "assalamu", "pagi", "siang", "sore", "malam", "nora!"]):
+        # KASUS F: SAPAAN HANYA PADA AWAL SESI
+        if is_first_turn and any(msg_l.startswith(k) for k in ["halo", "hai", "assalamu", "pagi", "siang", "sore", "malam"]):
             reply = (
-                "Halo! Senang sekali bisa belajar bersamamu di NUMORA Space. 👋\n"
-                "Ada konsep aljabar yang membuatmu penasaran hari ini? Misalnya tentang apa itu variabel, koefisien, "
-                "atau cara menyeimbangkan persamaan di neraca? Tanyakan saja dengan kata-katamu sendiri ya!"
+                "Halo! Aku NORA, tutor pendamping aljabar untukmu di NUMORA Space. 👋\n\n"
+                "Kamu bisa bertanya bebas tentang variabel, koefisien, konstanta, atau cara menyeimbangkan persamaan di neraca. "
+                "Apa yang ingin kamu pelajari hari ini?"
             )
             return NoraChatResponse(
                 reply=reply,
                 mode_used=mode,
                 math_latex="3x + 5 = 17",
-                voice_spoken_text="Halo! Senang sekali bisa belajar bersamamu di NUMORA Space. Ada konsep aljabar yang ingin kamu diskusikan hari ini?",
+                voice_spoken_text="Halo! Aku NORA, tutor aljabar di NUMORA Space. Apa yang ingin kamu diskusikan hari ini?",
                 hint_tier=tier,
                 demo_mode=True,
                 is_generative=False
             )
 
-        # Kasus 3: Pertanyaan Lanjutan Konfirmasi ("Berarti kalau 5x koefisiennya 5?", "kalau -3x koefisiennya -3?")
-        if "berarti kalau" in msg_l or "apakah kalau" in msg_l or "gimana kalau" in msg_l:
+        # KASUS G: PERTANYAAN KONFIRMASI KOEFISIEN ("Berarti kalau 5x koefisiennya 5?", "kalau -3x?")
+        if "berarti kalau" in msg_l or "apakah kalau" in msg_l or "gimana kalau" in msg_l or "kalau 5x" in msg_l or "kalau -3x" in msg_l:
             if "5x" in msg_l and ("5" in msg_l or "koefisien" in msg_l):
                 reply = (
-                    "Tepat sekali! Hebat! 🌟 Pada bentuk 5x, angka 5 mengalikan variabel x, sehingga koefisiennya adalah 5. "
-                    "Artinya kamu memiliki 5 buah wadah nilai x. Sangat cepat kamu memahaminya!"
+                    "Betul sekali! 🌟 Pada bentuk 5x, angka 5 mengalikan variabel x, sehingga koefisiennya adalah 5."
                 )
                 return NoraChatResponse(
                     reply=reply,
                     mode_used=mode,
                     math_latex="5x \\implies a = 5",
-                    voice_spoken_text="Tepat sekali! Pada bentuk 5x, angka 5 mengalikan variabel x, sehingga koefisiennya adalah 5.",
+                    voice_spoken_text="Betul sekali! Pada bentuk 5x, koefisiennya adalah 5.",
                     hint_tier=tier,
                     demo_mode=True,
                     is_generative=False
                 )
             if "-3x" in msg_l:
                 reply = (
-                    "Betul sekali! Pada -3x, tanda negatif melekat erat pada angkanya. "
-                    "Maka koefisiennya adalah -3, bukan 3. Tanda positif atau negatif selalu menjadi kesatuan dengan bilangannya."
+                    "Tepat! Pada -3x, tanda negatif melekat erat pada angkanya. Maka koefisiennya adalah -3, bukan 3."
                 )
                 return NoraChatResponse(
                     reply=reply,
                     mode_used=mode,
                     math_latex="-3x \\implies a = -3",
-                    voice_spoken_text="Betul sekali! Pada negatif 3x, tanda negatif melekat pada angkanya, sehingga koefisiennya adalah negatif 3.",
+                    voice_spoken_text="Tepat! Pada negatif 3x, koefisiennya adalah negatif 3.",
                     hint_tier=tier,
                     demo_mode=True,
                     is_generative=False
                 )
 
-        # Kasus 4: Pertanyaan tentang Koefisien
+        # KASUS H: PERTANYAAN TENTANG KOEFISIEN
         if "koefisien" in msg_l:
-            # Sub-kasus khusus -5x (Mandated Test Case)
             if "-5x" in msg_l:
                 if mode == "hint":
                     if tier == 1:
                         reply = "💡 [Petunjuk Tahap 1]: Ingat kembali, koefisien adalah bilangan atau angka yang menempel tepat di depan huruf variabel."
-                        speech = "Ingat kembali, koefisien adalah bilangan yang menempel tepat di depan huruf variabel."
+                        speech = "Koefisien adalah bilangan yang menempel tepat di depan huruf variabel."
                     elif tier == 2:
                         reply = "💡 [Petunjuk Tahap 2]: Perhatikan apakah ada tanda khusus seperti tanda tambah (+) atau tanda kurang/negatif (-) di depan angkanya."
                         speech = "Perhatikan apakah ada tanda tambah atau tanda negatif di depan angkanya."
@@ -314,7 +529,7 @@ class NoraAIService:
                         "Pada bentuk -5x, koefisiennya adalah -5, bukan 5. Tanda negatif di depan angka merupakan "
                         "bagian utuh yang melekat pada koefisien pengali variabel x tersebut."
                     )
-                    speech = "Pada bentuk negatif 5x, koefisiennya adalah negatif 5, bukan 5. Tanda negatif melekat pada angkanya."
+                    speech = "Pada bentuk negatif 5x, koefisiennya adalah negatif 5, bukan 5."
                 return NoraChatResponse(
                     reply=reply,
                     mode_used=mode,
@@ -327,109 +542,85 @@ class NoraAIService:
             else:
                 reply = (
                     "Koefisien adalah angka atau bilangan pengali yang berada tepat di depan variabel. "
-                    "Contohnya pada bentuk 3x + 5, angka 3 merupakan koefisien dari x karena mengalikan nilai x sebanyak 3 kali."
+                    "Contohnya pada bentuk 3x + 5, angka 3 merupakan koefisien dari x karena melipatgandakan nilai x sebanyak 3 kali."
                 )
                 return NoraChatResponse(
                     reply=reply,
                     mode_used=mode,
                     math_latex="3x \\implies a = 3",
-                    voice_spoken_text="Koefisien adalah angka pengali yang berada di depan variabel. Pada 3x, angka 3 merupakan koefisiennya.",
+                    voice_spoken_text="Koefisien adalah bilangan pengali di depan variabel. Pada 3x, angka 3 merupakan koefisiennya.",
                     hint_tier=tier,
                     demo_mode=True,
                     is_generative=False
                 )
 
-        # Kasus 5: Pertanyaan tentang Variabel
+        # KASUS I: PERTANYAAN TENTANG VARIABEL
         if "variabel" in msg_l or "apa itu x" in msg_l or "kenapa huruf" in msg_l:
             reply = (
                 "Variabel adalah lambang atau huruf (seperti x, y, atau a) yang digunakan untuk mewakili "
-                "suatu nilai bilangan yang belum diketahui pasti atau nilainya dapat berubah-ubah. "
-                "Bayangkan variabel seperti wadah atau kotak tertutup: kita bisa memasukkan bilangan berapa pun ke dalamnya untuk melihat hasilnya!"
+                "suatu nilai yang belum diketahui atau nilainya dapat berubah-ubah. "
+                "Bayangkan variabel seperti wadah penampung: kita bisa memasukkan bilangan berapa pun ke dalamnya!"
             )
             return NoraChatResponse(
                 reply=reply,
                 mode_used=mode,
                 math_latex="x \\in \\mathbb{R}",
-                voice_spoken_text="Variabel adalah lambang atau huruf yang mewakili suatu nilai yang belum diketahui atau dapat berubah.",
+                voice_spoken_text="Variabel adalah lambang atau huruf yang mewakili nilai yang belum diketahui atau dapat berubah.",
                 hint_tier=tier,
                 demo_mode=True,
                 is_generative=False
             )
 
-        # Kasus 6: Pertanyaan tentang Konstanta
+        # KASUS J: PERTANYAAN TENTANG KONSTANTA
         if "konstanta" in msg_l:
             reply = (
                 "Konstanta adalah suku aljabar yang berupa bilangan mandiri yang berdiri sendiri tanpa variabel pengali. "
-                "Contohnya pada bentuk 3x + 7, angka 7 adalah konstanta karena nilainya tetap konstan dan tidak terpengaruh perubahan nilai x."
+                "Contohnya pada 3x + 7, angka 7 adalah konstanta karena nilainya tetap konstan."
             )
             return NoraChatResponse(
                 reply=reply,
                 mode_used=mode,
                 math_latex="3x + 7 \\implies c = 7",
-                voice_spoken_text="Konstanta adalah bilangan mandiri yang nilainya tetap tanpa variabel. Pada 3x tambah 7, angka 7 adalah konstanta.",
+                voice_spoken_text="Konstanta adalah bilangan mandiri yang nilainya tetap tanpa variabel.",
                 hint_tier=tier,
                 demo_mode=True,
                 is_generative=False
             )
 
-        # Kasus 7: Perhitungan Aljabar Terverifikasi
-        if verified:
-            if verified["type"] == "substitution":
-                expr = verified["expression"]
-                x = verified["x"]
-                res = verified["result"]
-                reply = (
-                    f"Mari kita hitung bersama dengan teliti! 🔍\n"
-                    f"Untuk mengevaluasi bentuk {expr} dengan nilai x = {x}:\n"
-                    f"1. Ganti huruf x dengan angka ({x}): {expr.replace('x', f'({x})')}\n"
-                    f"2. Kalikan koefisiennya terlebih dahulu, lalu selesaikan penambahan/pengurangannya.\n"
-                    f"Maka hasilnya adalah {res}!"
-                )
-                return NoraChatResponse(
-                    reply=reply,
-                    mode_used=mode,
-                    math_latex=verified["latex"],
-                    voice_spoken_text=f"Hasil substitusi bentuk aljabar untuk x sama dengan {x} adalah {res}.",
-                    hint_tier=tier,
-                    demo_mode=True,
-                    verified_math=verified,
-                    is_generative=False
-                )
-
-        # Kasus 8: Persamaan Neraca / Timbangan
+        # KASUS K: PERSAMAAN NERACA / TIMBANGAN
         if any(k in msg_l for k in ["timbangan", "neraca", "seimbang", "persamaan", "ruas kiri"]):
             reply = (
-                "Persamaan linear aljabar bekerja persis seperti timbangan neraca dua lengan yang seimbang! ⚖️\n"
-                "Kuncinya adalah prinsip keadilan: apa pun operasi yang kamu lakukan pada ruas kiri (ditambah, dikurang, atau dibagi), "
-                "kamu harus melakukan operasi yang sama pada ruas kanan agar timbangan tetap seimbang."
+                "Persamaan aljabar bekerja persis seperti timbangan neraca seimbang! ⚖️\n"
+                "Prinsip utamanya adalah keadilan: operasi apa pun yang kamu lakukan di ruas kiri (misal dikurangi 4), "
+                "harus kamu lakukan juga di ruas kanan agar timbangan tetap seimbang."
             )
             return NoraChatResponse(
                 reply=reply,
                 mode_used=mode,
                 math_latex="2x + 4 = 12 \\iff 2x = 8 \\iff x = 4",
-                voice_spoken_text="Persamaan linear bekerja persis seperti timbangan neraca seimbang. Perlakuan pada ruas kiri harus sama dengan ruas kanan.",
+                voice_spoken_text="Persamaan aljabar bekerja persis seperti timbangan neraca seimbang. Perlakuan ruas kiri harus sama dengan ruas kanan.",
                 hint_tier=tier,
                 demo_mode=True,
                 is_generative=False
             )
 
-        # Kasus 9: Topik Umum Sains/Sejarah
-        if any(k in msg_l for k in ["khawarizmi", "sejarah", "siapa penemu", "asal usul"]):
+        # KASUS L: TOPIK UMUM SEJARAH AL-KHAWARIZMI
+        if any(k in msg_l for k in ["khawarizmi", "sejarah aljabar", "penemu aljabar", "asal usul"]):
             reply = (
-                "Aljabar berasal dari kata Arab 'Al-Jabr' yang dipopulerkan oleh ilmuwan besar bernama Muhammad bin Musa Al-Khawarizmi pada abad ke-9. "
-                "Al-Jabr bermakna 'mengembalikan atau menyeimbangkan', persis seperti cara kita menyeimbangkan kedua ruas persamaan hingga hari ini!"
+                "Aljabar berasal dari kata Arab 'Al-Jabr' dari kitab karya ilmuwan Muhammad bin Musa Al-Khawarizmi pada abad ke-9. "
+                "Al-Jabr bermakna 'mengembalikan atau menyeimbangkan', persis seperti menyeimbangkan kedua ruas persamaan hingga saat ini."
             )
             return NoraChatResponse(
                 reply=reply,
                 mode_used=mode,
                 math_latex=None,
-                voice_spoken_text="Aljabar berasal dari kata Arab Al-Jabr yang dipopulerkan ilmuwan Al-Khawarizmi, yang berarti menyeimbangkan.",
+                voice_spoken_text="Aljabar berasal dari kata Al-Jabr karya ilmuwan Al-Khawarizmi yang bermakna menyeimbangkan.",
                 hint_tier=tier,
                 demo_mode=True,
                 is_generative=False
             )
 
-        # Kasus 10: Mode Petunjuk (Hint) Sesuai Permintaan Spesifik
+        # KASUS M: PANDUAN PETUNJUK (HINT MODE)
         if mode == "hint":
             hints = {
                 1: "💡 [Petunjuk Tahap 1 - Panduan Ringan]: Identifikasi dulu mana komponen variabel (wadah nilai) dan mana angka tetapnya.",
@@ -447,38 +638,16 @@ class NoraAIService:
                 is_generative=False
             )
 
-        if mode == "ask":
-            return NoraChatResponse(
-                reply="❓ Pertanyaan NORA untukmu:\nJika kita memiliki bentuk aljabar 4x + 6, apa yang akan terjadi dengan nilai keseluruhannya jika nilai x kita perbesar dari 1 menjadi 5? Coba jelaskan alasannya!",
-                mode_used="ask",
-                math_latex="4x + 6",
-                voice_spoken_text="Pertanyaan NORA untukmu: Jika kita memiliki bentuk 4x tambah 6, apa yang terjadi jika x diperbesar?",
-                socratic_question="Apa hubungan kenaikan x terhadap nilai total bentuk aljabar?",
-                demo_mode=True,
-                is_generative=False
-            )
-
-        if mode == "review":
-            return NoraChatResponse(
-                reply="🎯 [Review Pemahaman Konsep]:\nMari kita ulas bersama:\n1. Variabel ($x$) = wadah yang bisa diisi sembarang angka.\n2. Koefisien ($a$) = faktor pengali berapa kali wadah dilipatgandakan.\n3. Konstanta ($b$) = angka mandiri yang tetap nilainya.\nApakah ada bagian yang ingin kamu diskusikan lagi?",
-                mode_used="review",
-                math_latex="ax + b",
-                voice_spoken_text="Mari kita ulas bersama: variabel adalah wadah nilai, koefisien adalah faktor pengalinya, dan konstanta adalah nilai tetap.",
-                demo_mode=True,
-                is_generative=False
-            )
-
-        # Default Natural Conversational Explanation
+        # JAWABAN UMUM DIRECT & EDUKATIF
         reply = (
-            f"Pertanyaan yang sangat bagus! Mengenai '{message}', dalam matematika aljabar kita memodelkan persoalan nyata ke dalam lambang bilangan. "
-            "Setiap simbol memiliki peran teratur agar kita bisa menemukan solusi secara logis. "
-            "Apakah ada contoh soal tertentu yang ingin kamu pecahkan bersama NORA?"
+            f"Mengenai '{message}', dalam aljabar kita memodelkan persoalan nyata ke dalam lambang matematika yang terstruktur. "
+            "Apakah ada contoh soal aljabar tertentu yang ingin kamu hitung bersama NORA?"
         )
         return NoraChatResponse(
             reply=reply,
             mode_used=mode,
             math_latex="ax + b = c",
-            voice_spoken_text=f"Pertanyaan yang bagus! Dalam aljabar kita memodelkan persoalan nyata ke dalam simbol yang logis.",
+            voice_spoken_text="Dalam aljabar kita memodelkan persoalan nyata ke dalam lambang terstruktur. Ada soal yang ingin dihitung bersama?",
             hint_tier=tier,
             demo_mode=True,
             is_generative=False
@@ -486,7 +655,6 @@ class NoraAIService:
 
     @staticmethod
     def _clean_speech_text(text: str) -> str:
-        # Bersihkan markdown formatting untuk suara text-to-speech yang mulus
         clean = re.sub(r"[\*\_#`]", "", text)
         clean = re.sub(r"\$[^$]+\$", "rumus aljabar", clean)
         return clean[:200]

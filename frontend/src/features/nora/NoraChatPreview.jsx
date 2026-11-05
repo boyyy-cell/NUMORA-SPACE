@@ -46,10 +46,12 @@ export default function NoraChatPreview({ compact = false }) {
   const [hintTier, setHintTier] = useState(1);
   const [isTyping, setIsTyping] = useState(false);
   const [activeSpeakingId, setActiveSpeakingId] = useState(null);
-  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
@@ -140,10 +142,16 @@ export default function NoraChatPreview({ compact = false }) {
     }
   };
 
+  const handleSubmit = (e) => {
+    e?.preventDefault();
+    if (!inputValue.trim() || isTyping) return;
+    handleSend();
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSubmit(e);
     }
   };
 
@@ -234,7 +242,7 @@ export default function NoraChatPreview({ compact = false }) {
       </div>
 
       {/* Messages Stream */}
-      <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 text-sm bg-[#FBFBFA]/60">
+      <div ref={chatContainerRef} className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 text-sm bg-[#FBFBFA]/60">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -324,8 +332,6 @@ export default function NoraChatPreview({ compact = false }) {
             </div>
           </div>
         )}
-
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Quick Prompts Suggestions (Jika pesan masih sedikit) */}
@@ -337,6 +343,7 @@ export default function NoraChatPreview({ compact = false }) {
           {QUICK_PROMPTS.map((prompt, i) => (
             <button
               key={i}
+              type="button"
               onClick={() => handleSend(prompt)}
               className="px-3 py-1 rounded-full bg-pure-white border border-border-clean text-charcoal hover:border-forest hover:bg-forest/5 text-[11px] whitespace-nowrap transition"
             >
@@ -347,7 +354,7 @@ export default function NoraChatPreview({ compact = false }) {
       )}
 
       {/* Free-form Chat Input Bar */}
-      <div className="p-3 sm:p-4 bg-pure-white border-t border-border-clean">
+      <form onSubmit={handleSubmit} className="p-3 sm:p-4 bg-pure-white border-t border-border-clean">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -355,11 +362,11 @@ export default function NoraChatPreview({ compact = false }) {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isTyping}
-            placeholder="Ketik pertanyaan bebas untuk NORA (misal: 'Apa bedanya variabel dan konstanta?')..."
+            placeholder="Ketik pertanyaan bebas untuk NORA (misal: 'Jika x = 4, berapa hasil 3x + 5?')..."
             className="flex-1 bg-ivory border border-border-clean rounded-2xl px-4 py-3 text-xs sm:text-sm text-charcoal placeholder-secondary-text/70 focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest transition"
           />
           <button
-            onClick={() => handleSend()}
+            type="submit"
             disabled={!inputValue.trim() || isTyping}
             className="px-5 py-3 rounded-2xl bg-forest hover:bg-forest-600 text-pure-white font-bold text-xs sm:text-sm transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 shadow-subtle shrink-0"
           >
@@ -367,7 +374,7 @@ export default function NoraChatPreview({ compact = false }) {
             <span className="hidden sm:inline">Kirim</span>
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

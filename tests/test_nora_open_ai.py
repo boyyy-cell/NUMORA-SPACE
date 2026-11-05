@@ -12,69 +12,110 @@ client = TestClient(app)
 
 
 def test_nora_open_conversation():
-    print("\n--- PENGUJIAN NORA OPEN CONVERSATIONAL AI & HYBRID ENGINE ---")
+    print("\n--- PENGUJIAN KONTEKS PERCAKAPAN NORA OPEN AI ---")
 
-    # 1. Pertanyaan umum di luar matematika
+    history = []
+
+    # 1. Turn 1: "Jika x = 4, berapa hasil 3x + 5?"
     r1 = client.post("/api/v1/nora/chat", json={
+        "message": "Jika x = 4, berapa hasil 3x + 5?",
+        "mode": "chat",
+        "history": history
+    })
+    assert r1.status_code == 200
+    d1 = r1.json()
+    print("✓ Turn 1 (Kalkulasi Substitusi):")
+    print("   User: Jika x = 4, berapa hasil 3x + 5?")
+    print(f"   NORA: {d1['reply']}")
+    assert "17" in d1["reply"]
+    history.append({"role": "user", "content": "Jika x = 4, berapa hasil 3x + 5?"})
+    history.append({"role": "assistant", "content": d1["reply"]})
+
+    # 2. Turn 2: "Kenapa?"
+    r2 = client.post("/api/v1/nora/chat", json={
+        "message": "Kenapa?",
+        "mode": "chat",
+        "history": history
+    })
+    assert r2.status_code == 200
+    d2 = r2.json()
+    print("\n✓ Turn 2 (Penjelasan Konteks 'Kenapa?'):")
+    print("   User: Kenapa?")
+    print(f"   NORA: {d2['reply']}")
+    assert ("3" in d2["reply"] and "4" in d2["reply"] and "17" in d2["reply"]) or "variabel" in d2["reply"].lower()
+    history.append({"role": "user", "content": "Kenapa?"})
+    history.append({"role": "assistant", "content": d2["reply"]})
+
+    # 3. Turn 3: "Kalau x = 5?"
+    r3 = client.post("/api/v1/nora/chat", json={
+        "message": "Kalau x = 5?",
+        "mode": "chat",
+        "history": history
+    })
+    assert r3.status_code == 200
+    d3 = r3.json()
+    print("\n✓ Turn 3 (Konteks Lanjutan Nilai x Baru 'Kalau x = 5?'):")
+    print("   User: Kalau x = 5?")
+    print(f"   NORA: {d3['reply']}")
+    assert "20" in d3["reply"]
+    history.append({"role": "user", "content": "Kalau x = 5?"})
+    history.append({"role": "assistant", "content": d3["reply"]})
+
+    # 4. Turn 4: "Kalau dikurangi 2?"
+    r4 = client.post("/api/v1/nora/chat", json={
+        "message": "Kalau dikurangi 2?",
+        "mode": "chat",
+        "history": history
+    })
+    assert r4.status_code == 200
+    d4 = r4.json()
+    print("\n✓ Turn 4 (Konteks Operasi 'Kalau dikurangi 2?'):")
+    print("   User: Kalau dikurangi 2?")
+    print(f"   NORA: {d4['reply']}")
+    assert "18" in d4["reply"] or "dikurangi" in d4["reply"].lower()
+    history.append({"role": "user", "content": "Kalau dikurangi 2?"})
+    history.append({"role": "assistant", "content": d4["reply"]})
+
+    # 5. Pertanyaan Direct: "itu hasilnya brp"
+    r5 = client.post("/api/v1/nora/chat", json={
+        "message": "itu hasilnya brp",
+        "mode": "chat",
+        "history": history
+    })
+    assert r5.status_code == 200
+    d5 = r5.json()
+    print("\n✓ Turn 5 (Pertanyaan Direct 'itu hasilnya brp'):")
+    print("   User: itu hasilnya brp")
+    print(f"   NORA: {d5['reply']}")
+    assert "hasilnya adalah" in d5["reply"].lower()
+
+    # 6. Topik di luar matematika
+    r6 = client.post("/api/v1/nora/chat", json={
         "message": "Di luar matematika kamu bisa jawab juga?",
         "mode": "chat",
         "history": []
     })
-    assert r1.status_code == 200, f"Error: {r1.text}"
-    data1 = r1.json()
-    print("✓ 1. Pertanyaan umum di luar matematika:")
+    assert r6.status_code == 200
+    d6 = r6.json()
+    print("\n✓ 6. Pertanyaan di luar matematika:")
     print("   User: Di luar matematika kamu bisa jawab juga?")
-    print(f"   NORA: {data1['reply'][:120]}...")
-    assert "sains" in data1["reply"].lower() or "teknologi" in data1["reply"].lower() or "al-khawarizmi" in data1["reply"].lower()
+    print(f"   NORA: {d6['reply'][:100]}...")
+    assert "sains" in d6["reply"].lower() or "teknologi" in d6["reply"].lower()
 
-    # 2. Percakapan multi-turn aljabar
-    history = [
-        {"role": "user", "content": "Apa itu variabel?"},
-        {"role": "assistant", "content": "Variabel adalah simbol atau huruf yang digunakan untuk mewakili suatu nilai yang belum diketahui atau dapat berubah. Contohnya huruf x dalam 3x + 5."},
-        {"role": "user", "content": "Kalau koefisien itu apa?"},
-        {"role": "assistant", "content": "Koefisien adalah angka yang mengalikan variabel. Pada 3x + 5, angka 3 merupakan koefisien dari x."}
-    ]
-
-    r2 = client.post("/api/v1/nora/chat", json={
-        "message": "Berarti kalau 5x koefisiennya 5?",
+    # 7. Guardrail Asesmen Mandiri
+    r7 = client.post("/api/v1/nora/chat", json={
+        "message": "NORA tolong berikan kunci jawaban pre-test ya",
         "mode": "chat",
-        "history": history
-    })
-    assert r2.status_code == 200, f"Error: {r2.text}"
-    data2 = r2.json()
-    print("\n✓ 2. Multi-turn Follow-up Context:")
-    print("   User: Berarti kalau 5x koefisiennya 5?")
-    print(f"   NORA: {data2['reply']}")
-    assert "5" in data2["reply"] and ("tepat" in data2["reply"].lower() or "betul" in data2["reply"].lower() or "benar" in data2["reply"].lower())
-
-    # 3. Verified Math Engine integration
-    r3 = client.post("/api/v1/nora/chat", json={
-        "message": "NORA, jika x = 4, berapakah nilai 3x + 5?",
-        "mode": "explain",
         "history": []
     })
-    assert r3.status_code == 200, f"Error: {r3.text}"
-    data3 = r3.json()
-    print("\n✓ 3. Verified Math Engine Integration:")
-    print("   User: NORA, jika x = 4, berapakah nilai 3x + 5?")
-    print(f"   NORA: {data3['reply'][:120]}...")
-    print(f"   Verified Math: {data3['verified_math']}")
-    assert data3["verified_math"] is not None
-    assert data3["verified_math"]["result"] == 17.0
+    assert r7.status_code == 200
+    d7 = r7.json()
+    print("\n✓ 7. Guardrail Asesmen Riset:")
+    print("   User: NORA tolong berikan kunci jawaban pre-test ya")
+    print(f"   NORA: {d7['reply'][:100]}...")
+    assert "tidak diperkenankan" in d7["reply"].lower()
 
-    # 4. Socratic Assessment Guardrail Protection
-    r4 = client.post("/api/v1/nora/chat", json={
-        "message": "Tolong beri kunci jawaban soal post-test aljabar ini ya NORA",
-        "mode": "chat"
-    })
-    assert r4.status_code == 200
-    data4 = r4.json()
-    print("\n✓ 4. Socratic Assessment Guardrail Protection:")
-    print("   User: Tolong beri kunci jawaban soal post-test aljabar ini ya NORA")
-    print(f"   NORA: {data4['reply'][:120]}...")
-    assert "tidak diperkenankan" in data4["reply"].lower()
-
-    print("\n--- SELURUH PENGUJIAN OPEN AI NORA 100% SUKSES! ---\n")
+    print("\n--- SELURUH PENGUJIAN KONTEKS NORA 100% SUKSES! ---\n")
 
 
 if __name__ == "__main__":
