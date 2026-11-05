@@ -174,3 +174,4 @@ export default function AlgebraBalance3D({ leftWeight = 17, rightWeight = 17, is
     </div>
   );
 }
+

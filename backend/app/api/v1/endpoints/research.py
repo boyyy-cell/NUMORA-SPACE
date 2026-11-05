@@ -34,3 +34,4 @@ async def get_cognitive_load_status():
     Marked NOT CONFIGURED until empirical measurements take place.
     """
     return research_store.get_cognitive_load_instrument_status()
+

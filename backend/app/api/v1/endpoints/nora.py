@@ -93,3 +93,4 @@ async def nora_chat(payload: NoraChatRequest):
             voice_spoken_text="Aljabar sebenarnya adalah cara kita menulis pola dunia nyata secara ringkas. Huruf x bukan rumus rahasia, melainkan wadah nilai.",
             demo_mode=True
         )
+

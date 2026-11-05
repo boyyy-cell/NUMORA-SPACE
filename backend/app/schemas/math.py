@@ -35,3 +35,4 @@ class DiagnoseMisconceptionResponse(BaseModel):
     feedback: str
     pedagogical_mode: str
     recommended_hint: Optional[str] = None
+

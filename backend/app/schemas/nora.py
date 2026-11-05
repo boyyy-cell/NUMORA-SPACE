@@ -18,3 +18,4 @@ class NoraChatResponse(BaseModel):
     misconception_flag: Optional[str] = None
     socratic_question: Optional[str] = None
     demo_mode: bool = True
+

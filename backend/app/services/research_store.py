@@ -89,3 +89,4 @@ class ResearchStore:
 
 
 research_store = ResearchStore()
+

@@ -36,3 +36,4 @@ class CognitiveLoadInstrumentStatus(BaseModel):
     germane_load_status: str = "NOT CONFIGURED (Awaiting Empirical Session)"
     scale_type: str = "0-10 Likert Scale"
     verification_status: str = "Protocol Awaiting Researcher Execution"
+
