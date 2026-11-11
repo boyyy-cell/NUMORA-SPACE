@@ -29,22 +29,31 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
+      // 1. Periksa localStorage (sesi persisten jika rememberMe aktif)
+      const localStored = localStorage.getItem(STORAGE_KEY);
+      if (localStored) {
+        const parsed = JSON.parse(localStored);
+        if (parsed && parsed.role && parsed.email) {
+          return parsed;
+        }
+      }
+      // 2. Periksa sessionStorage (sesi tab sementara jika rememberMe tidak aktif)
+      const sessionStored = sessionStorage.getItem(STORAGE_KEY);
+      if (sessionStored) {
+        const parsed = JSON.parse(sessionStored);
         if (parsed && parsed.role && parsed.email) {
           return parsed;
         }
       }
     } catch (e) {
-      console.warn('Gagal membaca sesi autentikasi dari localStorage', e);
+      console.warn('Gagal membaca sesi autentikasi', e);
     }
     return null;
   });
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = true) => {
     setIsLoading(true);
     // Verifikasi kredensial terukur
     await new Promise((resolve) => setTimeout(resolve, 350));
@@ -77,11 +86,24 @@ export function AuthProvider({ children }) {
 
     if (matchedUser) {
       setUser(matchedUser);
+
+      // Bersihkan sesi lama dari kedua storage agar tidak terjadi konflik
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(matchedUser));
+        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+
+      // Simpan sesuai opsi rememberMe: localStorage jika dicentang, sessionStorage jika tidak
+      try {
+        if (rememberMe) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(matchedUser));
+        } else {
+          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(matchedUser));
+        }
       } catch (e) {
-        console.warn('Gagal menyimpan sesi ke localStorage', e);
+        console.warn('Gagal menyimpan sesi autentikasi ke storage', e);
       }
+
       return { success: true, user: matchedUser };
     }
 
@@ -95,8 +117,9 @@ export function AuthProvider({ children }) {
     setUser(null);
     try {
       localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
     } catch (e) {
-      console.warn('Gagal menghapus sesi dari localStorage', e);
+      console.warn('Gagal menghapus sesi dari storage', e);
     }
   };
 

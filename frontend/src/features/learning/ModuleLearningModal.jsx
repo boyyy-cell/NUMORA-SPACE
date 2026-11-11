@@ -109,6 +109,8 @@ export const MODULE_DETAILS = [
 
 export default function ModuleLearningModal({
   currentModuleId,
+  completedModules = [],
+  onCompleteModule,
   onClose,
   onOpenLab,
 }) {
@@ -146,6 +148,7 @@ export default function ModuleLearningModal({
   const activeModule = MODULE_DETAILS[activeIdx];
   const hasPrev = activeIdx > 0;
   const hasNext = activeIdx < MODULE_DETAILS.length - 1;
+  const isCurrentCompleted = completedModules.includes(activeModule.id);
 
   const handlePrev = () => {
     if (hasPrev) setActiveIdx((prev) => prev - 1);
@@ -386,6 +389,39 @@ export default function ModuleLearningModal({
               </div>
             </div>
           </section>
+
+          {/* SECTION E: STATUS PENYELESAIAN MATERI */}
+          <section className="pt-5 border-t-1.5 border-[#28332C]/10">
+            <div className="p-4 rounded-2xl bg-[#F6F5EF] border-1.5 border-[#28332C]/14 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="space-y-0.5 text-center sm:text-left">
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-bold text-charcoal">
+                  <span>Status Pembelajaran Modul {activeModule.moduleNumber}</span>
+                </div>
+                <p className="text-xs text-secondary-text">
+                  {isCurrentCompleted
+                    ? 'Kamu telah menyelesaikan materi ini. Progres tersimpan secara otomatis.'
+                    : 'Sudah memahami materi ini? Tandai selesai untuk memperbarui progres belajarmu.'}
+                </p>
+              </div>
+
+              <div className="shrink-0">
+                {isCurrentCompleted ? (
+                  <div className="px-4 py-2 rounded-xl text-xs font-semibold bg-sage/25 text-forest border-1.5 border-sage/40 flex items-center gap-1.5 shadow-xs">
+                    <CheckCircle2 className="w-4 h-4 text-forest" />
+                    <span>Modul Selesai</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => onCompleteModule?.(activeModule.id)}
+                    className="btn-interactive px-5 py-2.5 rounded-xl text-xs font-semibold bg-forest text-pure-white hover:bg-forest-600 transition-colors shadow-subtle flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-pure-white" />
+                    <span>Tandai Selesai</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
 
         {/* 3. SOLID FOOTER: NAVIGATION & ACTIONS (Warm Ivory-50) */}
@@ -400,7 +436,7 @@ export default function ModuleLearningModal({
             ← Kembali ke Modul
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handlePrev}
               disabled={!hasPrev}
@@ -419,14 +455,25 @@ export default function ModuleLearningModal({
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 
+            {!isCurrentCompleted && (
+              <button
+                onClick={() => onCompleteModule?.(activeModule.id)}
+                className="btn-interactive px-4 py-2 rounded-xl text-xs font-semibold bg-forest text-pure-white hover:bg-forest-600 transition-colors shadow-subtle flex items-center gap-1.5"
+                title="Tandai materi ini telah dipahami dan selesai"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Selesaikan Modul</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 onClose?.();
                 onOpenLab?.();
               }}
-              className="btn-interactive px-4 py-2 rounded-xl text-xs font-semibold bg-forest text-pure-white hover:bg-forest-600 transition-colors shadow-subtle flex items-center gap-1.5 ml-1"
+              className="btn-interactive px-4 py-2 rounded-xl text-xs font-semibold bg-ivory text-charcoal hover:bg-sage/20 border-1.5 border-[#28332C]/14 transition-colors shadow-xs flex items-center gap-1.5 ml-1"
             >
-              <FlaskConical className="w-3.5 h-3.5" />
+              <FlaskConical className="w-3.5 h-3.5 text-forest" />
               <span>Uji di Lab</span>
             </button>
           </div>

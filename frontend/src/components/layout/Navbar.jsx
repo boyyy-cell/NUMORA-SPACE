@@ -18,6 +18,9 @@ export default function Navbar() {
     navigate('/login', { replace: true });
   };
 
+  const isLanding = location.pathname === '/' || location.pathname === '/landing';
+  const getAnchorHref = (hash) => (isLanding ? hash : `/${hash}`);
+
   const targetDashboard = user?.role === 'researcher' ? '/researcher-dashboard' : '/student-dashboard';
   const dashboardLabel = user?.role === 'researcher' ? 'Ruang Peneliti' : 'Ruang Siswa';
 
@@ -29,17 +32,17 @@ export default function Navbar() {
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-secondary-text">
-          <a href="#features" className="hover:text-charcoal transition-colors tab-interactive">
+          <a href={getAnchorHref('#features')} className="hover:text-charcoal transition-colors tab-interactive">
             Fitur Utama
           </a>
-          <a href="#preview-modules" className="hover:text-charcoal transition-colors tab-interactive">
+          <a href={getAnchorHref('#preview-modules')} className="hover:text-charcoal transition-colors tab-interactive">
             Modul Aljabar
           </a>
           <Link to="/numora-run" className="hover:text-forest text-[#D58B68] font-bold transition-colors flex items-center gap-1.5 tab-interactive">
             <Gamepad2 className="w-4 h-4" />
             NUMORA RUN
           </Link>
-          <a href="#preview-nora" className="hover:text-forest transition-colors flex items-center gap-1.5 tab-interactive">
+          <a href={getAnchorHref('#preview-nora')} className="hover:text-forest transition-colors flex items-center gap-1.5 tab-interactive">
             <Sparkles className="w-3.5 h-3.5 text-forest" />
             NORA AI
           </a>
@@ -99,14 +102,14 @@ export default function Navbar() {
         <div className="md:hidden bg-pure-white border-b border-[#28332C]/14 px-4 pt-3 pb-6 space-y-4 animate-in slide-in-from-top duration-200">
           <nav className="flex flex-col space-y-2 text-sm font-medium text-secondary-text">
             <a
-              href="#features"
+              href={getAnchorHref('#features')}
               onClick={() => setMobileMenuOpen(false)}
               className="py-2 px-3 rounded-lg hover:bg-ivory text-charcoal transition-colors"
             >
               Fitur Utama
             </a>
             <a
-              href="#preview-modules"
+              href={getAnchorHref('#preview-modules')}
               onClick={() => setMobileMenuOpen(false)}
               className="py-2 px-3 rounded-lg hover:bg-ivory text-charcoal transition-colors"
             >
@@ -121,7 +124,7 @@ export default function Navbar() {
               NUMORA RUN (Game 3D)
             </Link>
             <a
-              href="#preview-nora"
+              href={getAnchorHref('#preview-nora')}
               onClick={() => setMobileMenuOpen(false)}
               className="py-2 px-3 rounded-lg hover:bg-ivory text-forest flex items-center gap-2 transition-colors"
             >

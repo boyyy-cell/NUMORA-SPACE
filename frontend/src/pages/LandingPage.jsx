@@ -140,25 +140,27 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* SECTION: INTERACTIVE ALGEBRA LAB SHOWCASE */}
-        <section id="preview-modules" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/14">
-          <div className="text-center max-w-xl mx-auto space-y-1.5 mb-8">
-            <span className="text-xs font-semibold uppercase tracking-wider text-forest">
-              Laboratorium Matematika
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-charcoal">
-              Eksplorasi Konsep Aljabar
-            </h2>
-            <p className="text-xs sm:text-sm text-secondary-text">
-              Pilih mode penjelajahan untuk melihat bagaimana angka dan lambang berinteraksi.
-            </p>
-          </div>
+        {/* SECTION: INTERACTIVE ALGEBRA LAB SHOWCASE (FITUR UTAMA & MODUL) */}
+        <section id="features" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/14 scroll-mt-20">
+          <div id="preview-modules" className="scroll-mt-20">
+            <div className="text-center max-w-xl mx-auto space-y-1.5 mb-8">
+              <span className="text-xs font-semibold uppercase tracking-wider text-forest">
+                Laboratorium Matematika
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-charcoal">
+                Eksplorasi Konsep Aljabar
+              </h2>
+              <p className="text-xs sm:text-sm text-secondary-text">
+                Pilih mode penjelajahan untuk melihat bagaimana angka dan lambang berinteraksi.
+              </p>
+            </div>
 
-          <AlgebraLab />
+            <AlgebraLab />
+          </div>
         </section>
 
         {/* SECTION: NORA AI TUTOR PREVIEW */}
-        <section id="preview-nora" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/14">
+        <section id="preview-nora" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#28332C]/14 scroll-mt-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-5 space-y-4">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sage/20 text-xs font-semibold text-forest">

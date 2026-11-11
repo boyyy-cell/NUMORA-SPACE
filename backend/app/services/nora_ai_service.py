@@ -465,18 +465,53 @@ class NoraAIService:
                 is_generative=False
             )
 
-        # KASUS F: SAPAAN HANYA PADA AWAL SESI
-        if is_first_turn and any(msg_l.startswith(k) for k in ["halo", "hai", "assalamu", "pagi", "siang", "sore", "malam"]):
+        # KASUS F: SAPAAN DAN ETIKA PERCAKAPAN (Bisa diucapkan di giliran mana pun)
+        greeting_words = ["halo", "hai", "hei", "assalamu", "selamat pagi", "selamat siang", "selamat sore", "selamat malam", "pagi", "siang", "sore", "malam", "apa kabar"]
+        if any(msg_l == k or msg_l.startswith(k + " ") or msg_l.startswith(k + "!") or msg_l.startswith(k + ",") or msg_l.startswith(k + "?") for k in greeting_words):
             reply = (
                 "Halo! Aku NORA, tutor pendamping aljabar untukmu di NUMORA Space. 👋\n\n"
-                "Kamu bisa bertanya bebas tentang variabel, koefisien, konstanta, atau cara menyeimbangkan persamaan di neraca. "
-                "Apa yang ingin kamu pelajari hari ini?"
+                "Kamu bisa bertanya bebas tentang konsep variabel, koefisien, konstanta, atau penyelesaian persamaan aljabar. "
+                "Ada materi atau soal aljabar tertentu yang ingin kita bahas sekarang?"
             )
             return NoraChatResponse(
                 reply=reply,
                 mode_used=mode,
-                math_latex="3x + 5 = 17",
-                voice_spoken_text="Halo! Aku NORA, tutor aljabar di NUMORA Space. Apa yang ingin kamu diskusikan hari ini?",
+                math_latex=None,
+                voice_spoken_text="Halo! Aku NORA, tutor pendamping aljabar di NUMORA Space. Ada materi atau soal aljabar yang ingin kita bahas?",
+                hint_tier=tier,
+                demo_mode=True,
+                is_generative=False
+            )
+
+        # UCAPAN TERIMA KASIH & APRESIASI
+        thanks_words = ["terima kasih", "makasih", "thanks", "tengkyu", "terimakasih", "syukron"]
+        if any(k in msg_l for k in thanks_words):
+            reply = (
+                "Sama-sama! Senang sekali bisa menemanimu belajar matematika aljabar. 🌟\n"
+                "Jika ada konsep atau soal yang masih membingungkan, jangan ragu untuk bertanya lagi ke NORA ya!"
+            )
+            return NoraChatResponse(
+                reply=reply,
+                mode_used=mode,
+                math_latex=None,
+                voice_spoken_text="Sama-sama! Senang bisa menemanimu belajar. Jika ada soal lain, silakan tanyakan ya!",
+                hint_tier=tier,
+                demo_mode=True,
+                is_generative=False
+            )
+
+        # KONFIRMASI PEMAHAMAN
+        ok_words = ["oke", "ok", "siap", "paham", "mengerti", "baiklah", "sip"]
+        if any(msg_l == k or msg_l.startswith(k + " ") for k in ok_words) and len(msg_l) < 15:
+            reply = (
+                "Hebat! Pemahaman yang bagus. 👏 Kamu bisa melanjutkan ke modul tantangan literasi, "
+                "berlatih di Algebra Lab, atau memberi tahu NORA jika ingin mencoba contoh soal lainnya."
+            )
+            return NoraChatResponse(
+                reply=reply,
+                mode_used=mode,
+                math_latex=None,
+                voice_spoken_text="Hebat! Kamu bisa melanjutkan ke tantangan aljabar atau mencoba contoh soal lainnya.",
                 hint_tier=tier,
                 demo_mode=True,
                 is_generative=False
@@ -638,16 +673,32 @@ class NoraAIService:
                 is_generative=False
             )
 
-        # JAWABAN UMUM DIRECT & EDUKATIF
-        reply = (
-            f"Mengenai '{message}', dalam aljabar kita memodelkan persoalan nyata ke dalam lambang matematika yang terstruktur. "
-            "Apakah ada contoh soal aljabar tertentu yang ingin kamu hitung bersama NORA?"
-        )
+        # JAWABAN UMUM DIRECT & EDUKATIF (Honest Offline Fallback)
+        has_math_tokens = any(c in msg_l for c in ["x", "y", "a", "+", "-", "=", "*", "/", "aljabar", "hitung", "berapa"])
+        if has_math_tokens:
+            reply = (
+                f"Mengenai '{message}', NORA siap membantu menghitung atau menganalisisnya. "
+                "Kamu bisa menuliskan bentuk aljabar beserta nilai variabelnya (contoh: '3x + 5 dengan x = 4') "
+                "atau menanyakan bagian komponen seperti koefisien, variabel, atau konstantanya."
+            )
+            math_rep = "ax + b"
+        else:
+            reply = (
+                f"NORA mencatat pertanyaanmu: \"{message}\".\n\n"
+                "Sebagai asisten belajar aljabar SMP Kelas VII, NORA berfokus pada materi:\n"
+                "• Variabel (lambang penampung nilai)\n"
+                "• Koefisien (bilangan pengali variabel)\n"
+                "• Konstanta (bilangan mandiri tanpa variabel)\n"
+                "• Bentuk aljabar & penyelesaian persamaan linier.\n\n"
+                "Tuliskan pertanyaan aljabar yang ingin kamu pelajari atau diskusikan bersama NORA!"
+            )
+            math_rep = None
+
         return NoraChatResponse(
             reply=reply,
             mode_used=mode,
-            math_latex="ax + b = c",
-            voice_spoken_text="Dalam aljabar kita memodelkan persoalan nyata ke dalam lambang terstruktur. Ada soal yang ingin dihitung bersama?",
+            math_latex=math_rep,
+            voice_spoken_text="NORA siap membantumu mempelajari materi aljabar kelas VII. Tuliskan pertanyaanmu ya!",
             hint_tier=tier,
             demo_mode=True,
             is_generative=False

@@ -24,13 +24,21 @@ app = FastAPI(
 )
 
 # CORS Middleware
-origins = settings.CORS_ORIGINS
-if isinstance(origins, str):
-    origins = [origins]
+origins = list(settings.CORS_ORIGINS) if isinstance(settings.CORS_ORIGINS, (list, tuple)) else [settings.CORS_ORIGINS]
+if "https://numora-space.vercel.app" not in origins:
+    origins.append("https://numora-space.vercel.app")
+
+# Support LAN IP patterns and Vercel deployments of NUMORA Space
+default_cors_regex = (
+    r"^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$"
+    r"|^https://(numora-space.*\.vercel\.app)$"
+)
+cors_regex = settings.CORS_ORIGIN_REGEX or default_cors_regex
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if origins else ["*"],
+    allow_origins=origins if origins else [],
+    allow_origin_regex=cors_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

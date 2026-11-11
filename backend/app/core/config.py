@@ -10,7 +10,16 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     HOST: str = "127.0.0.1"
     PORT: int = 8000
-    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    CORS_ORIGINS: Union[List[str], str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://numora-space.vercel.app"
+    ]
+    CORS_ORIGIN_REGEX: Optional[str] = None
+
+    # Supabase Integration Settings (Server Confidential)
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
 
     # AI Integration Settings
     GEMINI_API_KEY: Optional[str] = None
@@ -35,7 +44,11 @@ class Settings(BaseSettings):
             return [i.strip() for i in v.split(",") if i.strip()]
         elif isinstance(v, list):
             return v
-        return ["http://localhost:5173", "http://127.0.0.1:5173"]
+        return [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://numora-space.vercel.app"
+        ]
 
 
 settings = Settings()

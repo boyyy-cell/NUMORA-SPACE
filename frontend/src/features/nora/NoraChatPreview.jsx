@@ -123,20 +123,19 @@ export default function NoraChatPreview({ compact = false }) {
         }
       ]);
     } catch (err) {
-      // Natural pedagogical fallback if offline
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now() + 1,
-            role: 'assistant',
-            text: `Pertanyaan yang sangat bagus tentang "${text}". Dalam matematika aljabar, kita memodelkan persoalan nyata ke dalam lambang dan variabel terstruktur. Setiap simbol memiliki peran teratur agar kita bisa menemukan solusi secara logis.`,
-            math: '3x + 5 = 17',
-            spokenText: 'Pertanyaan yang bagus. Dalam aljabar kita memodelkan persoalan nyata ke dalam simbol yang logis.',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        ]);
-      }, 500);
+      // Honest connection error state without misleading math fallbacks
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          role: 'assistant',
+          text: `⚠️ Maaf, NORA belum dapat terhubung ke server backend (${err.message || 'Koneksi gagal'}). Pastikan backend FastAPI aktif di port 8000 dan terhubung ke jaringan yang sama.`,
+          math: null,
+          spokenText: 'Maaf, koneksi ke server backend terputus. Pastikan server backend aktif.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isError: true
+        }
+      ]);
     } finally {
       setIsTyping(false);
     }

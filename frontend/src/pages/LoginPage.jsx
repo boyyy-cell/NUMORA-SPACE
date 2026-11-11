@@ -54,7 +54,7 @@ export default function LoginPage() {
       return;
     }
 
-    const result = await login(email, password);
+    const result = await login(email, password, rememberMe);
 
     if (result.success) {
       // Periksa apakah ada rute asal yang diminta pengunjung

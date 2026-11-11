@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
@@ -38,8 +38,59 @@ export default function StudentDashboard() {
     navigate('/login', { replace: true });
   };
 
-  // Real student progress
-  const [completedModules, setCompletedModules] = useState(['variables']);
+  const studentKey = user?.subjectId || user?.email || 'default_student';
+
+  // Progres belajar dinamis yang terisolasi per identitas akun siswa
+  const [completedModules, setCompletedModules] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`numora_student_progress_${studentKey}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn('Gagal membaca progres modul tersimpan', e);
+    }
+    return ['variables'];
+  });
+
+  // Sinkronisasi data progres saat akun siswa berganti
+  useEffect(() => {
+    const key = `numora_student_progress_${studentKey}`;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setCompletedModules(parsed);
+          return;
+        }
+      }
+    } catch (e) {}
+    setCompletedModules(['variables']);
+  }, [studentKey]);
+
+  // Handler penyelesaian modul belajar (disimpan ke localStorage)
+  const handleCompleteModule = (moduleId) => {
+    setCompletedModules((prev) => {
+      if (prev.includes(moduleId)) return prev;
+      const updated = [...prev, moduleId];
+      try {
+        const key = `numora_student_progress_${studentKey}`;
+        localStorage.setItem(key, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Gagal menyimpan progres modul', e);
+      }
+      return updated;
+    });
+  };
+
+  const totalModules = MODULES_DATA.length;
+  const completedCount = completedModules.length;
+  const progressPercent = Math.round((completedCount / totalModules) * 100);
+
+  // Modul aktif dinamis: modul pertama yang belum diselesaikan
+  const currentModule = MODULES_DATA.find((m) => !completedModules.includes(m.id)) || null;
 
   return (
     <div className="min-h-screen bg-ivory text-charcoal flex">
@@ -119,21 +170,35 @@ export default function StudentDashboard() {
                     <span>Halo, Siswa SMP! Siap Belajar Hari Ini?</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-charcoal">
-                    Materi Terakhir: Memahami Koefisien
+                    {currentModule
+                      ? `Materi Aktif: ${currentModule.subtitle}`
+                      : 'Selamat! Seluruh Modul Aljabar Telah Selesai'}
                   </h2>
                   <p className="text-xs sm:text-sm text-secondary-text leading-relaxed max-w-2xl">
-                    <MathText text="Pelajari bagaimana bilangan di depan variabel $x$ melipatgandakan nilai wadah aljabar secara visual." />
+                    <MathText
+                      text={
+                        currentModule
+                          ? currentModule.description
+                          : 'Kamu telah berhasil menyelesaikan pemahaman 4 pilar konsep aljabar dasar SMP kelas VII.'
+                      }
+                    />
                   </p>
                 </div>
 
                 {/* Tombol Utama */}
                 <div className="pt-1 flex flex-wrap items-center gap-3">
                   <button
-                    onClick={() => setActiveTab('lab')}
+                    onClick={() => {
+                      if (currentModule) {
+                        setSelectedModuleModal(currentModule);
+                      } else {
+                        setActiveTab('modules');
+                      }
+                    }}
                     className="btn-interactive px-6 py-3 rounded-xl text-xs sm:text-sm font-semibold bg-forest text-pure-white hover:bg-forest-600 transition-colors flex items-center gap-2 shadow-subtle"
                   >
                     <Play className="w-4 h-4 fill-current" />
-                    <span>Lanjutkan Belajar</span>
+                    <span>{currentModule ? 'Lanjutkan Belajar' : 'Tinjau Materi'}</span>
                   </button>
 
                   <button
@@ -157,10 +222,15 @@ export default function StudentDashboard() {
                 <div className="pt-4 border-t border-[#28332C]/20 space-y-2 max-w-md">
                   <div className="flex items-center justify-between text-xs font-medium">
                     <span className="text-secondary-text">Progres Modul Aljabar:</span>
-                    <span className="font-semibold text-forest">1 dari 4 Selesai (25%)</span>
+                    <span className="font-semibold text-forest">
+                      {completedCount} dari {totalModules} Selesai ({progressPercent}%)
+                    </span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-ivory overflow-hidden border border-[#28332C]/20">
-                    <div className="h-full bg-forest rounded-full" style={{ width: '25%' }} />
+                    <div
+                      className="h-full bg-forest rounded-full transition-all duration-300"
+                      style={{ width: `${progressPercent}%` }}
+                    />
                   </div>
                 </div>
               </div>
@@ -183,7 +253,7 @@ export default function StudentDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {MODULES_DATA.map((mod, idx) => {
                     const isDone = completedModules.includes(mod.id);
-                    const isCurrent = mod.id === 'coefficients';
+                    const isCurrent = currentModule?.id === mod.id;
 
                     return (
                       <div
@@ -246,7 +316,7 @@ export default function StudentDashboard() {
               <div className="space-y-3">
                 {MODULES_DATA.map((mod, index) => {
                   const isDone = completedModules.includes(mod.id);
-                  const isCurrent = mod.id === 'coefficients';
+                  const isCurrent = currentModule?.id === mod.id;
 
                   return (
                     <div
@@ -393,6 +463,8 @@ export default function StudentDashboard() {
       {selectedModuleModal && (
         <ModuleLearningModal
           currentModuleId={selectedModuleModal.id}
+          completedModules={completedModules}
+          onCompleteModule={handleCompleteModule}
           onClose={() => setSelectedModuleModal(null)}
           onOpenLab={() => {
             setSelectedModuleModal(null);
