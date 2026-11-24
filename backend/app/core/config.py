@@ -30,7 +30,8 @@ class Settings(BaseSettings):
         "http://127.0.0.1:4173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://numora-space.vercel.app"
+        "https://numora-space.vercel.app",
+        "https://numora-space-app.vercel.app"
     ]
 
     JWT_SECRET_KEY: Optional[str] = None
@@ -86,7 +87,8 @@ class Settings(BaseSettings):
             "http://127.0.0.1:5178",
             "http://192.168.1.7:5178",
             "http://192.168.1.7:5173",
-            "https://numora-space.vercel.app"
+            "https://numora-space.vercel.app",
+            "https://numora-space-app.vercel.app"
         ]
 
     @field_validator("TRUSTED_PROXIES")
