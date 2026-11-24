@@ -23,8 +23,8 @@ async def evaluate_expression(payload: EvaluateExpressionRequest):
     """
     try:
         return MathEngine.evaluate_linear_expression(payload.expression, payload.variables)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Bentuk ekspresi matematika tidak valid atau tidak didukung.")
 
 
 @router.post("/diagnose-misconception", response_model=DiagnoseMisconceptionResponse, summary="Diagnose Socratic Misconception")

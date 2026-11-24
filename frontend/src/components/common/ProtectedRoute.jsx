@@ -3,8 +3,16 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function ProtectedRoute({ children, requiredRole }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div role="status" className="min-h-screen flex items-center justify-center bg-ivory text-secondary-text text-sm">
+        Memverifikasi sesi...
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     // Alihkan pengunjung yang belum login kembali ke Sign In, simpan lokasi tujuan

@@ -44,11 +44,12 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
     { id: 'challenge', label: 'Evaluasi', icon: Award },
   ];
 
-  // Simplified 5 primary navigation tabs for Researcher Space
+  // Simplified primary navigation tabs for Researcher Space
   const researcherLinks = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'subjects', label: 'Partisipan', icon: Users },
-    { id: 'monitoring', label: 'Monitoring', icon: Activity },
+    { id: 'subjects', label: 'Peserta Riset', icon: Users },
+    { id: 'public_users', label: 'Aktivitas Pengguna', icon: Activity },
+    { id: 'monitoring', label: 'Monitoring Sesi', icon: Microscope },
     { id: 'instruments', label: 'Instrumen', icon: FileText },
     { id: 'analytics', label: 'Analisis & Ekspor', icon: Download },
   ];

@@ -1,18 +1,11 @@
-import sys
-from pathlib import Path
+from uuid import uuid4
 
-# Add project root to sys.path
-root_dir = Path(__file__).resolve().parent.parent
-if str(root_dir) not in sys.path:
-    sys.path.insert(0, str(root_dir))
-
-from fastapi.testclient import TestClient
-from backend.app.main import app
-
-client = TestClient(app)
+from backend.app.core.config import settings
+from backend.app.core.security import create_access_token
+from backend.app.services.auth_service import auth_service
 
 
-def test_system_endpoints():
+def test_system_endpoints(client):
     r1 = client.get("/")
     assert r1.status_code == 200
     assert r1.json()["status"] == "operational"
@@ -26,7 +19,7 @@ def test_system_endpoints():
     print("✓ System health and root endpoints PASSED")
 
 
-def test_mandated_mathematical_suite():
+def test_mandated_mathematical_suite(client):
     """
     Mandated test cases from Specification:
     1. 3x + 5, x = 4 -> 17
@@ -52,7 +45,7 @@ def test_mandated_mathematical_suite():
         print(f"✓ Math Test PASSED: {expr} with x={x_val} = {data['result']}")
 
 
-def test_misconception_diagnosis():
+def test_misconception_diagnosis(client):
     """
     Diagnoses conceptual errors in Grade 7 algebra:
     Apa koefisien dari -5x?
@@ -93,25 +86,41 @@ def test_misconception_diagnosis():
     print("✓ Misconception diagnosis suite PASSED")
 
 
-def test_research_data_integrity():
+def test_research_data_integrity(client):
     """
     Verifies that the research dashboard respects the 2-student protocol
     and does NOT invent 32 fictitious students or fake cognitive load measurements.
     """
-    r_sub = client.get("/api/v1/research/subjects")
+    email = f"research-integrity-{uuid4().hex}@example.test"
+    auth_service.provision_researcher_account(
+        email,
+        "valid-researcher-password",
+        subject_id="P-001",
+    )
+    token = create_access_token({
+        "sub": email,
+        "role": "researcher",
+        "name": "Research Integrity Test",
+        "subject_id": "P-001",
+    })
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r_sub = client.get("/api/v1/research/subjects", headers=headers)
     assert r_sub.status_code == 200
     subjects = r_sub.json()
     assert len(subjects) == 2, f"Expected strictly 2 subjects, got {len(subjects)}"
     assert subjects[0]["subject_id"] == "S-001"
     assert subjects[1]["subject_id"] == "S-002"
 
-    r_cog = client.get("/api/v1/research/cognitive-load-status")
+    r_cog = client.get("/api/v1/research/cognitive-load-status", headers=headers)
     assert r_cog.status_code == 200
     assert "NOT CONFIGURED" in r_cog.json()["intrinsic_load_status"]
     print("✓ Research data integrity suite PASSED (Strictly 2 Subjects, Honest Protocol)")
 
 
-def test_nora_socratic_guardrails():
+def test_nora_socratic_guardrails(client, monkeypatch):
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", None)
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", None)
     # Regular socratic request
     r1 = client.post("/api/v1/nora/chat", json={
         "message": "NORA, apa koefisien dari -5x?",
@@ -129,13 +138,3 @@ def test_nora_socratic_guardrails():
     assert r2.status_code == 200
     assert "tidak diperkenankan" in r2.json()["reply"]
     print("✓ NORA Socratic Guardrails suite PASSED")
-
-
-if __name__ == "__main__":
-    print("\n--- MENJALANKAN TEST SUITE BACKEND NUMORA SPACE v1.5 ---")
-    test_system_endpoints()
-    test_mandated_mathematical_suite()
-    test_misconception_diagnosis()
-    test_research_data_integrity()
-    test_nora_socratic_guardrails()
-    print("--- SELURUH SUITE PENGUJIAN 100% SUKSES! ---\n")

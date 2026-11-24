@@ -20,6 +20,7 @@ import {
 import MathView, { MathText } from '../../components/common/MathView';
 import { voiceService } from '../../services/voiceService';
 import { apiService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const QUICK_PROMPTS = [
   'Apa itu variabel dan mengapa dilambangkan huruf?',
@@ -32,14 +33,15 @@ const INITIAL_MESSAGES = [
   {
     id: 1,
     role: 'assistant',
-    text: 'Halo! Aku NORA, asisten AI pendamping belajarmu di NUMORA Space. 👋\n\nKamu bisa berdiskusi secara bebas denganku — mulai dari memahami konsep dasar variabel, bertanya cara menyelesaikan persamaan aljabar, meminta contoh soal, hingga topik sains atau sejarah aljabar. Apa yang ingin kamu tanyakan hari ini?',
-    math: '3x + 5 = 17',
+    text: 'Halo! Senang bertemu denganmu. Hari ini mau belajar aljabar atau ada yang ingin kamu tanyakan? 👋\n\nKamu bisa berdiskusi santai, bertanya konsep variabel, koefisien, konstanta, meminta petunjuk, atau mencoba contoh soal bersama NORA.',
+    math: null,
     timestamp: '10:00',
-    spokenText: 'Halo! Aku NORA, asisten AI pendamping belajarmu di NUMORA Space. Apa yang ingin kamu tanyakan hari ini?'
+    spokenText: 'Halo! Senang bertemu denganmu. Hari ini mau belajar aljabar atau ada yang ingin kamu tanyakan?'
   }
 ];
 
 export default function NoraChatPreview({ compact = false }) {
+  const { user } = useAuth();
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState('');
   const [selectedMode, setSelectedMode] = useState('explain'); // explain | hint | ask | review | chat
@@ -57,6 +59,14 @@ export default function NoraChatPreview({ compact = false }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  // Cleanup speech synthesis on component unmount
+  useEffect(() => {
+    return () => {
+      voiceService.stop();
+      setActiveSpeakingId(null);
+    };
+  }, []);
 
   const handleSpeak = (id, text) => {
     if (activeSpeakingId === id) {
@@ -102,9 +112,9 @@ export default function NoraChatPreview({ compact = false }) {
     setIsTyping(true);
 
     // Siapkan riwayat percakapan untuk konteks multi-turn
-    const conversationHistory = updatedMessages.map((m) => ({
+    const conversationHistory = updatedMessages.slice(-6).map((m) => ({
       role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.text
+      content: m.text.slice(-1000)
     }));
 
     try {
@@ -122,16 +132,47 @@ export default function NoraChatPreview({ compact = false }) {
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
+
+      // Catat aktivitas pembelajaran NORA ke backend persisten untuk seluruh pengguna login (kecuali S-001 kontrol)
+      if (user && user.subjectId !== 'S-001') {
+        apiService.logLearningActivity({
+          activity_type: 'NORA_CHAT',
+          module_or_feature_id: `nora_${selectedMode}`,
+          metadata: {
+            mode: selectedMode,
+            hint_tier: hintTier,
+            student_question: text.slice(0, 250),
+            nora_response: (response.reply || '').slice(0, 500),
+            verified_math: Boolean(response.verified_math),
+            is_generative: Boolean(response.is_generative),
+            timestamp: new Date().toISOString()
+          }
+        }).catch(() => {});
+      }
     } catch (err) {
-      // Honest connection error state without misleading math fallbacks
+      let errorText = '⚠️ NORA tidak dapat memproses pesan saat ini. Silakan coba lagi nanti.';
+      if (err?.isNetworkError || err?.isOffline) {
+        errorText = '⚠️ Backend NUMORA tidak dapat dijangkau. Periksa koneksi lalu coba lagi.';
+      } else if (err?.status === 401 || err?.status === 403) {
+        errorText = '⚠️ Sesi atau akses untuk layanan NORA tidak valid. Masuk kembali atau hubungi peneliti.';
+      } else if (err?.status === 429) {
+        errorText = '⚠️ Permintaan NORA sedang dibatasi. Tunggu sebentar lalu coba lagi.';
+      } else if (err?.status === 413 || err?.status === 422) {
+        errorText = '⚠️ Pesan atau konteks percakapan terlalu panjang. Ringkas pertanyaan lalu coba lagi.';
+      } else if (err?.status === 503) {
+        errorText = '⚠️ Provider AI NORA sedang tidak tersedia. Periksa konfigurasi atau kuota provider.';
+      } else if (err?.isServerError) {
+        errorText = '⚠️ Layanan NORA mengalami gangguan. Silakan coba lagi nanti.';
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
           role: 'assistant',
-          text: `⚠️ Maaf, NORA belum dapat terhubung ke server backend (${err.message || 'Koneksi gagal'}). Pastikan backend FastAPI aktif di port 8000 dan terhubung ke jaringan yang sama.`,
+          text: errorText,
           math: null,
-          spokenText: 'Maaf, koneksi ke server backend terputus. Pastikan server backend aktif.',
+          spokenText: errorText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           isError: true
         }
@@ -159,16 +200,13 @@ export default function NoraChatPreview({ compact = false }) {
       {/* NORA Header */}
       <div className="p-4 sm:px-6 bg-pure-white border-b border-[#28332C]/20 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="w-10 h-10 rounded-2xl bg-forest/10 border border-forest/20 flex items-center justify-center text-forest shadow-xs">
-              <Bot className="w-5 h-5" />
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-pure-white" />
+          <div className="w-10 h-10 rounded-2xl bg-forest/10 border border-forest/20 flex items-center justify-center text-forest shadow-xs">
+            <Bot className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-extrabold text-charcoal text-sm sm:text-base leading-tight">
-                NORA <span className="text-forest font-semibold text-xs sm:text-sm">Open Conversational AI</span>
+                NORA <span className="text-forest font-semibold text-xs sm:text-sm">Tutor Aljabar</span>
               </h3>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sage/20 text-forest border border-sage/30 hidden sm:inline">
                 Hybrid Engine
@@ -285,6 +323,12 @@ export default function NoraChatPreview({ compact = false }) {
                 </div>
               )}
 
+              {msg.role === 'assistant' && msg.isGenerative === false && !msg.isError && (
+                <div className="text-[10px] font-medium text-secondary-text">
+                  Respons lokal/berbasis aturan; bukan keluaran provider AI.
+                </div>
+              )}
+
               {/* Message Footer: Timestamp & Audio */}
               <div className={`flex items-center justify-between text-[10px] pt-1.5 border-t ${
                 msg.role === 'user' ? 'border-forest-600/60 text-pure-white/70' : 'border-[#28332C]/20 text-secondary-text'
@@ -358,10 +402,11 @@ export default function NoraChatPreview({ compact = false }) {
           <input
             type="text"
             value={inputValue}
+            maxLength={1000}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isTyping}
-            placeholder="Ketik pertanyaan bebas untuk NORA (misal: 'Jika x = 4, berapa hasil 3x + 5?')..."
+            placeholder="Ketik pertanyaan untuk NORA (misal: 'Halo NORA', 'Apa itu variabel?', 'Jelaskan konsep koefisien')..."
             className="input-interactive flex-1 bg-ivory border border-[#28332C]/20 rounded-2xl px-4 py-3 text-xs sm:text-sm text-charcoal placeholder-secondary-text/70 transition"
           />
           <button

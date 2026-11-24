@@ -1,18 +1,26 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class NoraMessage(BaseModel):
-    role: str = Field(..., description="Peran: 'user', 'assistant', atau 'nora'")
-    content: str = Field(..., description="Isi teks pesan")
+    role: Literal["user", "assistant", "nora"]
+    content: str = Field(..., min_length=1, max_length=1000)
 
 
 class NoraChatRequest(BaseModel):
-    message: str = Field(..., example="NORA, apa koefisien dari -5x?")
-    mode: Optional[str] = Field(default="explain", example="explain")  # explain, ask, hint, review, chat
-    hint_tier: Optional[int] = Field(default=1, example=1)   # 1 (gentle), 2 (concept), 3 (specific)
-    context_topic: Optional[str] = Field(default="algebra_coefficients", example="algebra_coefficients")
-    history: Optional[List[NoraMessage]] = Field(default=[], description="Riwayat percakapan sebelumnya untuk multi-turn chat")
+    model_config = ConfigDict(extra="forbid")
+
+    message: str = Field(
+        ...,
+        min_length=1,
+        max_length=1000,
+        json_schema_extra={"example": "NORA, apa koefisien dari -5x?"},
+    )
+    mode: Literal["explain", "ask", "hint", "review", "chat"] = "explain"
+    hint_tier: int = Field(default=1, ge=1, le=3)
+    context_topic: Optional[str] = Field(default="algebra_coefficients", max_length=100)
+    history: List[NoraMessage] = Field(default_factory=list, max_length=6)
 
 
 class NoraChatResponse(BaseModel):

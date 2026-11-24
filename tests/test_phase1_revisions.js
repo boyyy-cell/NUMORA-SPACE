@@ -83,17 +83,17 @@ function getStoredUser() {
 }
 
 // Skenario A: Login siswa dengan rememberMe = true
-const studentUser = { email: 'siswa.demo@numora.space', role: 'student', subjectId: 'S-002' };
+const studentUser = { email: 'student@example.test', role: 'student', subjectId: 'S-002' };
 simulateLogin(studentUser, true);
-assert.strictEqual(getStoredUser()?.email, 'siswa.demo@numora.space');
+assert.strictEqual(getStoredUser()?.email, 'student@example.test');
 assert(mockLocalStorage.getItem(STORAGE_KEY) !== null, 'localStorage harus terisi jika rememberMe true');
 assert(mockSessionStorage.getItem(STORAGE_KEY) === null, 'sessionStorage harus kosong jika rememberMe true');
 console.log('  ✓ Login siswa dengan rememberMe: TRUE -> tersimpan di localStorage.');
 
 // Skenario B: Login peneliti dengan rememberMe = false
-const researcherUser = { email: 'peneliti.demo@numora.space', role: 'researcher', subjectId: 'P-001' };
+const researcherUser = { email: 'researcher@example.test', role: 'researcher', subjectId: 'P-001' };
 simulateLogin(researcherUser, false);
-assert.strictEqual(getStoredUser()?.email, 'peneliti.demo@numora.space');
+assert.strictEqual(getStoredUser()?.email, 'researcher@example.test');
 assert(mockLocalStorage.getItem(STORAGE_KEY) === null, 'localStorage harus kosong jika rememberMe false');
 assert(mockSessionStorage.getItem(STORAGE_KEY) !== null, 'sessionStorage harus terisi jika rememberMe false');
 console.log('  ✓ Login peneliti dengan rememberMe: FALSE -> tersimpan di sessionStorage.');

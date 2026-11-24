@@ -1,560 +1,674 @@
 import React, { useState, useEffect } from 'react';
 import MathView from '../../components/common/MathView';
-import { apiService } from '../../services/api';
-import { voiceService } from '../../services/voiceService';
 import { useAuth } from '../../context/AuthContext';
+import { voiceService } from '../../services/voiceService';
+import { studentSyncService } from '../../services/studentSyncService';
+import {
+  EVALUATION_QUESTIONS,
+  getShuffledEvaluationQuestions,
+  calculateEvaluationResult,
+  CATEGORIES
+} from './evaluationQuestions';
 import {
   Award,
   CheckCircle2,
+  XCircle,
   AlertCircle,
-  Volume2,
   ArrowRight,
   ArrowLeft,
   RotateCcw,
   Sparkles,
   BookOpen,
-  Check
+  BarChart3,
+  Check,
+  ListOrdered,
+  HelpCircle,
+  Flame,
+  Volume2
 } from 'lucide-react';
 
-const CHALLENGES = [
-  {
-    id: 1,
-    moduleId: 'modul-1',
-    moduleTitle: 'Modul 1: Variabel',
-    title: 'Tantangan 1: Mengidentifikasi Lambang Variabel',
-    context: 'Di sebuah toko alat tulis, paket bundling pensil dan penghapus dimodelkan dalam bentuk aljabar 7a + 12.',
-    question: 'Tentukan lambang huruf yang berperan sebagai variabel dalam bentuk aljabar tersebut!',
-    expression: '7a + 12',
-    questionType: 'identify_variable',
-    correctAnswer: 'a',
-    placeholder: 'Tuliskan lambang huruf variabelmu (contoh: a)...',
-    pisaStage: 'FORMULATE',
-    hint: 'Variabel adalah lambang berupa huruf yang mewakili nilai yang belum diketahui atau dapat berubah.',
-    explanationText: 'Pada bentuk 7a + 12, huruf a adalah variabel penampung nilai, sedangkan 7 adalah koefisien dan 12 adalah konstanta.'
-  },
-  {
-    id: 2,
-    moduleId: 'modul-2',
-    moduleTitle: 'Modul 2: Koefisien',
-    title: 'Tantangan 2: Mengidentifikasi Koefisien Bertanda Negatif',
-    context: 'Dalam simulasi laboratorium penurunan suhu beku, perubahan nilai per menit dinyatakan dalam bentuk aljabar -5x.',
-    question: 'Berapakah nilai bilangan koefisien yang mengalikan variabel x dalam bentuk aljabar tersebut?',
-    expression: '-5x',
-    questionType: 'identify_coefficient',
-    correctAnswer: '-5',
-    placeholder: 'Tuliskan angka koefisien beserta tandanya (contoh: -5)...',
-    pisaStage: 'EMPLOY',
-    hint: 'Tanda negatif (-) di depan angka merupakan bagian utuh dari nilai koefisiennya.',
-    explanationText: 'Pada bentuk -5x, koefisiennya adalah -5 karena angka yang melipatgandakan variabel x adalah bilangan bulat negatif lima.'
-  },
-  {
-    id: 3,
-    moduleId: 'modul-3',
-    moduleTitle: 'Modul 3: Konstanta',
-    title: 'Tantangan 3: Mengidentifikasi Nilai Konstanta Bertanda Negatif',
-    context: 'Saldo tabungan harian dinyatakan dalam bentuk aljabar 3x - 8 setelah dipotong biaya administrasi tetap.',
-    question: 'Berapakah nilai bilangan yang berperan sebagai konstanta pada bentuk aljabar 3x - 8?',
-    expression: '3x - 8',
-    questionType: 'identify_constant',
-    correctAnswer: '-8',
-    placeholder: 'Tuliskan angka konstanta beserta tandanya (contoh: -8)...',
-    pisaStage: 'FORMULATE & EMPLOY',
-    hint: 'Perhatikan tanda pengurangan di depan angka 8. Konstanta mandiri tersebut bernilai negatif.',
-    explanationText: 'Pengurangan 8 setara dengan penjumlahan (-8). Sehingga nilai konstanta mandirinya adalah -8.'
-  },
-  {
-    id: 4,
-    moduleId: 'modul-4',
-    moduleTitle: 'Modul 4: Bentuk Aljabar & Nilai Evaluasi',
-    title: 'Tantangan 4: Evaluasi Substitusi Nilai Model Nyata',
-    context: 'Aisyah membeli 4 buku tulis seharga x ribu rupiah per buku dan sebuah tempat pensil seharga 6 ribu rupiah.',
-    question: 'Jika model matematikanya adalah 4x + 6, berapa total biaya yang harus dibayar (dalam ribuan rupiah) jika harga satu buku adalah x = 5?',
-    expression: '4x + 6',
-    questionType: 'evaluate_substitution',
-    correctAnswer: '26',
-    placeholder: 'Tuliskan angka hasil akhir perhitunganmu (contoh: 26)...',
-    pisaStage: 'INTERPRET',
-    hint: 'Substitusi x = 5 ke bentuk 4x + 6. Kalikan 4 × 5 terlebih dahulu, lalu tambahkan dengan 6.',
-    explanationText: 'Substitusi 4(5) + 6 = 20 + 6 = 26 (total biaya Rp26.000).'
-  }
-];
+const EVAL_STORAGE_PREFIX = 'numora_evaluation_results_';
 
 export default function MathematicalChallenge() {
   const { user } = useAuth();
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [userAnswer, setUserAnswer] = useState('');
-  const [answers, setAnswers] = useState({});
-  const [feedbacks, setFeedbacks] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-  const [previousResult, setPreviousResult] = useState(null);
+  const studentId = user?.subjectId || 'S-002';
+  const storageKey = `${EVAL_STORAGE_PREFIX}${studentId}`;
 
-  const storageKey = `numora_eval_results_${user?.email || user?.subjectId || 'guest'}`;
+  // Mode: 'overview' | 'quiz' | 'result'
+  const [viewMode, setViewMode] = useState('overview');
 
-  // Load previous persisted results for the current student & ensure account isolation
+  // State Pengerjaan Kuis 10 Soal
+  const [questions, setQuestions] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [evaluationResult, setEvaluationResult] = useState(null);
+  const [historyResult, setHistoryResult] = useState(null);
+  const [activeReviewFilter, setActiveReviewFilter] = useState('all'); // 'all' | 'wrong' | 'correct'
+
+  // Muat riwayat evaluasi siswa yang sedang aktif (prioritaskan sync cache terverifikasi)
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed && typeof parsed.score === 'number') {
-          setPreviousResult(parsed);
-        } else {
-          setPreviousResult(null);
-        }
-      } else {
-        setPreviousResult(null);
-      }
-    } catch (e) {
-      console.warn('Gagal membaca riwayat evaluasi', e);
-      setPreviousResult(null);
-    }
-    // Reset transient session state when active user switches
-    setAnswers({});
-    setFeedbacks({});
-    setCurrentIdx(0);
-    setUserAnswer('');
-    setShowSummary(false);
-  }, [storageKey]);
-
-  const currentChallenge = CHALLENGES[currentIdx];
-  const currentFeedback = feedbacks[currentChallenge.id];
-  const totalQuestions = CHALLENGES.length;
-
-  const handleVerify = async (e) => {
-    e?.preventDefault();
-    if (!userAnswer.trim()) return;
-
-    setIsLoading(true);
-    try {
-      const res = await apiService.diagnoseMisconception(
-        currentChallenge.questionType,
-        currentChallenge.expression,
-        userAnswer
-      );
-
-      const updatedFeedbacks = {
-        ...feedbacks,
-        [currentChallenge.id]: res
-      };
-      const updatedAnswers = {
-        ...answers,
-        [currentChallenge.id]: userAnswer.trim()
-      };
-
-      setFeedbacks(updatedFeedbacks);
-      setAnswers(updatedAnswers);
-    } catch (err) {
-      // Local fallback checking
-      const isCorrect = userAnswer.trim().toLowerCase() === currentChallenge.correctAnswer.toLowerCase();
-      const fallbackRes = {
-        is_correct: isCorrect,
-        student_answer: userAnswer,
-        diagnosed_type: isCorrect ? 'Konsep Dikuasai (Benar)' : 'Perlu Pendalaman Konsep',
-        feedback: isCorrect
-          ? 'Tepat sekali! Jawabanmu benar secara konseptual.'
-          : `Jawaban '${userAnswer}' belum tepat untuk soal ini. ${currentChallenge.explanationText}`,
-        recommended_hint: currentChallenge.hint
-      };
-
-      const updatedFeedbacks = {
-        ...feedbacks,
-        [currentChallenge.id]: fallbackRes
-      };
-      const updatedAnswers = {
-        ...answers,
-        [currentChallenge.id]: userAnswer.trim()
-      };
-
-      setFeedbacks(updatedFeedbacks);
-      setAnswers(updatedAnswers);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentIdx < totalQuestions - 1) {
-      const nextIdx = currentIdx + 1;
-      setCurrentIdx(nextIdx);
-      setUserAnswer(answers[CHALLENGES[nextIdx].id] || '');
+    const evals = studentSyncService.getLocalEvaluations(user);
+    if (evals && evals.length > 0) {
+      setHistoryResult(evals[0]);
     } else {
-      // Finished all questions -> generate summary and persist
-      finishEvaluation();
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentIdx > 0) {
-      const prevIdx = currentIdx - 1;
-      setCurrentIdx(prevIdx);
-      setUserAnswer(answers[CHALLENGES[prevIdx].id] || '');
-    }
-  };
-
-  const finishEvaluation = () => {
-    // Calculate final metrics
-    let correctCount = 0;
-    const details = [];
-
-    CHALLENGES.forEach((ch) => {
-      const fb = feedbacks[ch.id];
-      const isCorrect = fb?.is_correct || false;
-      if (isCorrect) correctCount += 1;
-
-      details.push({
-        id: ch.id,
-        moduleTitle: ch.moduleTitle,
-        title: ch.title,
-        expression: ch.expression,
-        correctAnswer: ch.correctAnswer,
-        studentAnswer: answers[ch.id] || '(Belum dijawab)',
-        isCorrect,
-        diagnosedType: fb?.diagnosed_type || 'Belum diuji',
-        feedback: fb?.feedback || ch.explanationText
-      });
-    });
-
-    const score = Math.round((correctCount / totalQuestions) * 100);
-
-    // Formulate learning recommendations based on missed concepts
-    const recommendations = [];
-    details.forEach((d) => {
-      if (!d.isCorrect) {
-        recommendations.push({
-          module: d.moduleTitle,
-          advice: `Pelajari kembali materi ${d.moduleTitle}: fokus pada pemahaman konsep dasar dan tanda bilangan.`
-        });
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setHistoryResult(parsed);
+        }
+      } catch (e) {
+        console.warn('Gagal membaca riwayat evaluasi', e);
       }
-    });
-
-    const record = {
-      score,
-      correctCount,
-      totalQuestions,
-      completedAt: new Date().toISOString(),
-      details,
-      recommendations
-    };
-
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(record));
-      setPreviousResult(record);
-    } catch (e) {
-      console.warn('Gagal menyimpan hasil evaluasi', e);
     }
+  }, [storageKey, user]);
 
-    setShowSummary(true);
+  // Expose test hook untuk automasi pengujian
+  useEffect(() => {
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      window.__NUMORA_EVALUATION__ = {
+        getQuestions: () => questions,
+        getCurrentQuestion: () => questions[currentIndex],
+        selectAnswer: (qId, answer) => {
+          setSelectedAnswers(prev => ({ ...prev, [qId]: answer }));
+        },
+        submitQuiz: () => {
+          const res = calculateEvaluationResult(selectedAnswers, questions);
+          setEvaluationResult(res);
+          setViewMode('result');
+          studentSyncService.recordEvaluation(user, res);
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(res));
+          } catch (_) {}
+          window.dispatchEvent(new Event('numora_evaluation_saved'));
+          return res;
+        },
+        startQuiz: handleStartQuiz,
+        getState: () => ({ viewMode, currentIndex, selectedAnswers, evaluationResult })
+      };
+    }
+    return () => {
+      if (import.meta.env.DEV && typeof window !== 'undefined') {
+        delete window.__NUMORA_EVALUATION__;
+      }
+    };
+  }, [questions, currentIndex, selectedAnswers, evaluationResult, viewMode, storageKey, user]);
+
+  // Mulai kuis: acak urutan soal (tetap 3+3+2+2)
+  const handleStartQuiz = () => {
+    const shuffled = getShuffledEvaluationQuestions();
+    setQuestions(shuffled);
+    setCurrentIndex(0);
+    setSelectedAnswers({});
+    setEvaluationResult(null);
+    setViewMode('quiz');
   };
 
-  const handleRestart = () => {
-    setAnswers({});
-    setFeedbacks({});
-    setCurrentIdx(0);
-    setUserAnswer('');
-    setShowSummary(false);
+  // Pilih jawaban
+  const handleSelectOption = (optionText) => {
+    const currentQ = questions[currentIndex];
+    if (!currentQ) return;
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [currentQ.id]: optionText
+    }));
   };
 
-  const handleVoice = (text) => {
+  // Selesaikan kuis & hitung nilai otomatis 0-100
+  const handleFinishQuiz = () => {
+    const result = calculateEvaluationResult(selectedAnswers, questions);
+    setEvaluationResult(result);
+    setViewMode('result');
+
+    // Simpan hasil persisten ke backend server & local cache terisolasi per akun siswa
+    studentSyncService.recordEvaluation(user, result);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(result));
+      window.dispatchEvent(new Event('numora_evaluation_saved'));
+    } catch (e) {
+      console.warn('Gagal menyimpan hasil evaluasi ke storage', e);
+    }
+  };
+
+  // Hitung jumlah soal yang telah dijawab
+  const answeredCount = Object.keys(selectedAnswers).length;
+  const currentQuestion = questions[currentIndex];
+  const progressPercent = questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
+
+  // Baca audio soal (aksesibilitas)
+  const handleReadQuestion = (text) => {
     voiceService.speak(text);
   };
 
-  // SUMMARY SCREEN
-  if (showSummary && previousResult) {
-    const { score, correctCount, details, recommendations } = previousResult;
-    const isMastered = score >= 75;
+  return (
+    <div className="space-y-6">
+      {/* =================================================================== */}
+      {/* 1. VIEW MODE: OVERVIEW / INFORMASI AWAL EVALUASI                   */}
+      {/* =================================================================== */}
+      {viewMode === 'overview' && (
+        <div className="space-y-6 animate-fade-page">
+          {/* Hero Banner Evaluasi */}
+          <div className="bg-pure-white rounded-3xl p-6 sm:p-8 border border-[#28332C]/14 shadow-card-clean relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-sage/10 rounded-full blur-3xl pointer-events-none" />
 
-    return (
-      <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/20 shadow-card-clean space-y-6 animate-fade-page">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/20 pb-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-              isMastered ? 'bg-sage/20 text-forest' : 'bg-terracotta/15 text-terracotta'
-            }`}>
-              <Sparkles className="w-6 h-6" />
+            <div className="max-w-2xl space-y-3 relative z-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sage/20 text-forest text-xs font-bold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Evaluasi Literasi Aljabar SMP Kelas VII</span>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
+                Evaluasi Mandiri 10 Soal Aljabar
+              </h2>
+
+              <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
+                Uji pemahaman komprehensif konsep aljabar Kurikulum Merdeka. Soal dirancang untuk menguji nalar konseptual, mengenali variabel, koefisien, konstanta, dan bentuk aljabar tanpa hafalan mekanis.
+              </p>
+
+              {/* Info Distribusi 10 Soal Wajib */}
+              <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="p-3 rounded-2xl bg-ivory border border-[#28332C]/14 text-center">
+                  <span className="text-[10px] text-secondary-text font-semibold uppercase block">Variabel</span>
+                  <span className="text-lg font-extrabold text-forest font-mono">3 Soal</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-ivory border border-[#28332C]/14 text-center">
+                  <span className="text-[10px] text-secondary-text font-semibold uppercase block">Koefisien</span>
+                  <span className="text-lg font-extrabold text-forest font-mono">3 Soal</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-ivory border border-[#28332C]/14 text-center">
+                  <span className="text-[10px] text-secondary-text font-semibold uppercase block">Konstanta</span>
+                  <span className="text-lg font-extrabold text-forest font-mono">2 Soal</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-ivory border border-[#28332C]/14 text-center">
+                  <span className="text-[10px] text-secondary-text font-semibold uppercase block">Bentuk Aljabar</span>
+                  <span className="text-lg font-extrabold text-forest font-mono">2 Soal</span>
+                </div>
+              </div>
+
+              {/* Tombol Mulai Evaluasi */}
+              <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={handleStartQuiz}
+                  className="btn-interactive py-3.5 px-8 rounded-2xl bg-forest hover:bg-forest-600 text-pure-white font-extrabold text-sm shadow-subtle flex items-center justify-center gap-2 transition"
+                >
+                  <ListOrdered className="w-4 h-4" />
+                  <span>{historyResult ? 'Ulangi Evaluasi Mandiri' : 'Mulai Evaluasi Mandiri'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-forest">
-                  Hasil Evaluasi Literasi
-                </span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-sage/20 text-forest border border-sage/30">
-                  PISA Framework
+          </div>
+
+          {/* Riwayat Hasil Terakhir (Jika Ada) */}
+          {historyResult && (
+            <div className="bg-pure-white rounded-3xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+              <div className="flex items-center justify-between border-b border-[#28332C]/14 pb-3">
+                <div className="flex items-center gap-2">
+                  <Award className="w-5 h-5 text-terracotta" />
+                  <h3 className="text-base font-bold text-charcoal">
+                    Hasil Evaluasi Terakhir ({studentId})
+                  </h3>
+                </div>
+                <span className="text-xs text-secondary-text">
+                  {new Date(historyResult.timestamp).toLocaleDateString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-charcoal">
-                {isMastered ? 'Pemahaman Konseptual Baik!' : 'Tinjauan Penguasaan Aljabar'}
-              </h3>
-            </div>
-          </div>
 
-          <button
-            onClick={handleRestart}
-            className="btn-interactive px-4 py-2 rounded-xl bg-ivory hover:bg-sage/20 text-forest border border-[#28332C]/20 flex items-center gap-2 text-xs font-semibold self-start sm:self-auto transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Ulangi Evaluasi</span>
-          </button>
-        </div>
-
-        {/* Score Card */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/20 flex flex-col items-center justify-center text-center">
-            <span className="text-xs text-secondary-text font-medium mb-1">Skor Akhir</span>
-            <span className="text-3xl font-extrabold text-forest">{score}</span>
-            <span className="text-[11px] text-secondary-text mt-0.5">dari 100 poin</span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/20 flex flex-col items-center justify-center text-center">
-            <span className="text-xs text-secondary-text font-medium mb-1">Akurasi Soal</span>
-            <span className="text-2xl font-bold text-charcoal">{correctCount} / {totalQuestions}</span>
-            <span className="text-[11px] text-forest font-semibold mt-0.5">
-              {Math.round((correctCount / totalQuestions) * 100)}% Jawaban Benar
-            </span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/20 flex flex-col items-center justify-center text-center">
-            <span className="text-xs text-secondary-text font-medium mb-1">Status Penguasaan</span>
-            <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${
-              isMastered
-                ? 'bg-sage/30 text-forest'
-                : 'bg-terracotta/15 text-terracotta'
-            }`}>
-              {isMastered ? 'Memenuhi Standar' : 'Perlu Pendalaman'}
-            </span>
-            <span className="text-[11px] text-secondary-text mt-1">4 Modul Dasar</span>
-          </div>
-        </div>
-
-        {/* Diagnostic Breakdown */}
-        <div className="space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-charcoal flex items-center gap-1.5">
-            <Check className="w-4 h-4 text-forest" />
-            <span>Rincian Diagnostik Butir Soal</span>
-          </h4>
-          <div className="space-y-2.5">
-            {details.map((item, idx) => (
-              <div
-                key={item.id}
-                className="p-3.5 rounded-xl bg-pure-white border border-[#28332C]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs"
-              >
-                <div className="space-y-1 max-w-xl">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-charcoal">Soal {idx + 1}: {item.title}</span>
-                    <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-ivory border border-[#28332C]/10 text-forest font-semibold">
-                      {item.expression}
-                    </span>
-                  </div>
-                  <p className="text-secondary-text leading-relaxed text-[11px]">
-                    Jawabanmu: <span className="font-semibold text-charcoal">{item.studentAnswer}</span> | Kunci: <span className="font-semibold text-forest">{item.correctAnswer}</span>
-                  </p>
-                  <p className="text-secondary-text text-[11px] italic">
-                    {item.feedback}
-                  </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-4 rounded-2xl bg-ivory text-center border border-[#28332C]/14">
+                  <span className="text-xs text-secondary-text block mb-1">Nilai Akhir</span>
+                  <span className="text-3xl font-black text-forest font-mono">{historyResult.score}</span>
+                  <span className="text-[11px] text-secondary-text block mt-1">Skala 0 - 100</span>
                 </div>
 
-                <div className="self-start sm:self-center shrink-0">
-                  <span className={`px-2.5 py-1 rounded-full font-semibold text-[11px] inline-flex items-center gap-1 ${
-                    item.isCorrect
-                      ? 'bg-sage/20 text-forest border border-sage/30'
-                      : 'bg-terracotta/10 text-terracotta border border-terracotta/30'
-                  }`}>
-                    {item.isCorrect ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
-                    <span>{item.diagnosedType}</span>
+                <div className="p-4 rounded-2xl bg-ivory text-center border border-[#28332C]/14">
+                  <span className="text-xs text-secondary-text block mb-1">Akurasi Jawaban</span>
+                  <span className="text-2xl font-black text-charcoal font-mono">
+                    {historyResult.correctCount} / {historyResult.totalQuestions}
+                  </span>
+                  <span className="text-[11px] text-emerald-700 font-semibold block mt-1">
+                    {historyResult.percentage}% Berhasil
                   </span>
                 </div>
+
+                <div className="p-4 rounded-2xl bg-ivory text-center border border-[#28332C]/14">
+                  <span className="text-xs text-secondary-text block mb-1">Status Penguasaan</span>
+                  <span className="text-sm font-bold text-charcoal block mt-1">
+                    {historyResult.score >= 80 ? '🌟 Sangat Menguasai' : historyResult.score >= 60 ? '👍 Cukup Menguasai' : '📚 Perlu Latihan'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEvaluationResult(historyResult);
+                      setViewMode('result');
+                    }}
+                    className="mt-2 text-xs text-forest font-semibold hover:underline"
+                  >
+                    Lihat Pembahasan Lengkap &gt;
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Conceptual Learning Recommendations */}
-        {recommendations.length > 0 ? (
-          <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/20 space-y-2">
-            <div className="flex items-center gap-2 text-forest font-bold text-xs">
-              <BookOpen className="w-4 h-4" />
-              <span>Rekomendasi Pemantapan Konsep Aljabar</span>
             </div>
-            <ul className="space-y-1.5 text-xs text-charcoal pl-5 list-disc">
-              {recommendations.map((rec, rIdx) => (
-                <li key={rIdx} className="leading-relaxed">
-                  <span className="font-semibold">{rec.module}:</span> {rec.advice}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <div className="p-4 rounded-xl bg-sage/15 border border-sage/30 text-forest text-xs space-y-1">
-            <div className="font-bold flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4" />
-              <span>Pemahaman Konsep Lengkap</span>
-            </div>
-            <p className="leading-relaxed">
-              Selamat! Kamu telah menguasai seluruh konsep dasar aljabar kelas VII (variabel, koefisien, konstanta, dan substitusi aljabar) tanpa terdeteksi miskonsepsi tanda bilangan.
-            </p>
-          </div>
-        )}
-
-        <div className="pt-2 flex justify-end">
-          <button
-            onClick={handleRestart}
-            className="btn-interactive px-5 py-2 rounded-xl bg-forest text-pure-white font-semibold text-xs flex items-center gap-2 hover:bg-forest-600 transition-colors shadow-subtle"
-          >
-            <span>Kembali ke Soal Pertama</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // QUESTION SCREEN
-  return (
-    <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/20 shadow-card-clean space-y-5 animate-fade-page">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/20 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-forest flex items-center gap-1">
-              <Award className="w-3.5 h-3.5" />
-              Tantangan Literasi Matematika
-            </span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-sage/20 text-forest border border-sage/30">
-              PISA Framework
-            </span>
-          </div>
-          <h3 className="text-base font-bold text-charcoal mt-1">
-            {currentChallenge.title}
-          </h3>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {previousResult && (
-            <button
-              onClick={() => setShowSummary(true)}
-              className="btn-interactive px-2.5 py-1.5 rounded-xl bg-sage/20 hover:bg-sage/30 text-forest border border-sage/30 flex items-center gap-1.5 text-xs font-medium transition-colors"
-              title="Lihat hasil evaluasi terakhir"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Hasil Sebelumnya ({previousResult.score})</span>
-            </button>
           )}
-
-          <button
-            onClick={() => handleVoice(`${currentChallenge.context} ${currentChallenge.question}`)}
-            className="btn-interactive p-2 rounded-xl bg-ivory hover:bg-sage/20 text-forest border border-[#28332C]/20 flex items-center gap-1.5 text-xs transition-colors"
-          >
-            <Volume2 className="w-4 h-4" />
-            <span>Bacakan Soal</span>
-          </button>
         </div>
-      </div>
+      )}
 
-      {/* Progress Indicators */}
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-secondary-text font-medium">
-          Soal <strong className="text-charcoal">{currentIdx + 1}</strong> dari {totalQuestions}
-        </span>
-        <div className="flex items-center gap-1.5">
-          {CHALLENGES.map((ch, idx) => {
-            const isAnswered = Boolean(feedbacks[ch.id]);
-            const isCurrent = idx === currentIdx;
-            const isCorrect = feedbacks[ch.id]?.is_correct;
+      {/* =================================================================== */}
+      {/* 2. VIEW MODE: QUIZ ACTIVE (10 SOAL PILIHAN GANDA)                   */}
+      {/* =================================================================== */}
+      {viewMode === 'quiz' && currentQuestion && (
+        <div className="space-y-5 animate-fade-page">
+          {/* Header Bar Kuis & Progres */}
+          <div className="bg-pure-white rounded-2xl p-4 sm:p-5 border border-[#28332C]/14 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-forest text-pure-white font-extrabold text-sm flex items-center justify-center font-mono">
+                {currentIndex + 1}
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-charcoal">
+                    Soal {currentIndex + 1} dari {questions.length}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sage/20 text-forest uppercase">
+                    {currentQuestion.categoryTitle}
+                  </span>
+                </div>
+                <span className="text-[11px] text-secondary-text">
+                  Terjawab: {answeredCount} dari {questions.length} soal
+                </span>
+              </div>
+            </div>
 
-            return (
+            {/* Progress Bar Persentase */}
+            <div className="w-full sm:w-48 space-y-1 text-right">
+              <div className="flex justify-between text-[11px] font-semibold text-secondary-text">
+                <span>Progres</span>
+                <span>{progressPercent}%</span>
+              </div>
+              <div className="w-full h-2 bg-ivory rounded-full overflow-hidden border border-[#28332C]/14">
+                <div
+                  className="h-full bg-forest transition-all duration-300 rounded-full"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Kartu Pertanyaan Soal */}
+          <div className="bg-pure-white rounded-3xl p-6 sm:p-8 border border-[#28332C]/14 shadow-card-clean space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-base sm:text-lg font-bold text-charcoal leading-relaxed">
+                  {currentQuestion.question}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleReadQuestion(currentQuestion.question)}
+                  className="p-2 rounded-xl text-secondary-text hover:text-forest hover:bg-sage/10 transition shrink-0"
+                  title="Dengarkan Soal"
+                >
+                  <Volume2 className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Tampilan Matematis LaTeX (MathView) */}
+              {currentQuestion.expressionLatex && (
+                <div className="p-4 rounded-2xl bg-ivory border border-[#28332C]/14 text-center font-mono text-lg font-bold text-forest">
+                  <MathView math={currentQuestion.expressionLatex} />
+                </div>
+              )}
+            </div>
+
+            {/* Pilihan Jawaban A, B, C, D */}
+            <div className="space-y-2.5 pt-2">
+              {currentQuestion.options.map((option, idx) => {
+                const label = ['A', 'B', 'C', 'D'][idx];
+                const isSelected = selectedAnswers[currentQuestion.id] === option;
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectOption(option)}
+                    className={`btn-interactive w-full p-4 rounded-2xl border-2 text-left font-semibold text-xs sm:text-sm transition-all flex items-center justify-between gap-3 ${
+                      isSelected
+                        ? 'border-forest bg-sage/15 text-forest shadow-xs'
+                        : 'border-[#28332C]/14 bg-pure-white hover:bg-ivory text-charcoal'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`w-7 h-7 rounded-xl flex items-center justify-center font-mono text-xs font-extrabold shrink-0 border ${
+                          isSelected
+                            ? 'bg-forest text-pure-white border-forest'
+                            : 'bg-ivory text-secondary-text border-[#28332C]/20'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                      <span className="leading-snug">{option}</span>
+                    </div>
+
+                    {isSelected && (
+                      <CheckCircle2 className="w-5 h-5 text-forest shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Navigasi Soal (Sebelumnya, Nomor Soal, Selanjutnya, Selesai) */}
+            <div className="pt-4 border-t border-[#28332C]/14 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                  disabled={currentIndex === 0}
+                  className="btn-interactive flex-1 sm:flex-initial py-2.5 px-4 rounded-xl border border-[#28332C]/14 text-xs font-semibold text-charcoal hover:bg-ivory disabled:opacity-40 transition flex items-center justify-center gap-1.5"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Sebelumnya</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
+                  disabled={currentIndex === questions.length - 1}
+                  className="btn-interactive flex-1 sm:flex-initial py-2.5 px-4 rounded-xl border border-[#28332C]/14 text-xs font-semibold text-charcoal hover:bg-ivory disabled:opacity-40 transition flex items-center justify-center gap-1.5"
+                >
+                  <span>Selanjutnya</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Tombol Selesaikan Evaluasi */}
               <button
-                key={ch.id}
-                onClick={() => {
-                  setCurrentIdx(idx);
-                  setUserAnswer(answers[ch.id] || '');
-                }}
-                className={`w-6 h-6 rounded-lg text-[10px] font-bold flex items-center justify-center transition-all ${
-                  isCurrent
-                    ? 'ring-2 ring-forest bg-forest text-pure-white'
-                    : isAnswered
-                    ? isCorrect
-                      ? 'bg-sage/40 text-forest border border-forest/30'
-                      : 'bg-terracotta/20 text-terracotta border border-terracotta/40'
-                    : 'bg-ivory text-secondary-text border border-[#28332C]/20 hover:bg-sage/20'
-                }`}
-                title={`Soal ${idx + 1}: ${ch.title}`}
+                type="button"
+                onClick={handleFinishQuiz}
+                className="btn-interactive w-full sm:w-auto py-2.5 px-6 rounded-xl bg-forest hover:bg-forest-600 text-pure-white text-xs font-bold shadow-subtle flex items-center justify-center gap-2 transition"
               >
-                {idx + 1}
+                <Check className="w-4 h-4" />
+                <span>Selesaikan Evaluasi</span>
               </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Context Scenario */}
-      <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/20 space-y-3 text-xs leading-relaxed">
-        <p className="text-secondary-text">{currentChallenge.context}</p>
-        <div className="p-2.5 rounded-lg bg-pure-white border border-[#28332C]/20 text-center font-mono text-forest font-bold text-sm shadow-subtle">
-          <MathView math={currentChallenge.expression} />
-        </div>
-        <p className="font-semibold text-charcoal">{currentChallenge.question}</p>
-      </div>
-
-      {/* Answer Form */}
-      <form onSubmit={handleVerify} className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-2.5">
-          <input
-            type="text"
-            value={userAnswer}
-            onChange={(e) => setUserAnswer(e.target.value)}
-            placeholder={currentChallenge.placeholder}
-            className="input-interactive flex-1 bg-ivory/60 border border-[#28332C]/20 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal placeholder-secondary-text/60 transition-all"
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !userAnswer.trim()}
-            className="btn-interactive px-5 py-2.5 rounded-xl font-semibold text-xs bg-forest text-pure-white hover:bg-forest-600 disabled:opacity-40 transition-colors shadow-subtle shrink-0"
-          >
-            {isLoading ? 'Menganalisis...' : 'Periksa Jawaban'}
-          </button>
-        </div>
-      </form>
-
-      {/* Diagnostic Socratic Feedback */}
-      {currentFeedback && (
-        <div className={`p-4 rounded-xl border space-y-2 text-xs animate-in fade-in duration-200 ${
-          currentFeedback.is_correct
-            ? 'bg-sage/15 border-sage/30 text-forest'
-            : 'bg-terracotta/10 border-terracotta/30 text-terracotta'
-        }`}>
-          <div className="flex items-center gap-2 font-bold">
-            {currentFeedback.is_correct ? (
-              <CheckCircle2 className="w-4 h-4 text-forest" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-terracotta" />
-            )}
-            <span>Diagnosis: {currentFeedback.diagnosed_type}</span>
-          </div>
-          <p className="text-charcoal leading-relaxed">{currentFeedback.feedback}</p>
-          {currentFeedback.recommended_hint && (
-            <div className="p-2.5 rounded-lg bg-pure-white border border-[#28332C]/20 text-[11px] text-forest font-medium">
-              💡 {currentFeedback.recommended_hint}
             </div>
-          )}
+          </div>
 
-          <div className="pt-2 flex items-center justify-between">
-            <button
-              onClick={handlePrev}
-              disabled={currentIdx === 0}
-              className="btn-interactive px-3 py-1.5 rounded-lg bg-pure-white border border-[#28332C]/20 text-charcoal font-semibold text-xs flex items-center gap-1 hover:bg-ivory disabled:opacity-30 transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Sebelumnya</span>
-            </button>
+          {/* Palet Nomor Soal 1 - 10 (Quick Jump) */}
+          <div className="bg-pure-white rounded-2xl p-4 border border-[#28332C]/14 shadow-subtle">
+            <span className="text-[11px] font-bold text-secondary-text uppercase tracking-wider block mb-2.5">
+              Daftar Nomor Soal (Klik untuk berpindah):
+            </span>
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+              {questions.map((q, idx) => {
+                const isAnswered = Boolean(selectedAnswers[q.id]);
+                const isCurrent = idx === currentIndex;
 
-            <button
-              onClick={handleNext}
-              className="btn-interactive px-4 py-1.5 rounded-lg bg-forest text-pure-white font-semibold text-xs flex items-center gap-1.5 hover:bg-forest-600 transition-colors"
-            >
-              <span>{currentIdx < totalQuestions - 1 ? 'Lanjut ke Soal Berikutnya' : 'Lihat Ringkasan Evaluasi'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+                let btnStyle = 'bg-ivory border-[#28332C]/14 text-secondary-text';
+                if (isCurrent) {
+                  btnStyle = 'bg-forest text-pure-white border-forest font-bold ring-2 ring-forest/30';
+                } else if (isAnswered) {
+                  btnStyle = 'bg-sage/20 border-sage/40 text-forest font-semibold';
+                }
+
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`btn-interactive py-2 rounded-xl border text-xs font-mono transition text-center ${btnStyle}`}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* 3. VIEW MODE: HASIL EVALUASI & ANALISIS 4 MATERI                    */}
+      {/* =================================================================== */}
+      {viewMode === 'result' && evaluationResult && (
+        <div className="space-y-6 animate-fade-page">
+          {/* Kartu Skor Utama */}
+          <div className="bg-pure-white rounded-3xl p-6 sm:p-8 border border-[#28332C]/14 shadow-card-clean text-center space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sage/20 text-forest text-xs font-bold uppercase tracking-wider">
+              <Award className="w-4 h-4" />
+              <span>Hasil Evaluasi Mandiri Siswa</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-charcoal">
+              {evaluationResult.score} <span className="text-base text-secondary-text font-normal">/ 100 Poin</span>
+            </h2>
+
+            <p className="text-xs sm:text-sm text-secondary-text max-w-md mx-auto">
+              {evaluationResult.score >= 80
+                ? 'Luar biasa! Kamu telah menguasai konsep dasar aljabar SMP Kelas VII dengan sangat baik.'
+                : evaluationResult.score >= 60
+                ? 'Bagus! Sebagian besar konsep sudah kamu pahami, perhatikan kembali beberapa materi yang keliru.'
+                : 'Tetap semangat! Pelajari kembali pembahasan di bawah ini dan latih konsep melalui simulasi Algebra Lab.'}
+            </p>
+
+            {/* Statistik Ringkas */}
+            <div className="grid grid-cols-3 gap-3 max-w-md mx-auto pt-2">
+              <div className="p-3 bg-ivory rounded-2xl border border-[#28332C]/14">
+                <span className="text-[10px] text-secondary-text uppercase font-bold block">Benar</span>
+                <span className="text-lg font-bold text-emerald-700 font-mono">{evaluationResult.correctCount} Soal</span>
+              </div>
+              <div className="p-3 bg-ivory rounded-2xl border border-[#28332C]/14">
+                <span className="text-[10px] text-secondary-text uppercase font-bold block">Salah</span>
+                <span className="text-lg font-bold text-rose-700 font-mono">{evaluationResult.wrongCount} Soal</span>
+              </div>
+              <div className="p-3 bg-ivory rounded-2xl border border-[#28332C]/14">
+                <span className="text-[10px] text-secondary-text uppercase font-bold block">Akurasi</span>
+                <span className="text-lg font-bold text-forest font-mono">{evaluationResult.percentage}%</span>
+              </div>
+            </div>
+
+            {/* Tombol Aksi */}
+            <div className="pt-3 flex flex-col sm:flex-row justify-center gap-3">
+              <button
+                type="button"
+                onClick={handleStartQuiz}
+                className="btn-interactive py-2.5 px-6 rounded-xl bg-forest hover:bg-forest-600 text-pure-white text-xs font-bold shadow-subtle flex items-center justify-center gap-2 transition"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Ulangi Evaluasi Mandiri</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('overview')}
+                className="btn-interactive py-2.5 px-5 rounded-xl bg-ivory text-charcoal border border-[#28332C]/14 text-xs font-bold hover:bg-sage/20 transition"
+              >
+                Kembali ke Beranda Evaluasi
+              </button>
+            </div>
+          </div>
+
+          {/* Analisis Penguasaan Per Materi (4 Materi Utama) */}
+          <div className="bg-pure-white rounded-3xl p-6 sm:p-7 border border-[#28332C]/14 shadow-subtle space-y-4">
+            <div className="flex items-center gap-2 border-b border-[#28332C]/14 pb-3">
+              <BarChart3 className="w-5 h-5 text-forest" />
+              <h3 className="text-base font-bold text-charcoal">
+                Analisis Penguasaan Empat Materi Aljabar
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {evaluationResult.categoryAnalysis.map((cat) => (
+                <div key={cat.categoryKey} className="p-4 rounded-2xl bg-ivory border border-[#28332C]/14 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-charcoal">{cat.title}</span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        cat.percentage >= 80
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : cat.percentage >= 50
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-rose-100 text-rose-800'
+                      }`}
+                    >
+                      {cat.masteryStatus}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-secondary-text font-mono">
+                    <span>Benar: {cat.correct} dari {cat.total} soal</span>
+                    <span className="font-bold text-charcoal">{cat.percentage}%</span>
+                  </div>
+
+                  {/* Bar Progres Materi */}
+                  <div className="w-full h-1.5 bg-pure-white rounded-full overflow-hidden border border-[#28332C]/14">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        cat.percentage >= 80 ? 'bg-forest' : cat.percentage >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${cat.percentage}%` }}
+                    />
+                  </div>
+
+                  <p className="text-[11px] text-secondary-text pt-1 leading-relaxed">
+                    <strong>Rekomendasi:</strong> {cat.recommendation}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pembahasan Lengkap Seluruh 10 Soal */}
+          <div className="bg-pure-white rounded-3xl p-6 sm:p-7 border border-[#28332C]/14 shadow-subtle space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/14 pb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-forest" />
+                <h3 className="text-base font-bold text-charcoal">
+                  Pembahasan Lengkap 10 Soal Evaluasi
+                </h3>
+              </div>
+
+              {/* Filter Pembahasan */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setActiveReviewFilter('all')}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
+                    activeReviewFilter === 'all'
+                      ? 'bg-forest text-pure-white'
+                      : 'bg-ivory text-secondary-text hover:text-charcoal'
+                  }`}
+                >
+                  Semua (10)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveReviewFilter('wrong')}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
+                    activeReviewFilter === 'wrong'
+                      ? 'bg-rose-600 text-pure-white'
+                      : 'bg-ivory text-secondary-text hover:text-charcoal'
+                  }`}
+                >
+                  Perlu Dipelajari ({evaluationResult.wrongCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveReviewFilter('correct')}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
+                    activeReviewFilter === 'correct'
+                      ? 'bg-emerald-600 text-pure-white'
+                      : 'bg-ivory text-secondary-text hover:text-charcoal'
+                  }`}
+                >
+                  Benar ({evaluationResult.correctCount})
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {evaluationResult.questionReviews
+                .filter((r) => {
+                  if (activeReviewFilter === 'wrong') return !r.isCorrect;
+                  if (activeReviewFilter === 'correct') return r.isCorrect;
+                  return true;
+                })
+                .map((item) => (
+                  <div
+                    key={item.id}
+                    className={`p-4 sm:p-5 rounded-2xl border text-left space-y-3 ${
+                      item.isCorrect
+                        ? 'bg-pure-white border-emerald-200'
+                        : 'bg-rose-50/40 border-rose-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-6 h-6 rounded-lg text-xs font-bold font-mono flex items-center justify-center ${
+                            item.isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                          }`}
+                        >
+                          {item.questionNumber}
+                        </span>
+                        <span className="text-xs font-bold text-charcoal">{item.categoryTitle}</span>
+                      </div>
+                      <span
+                        className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                          item.isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                        }`}
+                      >
+                        {item.isCorrect ? (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Jawaban Benar</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Jawaban Belum Tepat</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+
+                    <p className="text-xs sm:text-sm font-semibold text-charcoal leading-relaxed">
+                      {item.question}
+                    </p>
+
+                    {item.expressionLatex && (
+                      <div className="p-2.5 rounded-xl bg-ivory text-center font-mono text-sm font-bold text-forest border border-[#28332C]/14">
+                        <MathView math={item.expressionLatex} />
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 rounded-xl bg-ivory border border-[#28332C]/14">
+                        <span className="text-[10px] text-secondary-text uppercase font-semibold block">Jawaban Kamu:</span>
+                        <span className={`font-semibold ${item.isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          {item.chosenAnswer}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-ivory border border-[#28332C]/14">
+                        <span className="text-[10px] text-secondary-text uppercase font-semibold block">Kunci Jawaban:</span>
+                        <span className="font-semibold text-emerald-800">
+                          {item.correctAnswer}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Pembahasan Matematis */}
+                    <div className="p-3 bg-ivory rounded-xl border border-[#28332C]/14 text-xs text-charcoal space-y-1">
+                      <span className="font-bold text-forest flex items-center gap-1.5">
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        <span>Pembahasan Konsep:</span>
+                      </span>
+                      <p className="text-secondary-text leading-relaxed">
+                        {item.explanation}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
         </div>
       )}

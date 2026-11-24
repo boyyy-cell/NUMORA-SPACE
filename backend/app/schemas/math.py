@@ -3,8 +3,8 @@ from typing import Dict, Any, List, Optional
 
 
 class EvaluateExpressionRequest(BaseModel):
-    expression: str = Field(..., example="3x + 5")
-    variables: Dict[str, float] = Field(default_factory=lambda: {"x": 4}, example={"x": 4})
+    expression: str = Field(..., min_length=1, max_length=128, json_schema_extra={"example": "3x + 5"})
+    variables: Dict[str, float] = Field(default_factory=lambda: {"x": 4}, json_schema_extra={"example": {"x": 4}})
 
 
 class CalculationStep(BaseModel):
@@ -23,9 +23,9 @@ class EvaluateExpressionResponse(BaseModel):
 
 
 class DiagnoseMisconceptionRequest(BaseModel):
-    question_type: str = Field(..., example="identify_coefficient")
-    expression: str = Field(..., example="-5x")
-    student_answer: str = Field(..., example="5")
+    question_type: str = Field(..., json_schema_extra={"example": "identify_coefficient"})
+    expression: str = Field(..., json_schema_extra={"example": "-5x"})
+    student_answer: str = Field(..., json_schema_extra={"example": "5"})
 
 
 class DiagnoseMisconceptionResponse(BaseModel):

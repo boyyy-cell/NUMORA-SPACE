@@ -1,3 +1,5 @@
+import ast
+import math
 import re
 from typing import Dict, List, Tuple
 from backend.app.schemas.math import (
@@ -16,30 +18,34 @@ class MathEngine:
         """
         clean_expr = expr.replace(" ", "")
         x_val = variables.get("x", 0.0)
+        if not math.isfinite(x_val):
+            raise ValueError("Nilai variabel harus berupa bilangan hingga.")
 
         # Regex to parse [sign] [coeff] x [ [sign] [const] ]
         pattern = r"^([+-]?\d*)x([+-]\d+)?$"
         match = re.match(pattern, clean_expr)
 
         if not match:
-            # Fallback simple evaluator
             try:
-                # safe replacement for single variable x
-                eval_str = clean_expr.replace("x", f"({x_val})")
-                res = float(eval(eval_str, {"__builtins__": None}, {}))
+                if len(clean_expr) > 128:
+                    raise ValueError("Expression is too long.")
+                expression_tree = ast.parse(clean_expr, mode="eval")
+                if sum(1 for _ in ast.walk(expression_tree)) > 32:
+                    raise ValueError
+                res = MathEngine._evaluate_expression_node(expression_tree.body, x_val)
                 return EvaluateExpressionResponse(
                     expression=expr,
                     variables=variables,
                     result=res,
                     steps=[
-                        CalculationStep(step_number=1, description=f"Substitusi nilai x = {x_val}", expression_state=eval_str),
+                        CalculationStep(step_number=1, description=f"Substitusi nilai x = {x_val}", expression_state=clean_expr),
                         CalculationStep(step_number=2, description="Hitung operasi aritmetika", expression_state=str(res)),
                     ],
                     formatted_latex=f"{expr} \\implies {res}",
                     interpretation=f"Hasil substitusi {expr} untuk x = {x_val} menghasilkan nilai {res}.",
                 )
-            except Exception as e:
-                raise ValueError(f"Bentuk ekspresi matematika tidak didukung: {expr}")
+            except (SyntaxError, TypeError, ArithmeticError, OverflowError):
+                raise ValueError("Bentuk ekspresi matematika tidak valid atau tidak didukung.")
 
         coeff_str, const_str = match.groups()
 
@@ -57,6 +63,8 @@ class MathEngine:
         # Calculations
         term_ax = a * x_val
         final_result = term_ax + b
+        if not math.isfinite(final_result) or abs(final_result) > 1e100:
+            raise ValueError("Hasil ekspresi berada di luar rentang yang didukung.")
 
         # Formulate pedagogical steps
         steps: List[CalculationStep] = []
@@ -101,6 +109,40 @@ class MathEngine:
             formatted_latex=latex_str,
             interpretation=interpretation
         )
+
+    @staticmethod
+    def _evaluate_expression_node(node: ast.AST, x_value: float) -> float:
+        if isinstance(node, ast.Constant) and not isinstance(node.value, bool):
+            if isinstance(node.value, (int, float)):
+                value = float(node.value)
+            else:
+                raise ValueError("Unsupported expression value.")
+        elif isinstance(node, ast.Name) and node.id == "x":
+            value = float(x_value)
+        elif isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            operand = MathEngine._evaluate_expression_node(node.operand, x_value)
+            value = operand if isinstance(node.op, ast.UAdd) else -operand
+        elif isinstance(node, ast.BinOp):
+            left = MathEngine._evaluate_expression_node(node.left, x_value)
+            right = MathEngine._evaluate_expression_node(node.right, x_value)
+            if isinstance(node.op, ast.Add):
+                value = left + right
+            elif isinstance(node.op, ast.Sub):
+                value = left - right
+            elif isinstance(node.op, ast.Mult):
+                value = left * right
+            elif isinstance(node.op, ast.Div):
+                value = left / right
+            elif isinstance(node.op, ast.Pow) and abs(right) <= 12:
+                value = left ** right
+            else:
+                raise ValueError("Unsupported expression operator.")
+        else:
+            raise ValueError("Unsupported expression syntax.")
+
+        if not math.isfinite(value) or abs(value) > 1e100:
+            raise ValueError("Expression result is outside the supported range.")
+        return value
 
     @staticmethod
     def diagnose_misconception(question_type: str, expression: str, student_answer: str) -> DiagnoseMisconceptionResponse:

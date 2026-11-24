@@ -18,7 +18,7 @@
 - **Visual Studio & Interactive 2D Canvas**: Slider manipulasi interaktif untuk nilai variabel $x$, visualisasi wadah nilai, kelipatan koefisien, dan keseimbangan bentuk aljabar.
 - **NORA AI Tutor (Preview DEMO MODE)**: Chat tutor dengan karakter ramah, sabar, dan terstruktur dalam 4 mode interaksi: *Explain*, *Ask*, *Hint*, dan *Review*.
 - **Portal Siswa (Student Dashboard)**: Gambaran kemajuan belajar, shortcut modul, metrik pemahaman, dan aktivitas terkini (*SAMPLE DATA*).
-- **Portal Peneliti (Researcher Dashboard)**: Pratinjau metrik kognitif (*Germane*, *Intrinsic*, *Extraneous Load*), status pre/post-test, dan keterlibatan modul (*DEMO DATA*).
+- **Portal Peneliti (Researcher Dashboard)**: Template protokol S-001/S-002 dan status instrumen; sesi maupun pengukuran hanya tampil jika data empiris benar-benar tersedia.
 - **Indikator Konektivitas Real-Time**: Status *Backend Connected* / *Disconnected* yang melakukan pemeriksaan langsung ke backend FastAPI secara berkala.
 - **PWA Foundation**: Dukungan Web App Manifest dan ikon resolusi tinggi siap dipasang pada perangkat desktop maupun Android.
 
@@ -35,10 +35,14 @@
 - **Framework**: Python FastAPI
 - **Server**: Uvicorn ASGI
 - **Config & Validasi**: Pydantic v2 & Pydantic Settings
-- **Pengujian**: HTTPX & Pytest / TestClient
+- **Pengujian**: Pytest, HTTPX & FastAPI TestClient
+- **Autentikasi**: JWT HS256, PBKDF2-HMAC-SHA256, Google `google-auth`
 
-### Database & Visualisasi Lanjutan (Fase Mendatang)
-- Supabase PostgreSQL (Phase 02)
+### Database
+- SQLite persisten untuk akun, rate limit, dan pencabutan token (satu instance pada filesystem persisten)
+- Supabase PostgreSQL dapat dipertimbangkan sebelum menjalankan beberapa instance backend
+
+### Integrasi Lanjutan
 - Three.js 3D Animations & Voice Narration (Phase 03)
 
 ---
@@ -143,16 +147,9 @@ NUMORA-SPACE/
 ## 7. Panduan Menjalankan Proyek
 
 ### A. Menjalankan Backend FastAPI
-Buka terminal PowerShell baru dan jalankan:
+Buka PowerShell pada root repository dan jalankan:
 ```powershell
-# 1. Masuk ke direktori backend
-cd "C:\Users\User\Documents\NUMORA space\backend"
-
-# 2. Aktifkan virtual environment
-.\venv\Scripts\Activate.ps1
-
-# 3. Jalankan server backend uvicorn
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+.\backend\venv314\Scripts\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 Akses backend pada:
 - **API Root**: `http://127.0.0.1:8000/`
@@ -161,12 +158,9 @@ Akses backend pada:
 - **Dokumentasi Interaktif Swagger UI**: `http://127.0.0.1:8000/docs`
 
 ### B. Menjalankan Frontend React (Vite)
-Buka terminal PowerShell kedua dan jalankan:
+Buka PowerShell kedua pada root repository:
 ```powershell
-# 1. Masuk ke direktori frontend
-cd "C:\Users\User\Documents\NUMORA space\frontend"
-
-# 2. Jalankan server pengembang Vite
+cd frontend
 npm run dev
 ```
 Akses antarmuka web pada:
@@ -174,9 +168,17 @@ Akses antarmuka web pada:
 
 ### C. Menjalankan Pengujian Otomatis Backend
 ```powershell
-cd "C:\Users\User\Documents\NUMORA space"
-.\backend\venv\Scripts\python.exe tests/test_api.py
+.\backend\venv314\Scripts\python.exe -m pytest --collect-only -q
+.\backend\venv314\Scripts\python.exe -m pytest -q
 ```
+
+### D. Konfigurasi Keamanan dan Data
+- Di production, set `ENVIRONMENT=production`, `JWT_SECRET_KEY` dari environment dengan nilai acak minimal 32 karakter, serta `CORS_ORIGINS` ke origin frontend yang tepat. Startup ditolak bila JWT secret production tidak tersedia/terlalu pendek.
+- Tidak ada akun demo atau seed akun otomatis. Login publik hanya melalui Google Identity Services; identitas Google baru mendapat role `student`, sedangkan role `researcher` hanya dipertahankan untuk akun yang sudah diprovisioning secara internal dan cocok dengan email Google terverifikasi. Login email/kata sandi dan provisioning publik tidak tersedia.
+- Login Google memakai tombol resmi Google Identity Services. Tetapkan `VITE_GOOGLE_CLIENT_ID` di `frontend/.env` dan `GOOGLE_CLIENT_ID` di `backend/.env` dengan OAuth 2.0 Web Client ID yang sama. Tambahkan origin frontend lokal yang dipakai ke Authorized JavaScript origins di Google Cloud. Popup credential flow ini tidak memerlukan redirect URI atau Client Secret.
+- `NUMORA_SECURITY_DB_PATH` dapat mengarahkan database lokal ke lokasi persisten yang sesuai. Inisialisasi skema hanya menambahkan tabel yang belum ada dan tidak menghapus tabel atau baris.
+- SQLite tidak cocok untuk filesystem ephemeral atau beberapa instance backend yang tidak berbagi file lokal yang sama. Pada hosting ephemeral, data akun/rate-limit/revocation hilang saat restart; untuk beberapa instance atau kebutuhan durabilitas gunakan database server (misalnya PostgreSQL) sebelum deployment tersebut.
+- Endpoint `/api/v1/health` dan `/api/v1/ready` memeriksa database; `/api/v1/live` hanya memeriksa liveness proses.
 
 ---
 
@@ -186,7 +188,7 @@ cd "C:\Users\User\Documents\NUMORA space"
 | :--- | :---: | :--- |
 | **Arsitektur Modular** | Selesai | Frontend dan backend terpisah rapi |
 | **Landing Page** | Selesai | Hero visual, fitur, modul preview, responsif |
-| **Login Demo** | Selesai | Autentikasi demo lokal dengan tombol 1-klik |
+| **Login** | Menunggu konfigurasi OAuth | Hanya Google Identity Services; role ditentukan backend dan tidak ada autentikasi demo |
 | **Student Dashboard** | Selesai | 4 kartu modul aljabar, status kemajuan (*SAMPLE DATA*) |
 | **Researcher Dashboard**| Selesai | Metrik beban kognitif dan status sesi (*DEMO DATA*) |
 | **NORA AI Preview** | Selesai | Mode Explain, Ask, Hint, Review (*DEMO MODE*) |
@@ -199,8 +201,8 @@ cd "C:\Users\User\Documents\NUMORA space"
 Sesuai batasan Phase 01, fitur-fitur berikut disimulasikan secara transparan dan beretika:
 - **NORA AI Response**: Menggunakan respons simulasi berbasis aturan pedagogi (*DEMO MODE*) tanpa koneksi API LLM berbayar.
 - **Data Kemajuan Belajar**: Persentase kemajuan siswa berlabel *SAMPLE DATA*.
-- **Data Peneliti**: Data kognitif dan subjek berlabel *DEMO DATA* (bukan data penelitian nyata).
-- **Autentikasi**: Simulasi lokal tanpa koneksi database.
+- **Data Peneliti**: S-001/S-002 adalah template protokol; tidak ada sesi empiris atau pengukuran buatan yang ditampilkan.
+- **Autentikasi**: Backend memvalidasi kredensial dan token; simulasi antarmuka Google lokal bukan sesi backend terautentikasi.
 
 ---
 

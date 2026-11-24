@@ -48,3 +48,21 @@ htmlcov/
 
 # OS files
 Desktop.ini
+
+# Database files & backups (all locations)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+backend/app/data/*.db
+backend/app/data/*.sqlite*
+backend/app/data/backups/
+
+# Client secrets & Google credential keys
+client_secret*.json
+*.credential*.json
+
+# Local audit and temporary scripts
+/scratch/

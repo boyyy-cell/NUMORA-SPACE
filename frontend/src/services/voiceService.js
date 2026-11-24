@@ -32,31 +32,46 @@ class VoiceService {
   }
 
   /**
-   * Transforms raw mathematical symbols into natural spoken Indonesian
+   * Transforms raw mathematical symbols and markdown into natural spoken Indonesian
    */
   formatMathForSpeech(text) {
     if (!text) return '';
 
     let spoken = text;
 
-    // LaTeX cleanup
+    // Remove emojis, markdown characters, and bullet points
+    spoken = spoken.replace(/[\*\_#`~>•]/g, ' ');
+    spoken = spoken.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F018}-\u{1F0F5}\u{1F200}-\u{1F2FF}]/gu, '');
+
+    // LaTeX symbol cleanups
     spoken = spoken.replace(/\$+/g, ' ');
     spoken = spoken.replace(/\\implies/g, ' berakibat ');
+    spoken = spoken.replace(/\\iff/g, ' jika dan hanya jika ');
     spoken = spoken.replace(/\\in/g, ' anggota dari ');
     spoken = spoken.replace(/\\mathbb\{R\}/g, ' bilangan real ');
     spoken = spoken.replace(/\\times/g, ' kali ');
+    spoken = spoken.replace(/\\pm/g, ' plus minus ');
 
-    // Specific math expressions
-    spoken = spoken.replace(/-(\d+)?x/g, (match, p1) => {
-      return p1 ? ` negatif ${p1} x ` : ' negatif x ';
+    // Leading or post-equal negative expressions (e.g. -3x -> negatif 3 x, = -5 -> sama dengan negatif 5)
+    spoken = spoken.replace(/(?:^|[\s(=])\s*-(\d*)([a-z])\b/gi, (match, num, letter) => {
+      const n = num ? ` ${num}` : '';
+      return ` negatif${n} ${letter} `;
     });
-    spoken = spoken.replace(/(\d+)x/g, '$1 x');
-    spoken = spoken.replace(/(\d+)y/g, '$1 y');
-    spoken = spoken.replace(/\+/g, ' tambah ');
-    spoken = spoken.replace(/-/g, ' kurang ');
-    spoken = spoken.replace(/=/g, ' sama dengan ');
-    spoken = spoken.replace(/\*/g, ' kali ');
-    spoken = spoken.replace(/\//g, ' bagi ');
+
+    // Negative constants after '=' or at word boundary (e.g. x = -5 -> x sama dengan negatif 5)
+    spoken = spoken.replace(/(?:^|[\s(=])\s*-(\d+)\b/g, (match, num) => {
+      return ` negatif ${num} `;
+    });
+
+    // Standard variable with coefficient (e.g. 5x -> 5 x)
+    spoken = spoken.replace(/(\d+)([a-z])\b/gi, '$1 $2');
+
+    // Mathematical operators
+    spoken = spoken.replace(/(\s*)\+(\s*)/g, ' tambah ');
+    spoken = spoken.replace(/(\s*)-(\s*)/g, ' kurang ');
+    spoken = spoken.replace(/(\s*)=(\s*)/g, ' sama dengan ');
+    spoken = spoken.replace(/(\s*)\*(\s*)/g, ' kali ');
+    spoken = spoken.replace(/(\s*)\/(\s*)/g, ' bagi ');
 
     // Number mapping in Indonesian
     spoken = spoken.replace(/\b1\/2\b/g, 'satu per dua');

@@ -4,7 +4,18 @@
  * Tidak mencemari atau memalsukan data penelitian.
  */
 
+import { studentSyncService } from '../../services/studentSyncService.js';
+
 const STORAGE_KEY = 'numora_runner_data_v1';
+
+function getCurrentUser() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('numora_auth_session') || sessionStorage.getItem('numora_auth_session');
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return null;
+}
 
 const DEFAULT_DATA = {
   highScores: {
@@ -23,6 +34,27 @@ const DEFAULT_DATA = {
 export function getRunnerStats() {
   if (typeof window === 'undefined') return DEFAULT_DATA;
   try {
+    const user = getCurrentUser();
+    if (user) {
+      const scoped = studentSyncService.getLocalRunner(user);
+      if (scoped && scoped.stats && typeof scoped.stats.total_games === 'number') {
+        return {
+          ...DEFAULT_DATA,
+          highScores: {
+            beginner: scoped.stats.high_score_beginner || 0,
+            intermediate: scoped.stats.high_score_intermediate || 0,
+            advanced: scoped.stats.high_score_advanced || 0,
+            expert: scoped.stats.high_score_expert || 0,
+          },
+          totalGames: scoped.stats.total_games || 0,
+          totalCoins: scoped.stats.total_coins || 0,
+          totalAnswered: scoped.stats.total_math_answered || 0,
+          totalCorrect: scoped.stats.total_math_correct || 0,
+          recentSessions: Array.isArray(scoped.sessions) ? scoped.sessions : [],
+        };
+      }
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_DATA;
     const parsed = JSON.parse(raw);
@@ -81,10 +113,26 @@ export function saveRunnerSession({
       mistakesCount: mistakes.length,
     };
 
-    // Simpan 10 sesi terakhir
+    // Simpan 10 sesi terakhir di local storage lama
     current.recentSessions = [sessionRecord, ...current.recentSessions].slice(0, 10);
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+
+    // Sinkronisasi persisten ke database server (seluruh sesi disimpan permanen)
+    const user = getCurrentUser();
+    if (user && user.subjectId !== 'S-001') {
+      studentSyncService.recordRunnerSession(user, {
+        level,
+        score,
+        coins,
+        distance,
+        answered,
+        correct,
+        accuracy,
+        mistakes,
+      });
+    }
+
     return { isNewHigh, currentHighScore: Math.max(score, oldHigh) };
   } catch (e) {
     console.warn('Failed to save runner session to localStorage:', e);

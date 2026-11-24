@@ -8,48 +8,20 @@
  */
 
 const assert = require('assert');
+const path = require('path');
+const { pathToFileURL } = require('url');
 
+async function main() {
 // ==========================================
 // 1. API BASE URL RESOLUTION TEST
 // ==========================================
 console.log('\n--- 1. TESTING API BASE URL RESOLUTION ---');
 
-const PRODUCTION_BACKEND_URL = 'https://numora-space-api.de2.netrun.io';
-
-function resolveBaseUrl(envUrl, windowMock) {
-  // 1. Explicit production backend URL takes highest precedence
-  if (envUrl && envUrl.trim() !== '' && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-    return envUrl.replace(/\/+$/, '');
-  }
-
-  // 2. Runtime browser resolution
-  if (windowMock && windowMock.location && windowMock.location.hostname) {
-    const hostname = windowMock.location.hostname;
-    const protocol = windowMock.location.protocol || 'http:';
-
-    const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
-    const isLanIp = /^192\.168\.\d+\.\d+$|^10\.\d+\.\d+\.\d+$|^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(hostname);
-
-    if (isLanIp) {
-      return `${protocol}//${hostname}:8000`;
-    }
-
-    if (isLoopback) {
-      return envUrl ? envUrl.replace(/\/+$/, '') : 'http://127.0.0.1:8000';
-    }
-
-    if (envUrl && envUrl.trim() !== '' && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-      return envUrl.replace(/\/+$/, '');
-    }
-
-    // Direct fallback to official production API endpoint
-    return PRODUCTION_BACKEND_URL;
-  }
-
-  return envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')
-    ? envUrl.replace(/\/+$/, '')
-    : PRODUCTION_BACKEND_URL;
-}
+const { resolveApiBaseUrl, PRODUCTION_API_URL: PRODUCTION_BACKEND_URL } = await import(
+  pathToFileURL(path.resolve(__dirname, '../frontend/src/services/apiBaseUrl.js')).href
+);
+const resolveBaseUrl = (envUrl, windowMock) =>
+  resolveApiBaseUrl(envUrl, windowMock?.location || null);
 
 // Test 1.1: Localhost development
 assert.strictEqual(
@@ -72,21 +44,48 @@ assert.strictEqual(
   'Explicit custom backend URL must take precedence on Vercel'
 );
 
-// Test 1.4: Production URL prioritizes over LAN IP
+// Test 1.4: Local development must never send auth requests to a remote API URL.
 assert.strictEqual(
   resolveBaseUrl('https://numora-space-api.de2.netrun.io', { location: { hostname: '192.168.1.34', protocol: 'http:' } }),
-  'https://numora-space-api.de2.netrun.io',
-  'Explicit production URL must take precedence even when testing from LAN host'
+  'http://192.168.1.34:8000',
+  'A local LAN browser must use its local backend, not a remote API URL'
 );
 
-// Test 1.5: Vercel deployment without envUrl fallback to official production backend URL
+assert.strictEqual(
+  resolveBaseUrl('https://numora-space-api.de2.netrun.io', { location: { hostname: '127.0.0.1', protocol: 'http:' } }),
+  'http://127.0.0.1:8000',
+  'A loopback browser must use the local backend, not a remote API URL'
+);
+
+// Test 1.5: Vercel deployment without envUrl fallback to production backend URL
 assert.strictEqual(
   resolveBaseUrl('', { location: { hostname: 'numora-space.vercel.app', protocol: 'https:' } }),
   'https://numora-space-api.de2.netrun.io',
   'Vercel without envUrl must fallback to https://numora-space-api.de2.netrun.io (never relative path)'
 );
 
-console.log('  ✓ 5/5 API Base URL scenarios passed successfully.');
+// Test 1.6: A configured LAN host must resolve to loopback in local browser development.
+assert.strictEqual(
+  resolveBaseUrl('http://192.168.1.28:8000', { location: { hostname: '127.0.0.1', protocol: 'http:' } }),
+  'http://127.0.0.1:8000',
+  'A LAN address must not be used by a loopback browser'
+);
+
+// Test 1.7: A local backend URL must never leak into a remote frontend deployment.
+assert.strictEqual(
+  resolveBaseUrl('http://192.168.1.28:8000', { location: { hostname: 'numora-space.vercel.app', protocol: 'https:' } }),
+  'https://numora-space-api.de2.netrun.io',
+  'Remote deployments must not use a private LAN backend URL'
+);
+
+// Test 1.8: An API prefix in configuration must not be duplicated by API calls.
+assert.strictEqual(
+  resolveBaseUrl('http://127.0.0.1:8000/api/v1', { location: { hostname: 'localhost', protocol: 'http:' } }),
+  'http://127.0.0.1:8000',
+  'The configured base URL must not include a duplicated /api/v1 prefix'
+);
+
+console.log('  ✓ 9/9 API Base URL scenarios passed successfully.');
 
 
 // ==========================================
@@ -280,8 +279,8 @@ function loadEvaluation(user) {
   return val ? JSON.parse(val) : null;
 }
 
-const studentUser = { email: 'siswa.demo@numora.space', subjectId: 'S-002' };
-const researcherUser = { email: 'peneliti.demo@numora.space', subjectId: 'P-001' };
+const studentUser = { email: 'student@example.test', subjectId: 'S-002' };
+const researcherUser = { email: 'researcher@example.test', subjectId: 'P-001' };
 const guestUser = null;
 
 // Student submits evaluation with 100 score
@@ -331,3 +330,9 @@ console.log('  ✓ 8/8 CORS origin and regex scenarios passed successfully.');
 console.log('\n======================================================');
 console.log('🎉 ALL FINAL VERIFICATION TESTS PASSED SUCCESSFULLY!');
 console.log('======================================================\n');
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

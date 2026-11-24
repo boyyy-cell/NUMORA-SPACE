@@ -70,46 +70,66 @@ export default function NumoraRunPage() {
 
       {/* Main Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 animate-fade-page">
-        {/* The 3D Runner Stage */}
-        <section className="bg-white rounded-3xl p-3 sm:p-5 border border-[#28332C]/14 shadow-sm">
-          <NumoraRunner3D onBackToDashboard={() => navigate(targetDashboard)} />
-        </section>
-
-        {/* Gameplay Guide & Socratic Math Concept */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
-            <div className="w-9 h-9 rounded-xl bg-[#355B45]/10 text-[#355B45] flex items-center justify-center font-bold mb-3">
-              1
+        {user?.subjectId === 'S-001' ? (
+          <section className="bg-white rounded-3xl p-8 sm:p-12 border border-[#28332C]/14 shadow-sm text-center space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-2xl font-bold">
+              ⚠️
             </div>
-            <h3 className="text-sm font-bold text-[#28332C] mb-1">Kendali 3 Jalur & Aksi</h3>
-            <p className="text-xs text-[#707A70] leading-relaxed">
-              Gunakan panah <strong>Kiri/Kanan</strong> untuk berpindah jalur, <strong>Atas/Spasi</strong> untuk melompati rintangan rendah, dan <strong>Bawah</strong> untuk meluncur merunduk melewati palang tinggi.
+            <h2 className="text-xl font-bold text-[#28332C]">Akses Dinonaktifkan untuk Subjek S-001</h2>
+            <p className="text-sm text-[#707A70] max-w-lg mx-auto leading-relaxed">
+              Subjek S-001 dialokasikan untuk protokol pembelajaran tatap muka langsung bersama peneliti. Sesuai desain riset komparatif, aktivitas permainan NUMORA RUN dinonaktifkan agar validitas data penelitian tetap terjaga.
             </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
-            <div className="w-9 h-9 rounded-xl bg-[#D58B68]/15 text-[#D58B68] flex items-center justify-center font-bold mb-3">
-              2
+            <div className="pt-2">
+              <button
+                onClick={() => navigate(targetDashboard)}
+                className="btn-interactive px-6 py-3 rounded-xl bg-[#355B45] text-white text-sm font-semibold hover:bg-[#355B45]/90 transition"
+              >
+                Kembali ke Dashboard Siswa
+              </button>
             </div>
-            <h3 className="text-sm font-bold text-[#28332C] mb-1">Gerbang Tantangan Aljabar</h3>
-            <p className="text-xs text-[#707A70] leading-relaxed">
-              Setiap beberapa ratus meter muncul Gerbang Aljabar. Jawab 4 opsi pilihan ganda dalam 10 detik untuk membuka gerbang dan melipatgandakan poin skor combo!
-            </p>
-          </div>
+          </section>
+        ) : (
+          <>
+            {/* The 3D Runner Stage */}
+            <section className="bg-white rounded-3xl p-3 sm:p-5 border border-[#28332C]/14 shadow-sm">
+              <NumoraRunner3D onBackToDashboard={() => navigate(targetDashboard)} />
+            </section>
 
-          <div className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
-            <div className="w-9 h-9 rounded-xl bg-[#A7BCA8]/30 text-[#355B45] flex items-center justify-center font-bold mb-3">
-              3
-            </div>
-            <h3 className="text-sm font-bold text-[#28332C] mb-1">Umpan Balik Socratic NORA</h3>
-            <p className="text-xs text-[#707A70] leading-relaxed">
-              Jika salah menjawab atau waktu habis, NORA langsung memberikan petunjuk ringkas 1–2 kalimat agar kamu memahami pola dan konsep aljabarnya.
-            </p>
-          </div>
-        </section>
+            {/* Gameplay Guide & Socratic Math Concept */}
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#355B45]/10 text-[#355B45] flex items-center justify-center font-bold mb-3">
+                  1
+                </div>
+                <h3 className="text-sm font-bold text-[#28332C] mb-1">Kendali 3 Jalur & Aksi</h3>
+                <p className="text-xs text-[#707A70] leading-relaxed">
+                  Gunakan panah <strong>Kiri/Kanan</strong> untuk berpindah jalur, <strong>Atas/Spasi</strong> untuk melompati rintangan rendah, dan <strong>Bawah</strong> untuk meluncur merunduk melewati palang tinggi.
+                </p>
+              </div>
 
-        {/* Histori Belajar & Sesi Terakhir (Jujur di LocalStorage) */}
-        {stats && stats.recentSessions && stats.recentSessions.length > 0 && (
+              <div className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#D58B68]/15 text-[#D58B68] flex items-center justify-center font-bold mb-3">
+                  2
+                </div>
+                <h3 className="text-sm font-bold text-[#28332C] mb-1">Gerbang Tantangan Aljabar</h3>
+                <p className="text-xs text-[#707A70] leading-relaxed">
+                  Setiap beberapa ratus meter muncul Gerbang Aljabar. Jawab 4 opsi pilihan ganda dalam 10 detik untuk membuka gerbang dan melipatgandakan poin skor combo!
+                </p>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#28332C]/10 text-[#28332C] flex items-center justify-center font-bold mb-3">
+                  3
+                </div>
+                <h3 className="text-sm font-bold text-[#28332C] mb-1">Integrasi Persisten</h3>
+                <p className="text-xs text-[#707A70] leading-relaxed">
+                  Skor, rekor high score, koin, dan histori seluruh sesi otomatis tersimpan permanen ke backend database SQLite NUMORA Space.
+                </p>
+              </div>
+            </section>
+
+            {/* Histori Belajar & Sesi Terakhir (Jujur di LocalStorage) */}
+            {stats && stats.recentSessions && stats.recentSessions.length > 0 && (
           <section className="bg-white rounded-2xl p-5 border border-[#28332C]/14 shadow-xs">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -158,6 +178,8 @@ export default function NumoraRunPage() {
               </table>
             </div>
           </section>
+        )}
+          </>
         )}
       </main>
     </div>

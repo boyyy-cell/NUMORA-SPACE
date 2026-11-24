@@ -1,5 +1,4 @@
 from typing import List, Dict, Optional
-from datetime import datetime
 from backend.app.schemas.research import (
     ResearchSubject,
     ResearchSessionLog,
@@ -42,34 +41,7 @@ class ResearchStore:
             ),
         }
 
-        # Sesi di bawah adalah DEMO_SEED (template simulasi) untuk pengujian UI dashboard,
-        # secara eksplisit BUKAN data riil hasil observasi siswa lapangan.
-        self._sessions: List[ResearchSessionLog] = [
-            ResearchSessionLog(
-                session_id="SEED-001-ORIENT",
-                subject_id="S-001",
-                timestamp=datetime.utcnow(),
-                module_id="mod_variables",
-                concept_studied="Wadah Nilai Variabel (Template Simulasi)",
-                duration_minutes=25.0,
-                hints_used=2,
-                misconceptions_detected=["Contoh: Awalnya menganggap x hanya inisial nama"],
-                notes="Data simulasi antarmuka — belum ada sesi riil lapangan.",
-                data_source="DEMO_SEED"
-            ),
-            ResearchSessionLog(
-                session_id="SEED-002-ORIENT",
-                subject_id="S-002",
-                timestamp=datetime.utcnow(),
-                module_id="mod_variables",
-                concept_studied="Laboratorium Visual 2D Variabel x (Template Simulasi)",
-                duration_minutes=22.5,
-                hints_used=1,
-                misconceptions_detected=["Contoh: Eksplorasi bilangan desimal pada wadah x"],
-                notes="Data simulasi antarmuka — belum ada sesi riil lapangan.",
-                data_source="DEMO_SEED"
-            )
-        ]
+        self._sessions: List[ResearchSessionLog] = []
 
         self._instrument_status = CognitiveLoadInstrumentStatus(
             framework_name="Leppink et al. Multidimensional Cognitive Load Scale",

@@ -1,17 +1,9 @@
-import sys
-from pathlib import Path
-
-root_dir = Path(__file__).resolve().parent.parent
-if str(root_dir) not in sys.path:
-    sys.path.insert(0, str(root_dir))
-
-from fastapi.testclient import TestClient
-from backend.app.main import app
-
-client = TestClient(app)
+from backend.app.core.config import settings
 
 
-def test_nora_open_conversation():
+def test_nora_open_conversation(client, monkeypatch):
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", None)
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", None)
     print("\n--- PENGUJIAN KONTEKS PERCAKAPAN NORA OPEN AI ---")
 
     history = []
@@ -80,7 +72,7 @@ def test_nora_open_conversation():
     r5 = client.post("/api/v1/nora/chat", json={
         "message": "itu hasilnya brp",
         "mode": "chat",
-        "history": history
+        "history": history[-6:]
     })
     assert r5.status_code == 200
     d5 = r5.json()
@@ -100,7 +92,8 @@ def test_nora_open_conversation():
     print("\n✓ 6. Pertanyaan di luar matematika:")
     print("   User: Di luar matematika kamu bisa jawab juga?")
     print(f"   NORA: {d6['reply'][:100]}...")
-    assert "sains" in d6["reply"].lower() or "teknologi" in d6["reply"].lower()
+    assert "asisten tutor khusus" in d6["reply"].lower()
+    assert "aljabar" in d6["reply"].lower()
 
     # 7. Guardrail Asesmen Mandiri
     r7 = client.post("/api/v1/nora/chat", json={
@@ -116,7 +109,3 @@ def test_nora_open_conversation():
     assert "tidak diperkenankan" in d7["reply"].lower()
 
     print("\n--- SELURUH PENGUJIAN KONTEKS NORA 100% SUKSES! ---\n")
-
-
-if __name__ == "__main__":
-    test_nora_open_conversation()

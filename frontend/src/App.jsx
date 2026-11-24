@@ -4,29 +4,22 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import ResearcherLoginPage from './pages/ResearcherLoginPage';
 import StudentDashboard from './pages/StudentDashboard';
 import ResearcherDashboard from './pages/ResearcherDashboard';
 import NumoraRunPage from './pages/NumoraRunPage';
 
-// Rute Akar (/): Menampilkan Sign In jika belum terautentikasi, atau dashboard jika sudah
-function RootHandler() {
-  const { user, isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return user.role === 'researcher' ? (
-    <Navigate to="/researcher-dashboard" replace />
-  ) : (
-    <Navigate to="/student-dashboard" replace />
-  );
-}
-
 // Rute Login (/login): Jika sudah ada sesi aktif, langsung alihkan ke ruang yang sesuai
 function LoginHandler() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isRestoringSession } = useAuth();
 
+  if (isRestoringSession) {
+    return (
+      <div role="status" className="min-h-screen flex items-center justify-center bg-ivory text-secondary-text text-sm">
+        Memverifikasi sesi...
+      </div>
+    );
+  }
   if (isAuthenticated) {
     return user.role === 'researcher' ? (
       <Navigate to="/researcher-dashboard" replace />
@@ -42,12 +35,14 @@ export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Halaman pertama saat website dibuka: Sign In */}
-        <Route path="/" element={<RootHandler />} />
-        <Route path="/login" element={<LoginHandler />} />
-
-        {/* Halaman Profil Produk / Presentasi Publik */}
+        {/* Halaman pertama saat website dibuka: Landing Page Publik */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/landing" element={<LandingPage />} />
+
+        {/* Halaman kedua: Autentikasi Masuk */}
+        <Route path="/login" element={<LoginHandler />} />
+        <Route path="/research-login" element={<ResearcherLoginPage />} />
+        <Route path="/login/researcher" element={<ResearcherLoginPage />} />
 
         {/* Ruang Siswa Terproteksi */}
         <Route

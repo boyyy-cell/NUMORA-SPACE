@@ -16,17 +16,35 @@ import {
   FileCode,
   CheckCircle2,
   ChevronDown,
-  LogOut
+  LogOut,
+  Microscope,
+  BookOpen,
+  Award,
+  Gamepad2,
+  Bot,
+  Eye,
+  X,
+  Search,
+  Check,
+  XCircle,
+  Clock,
+  Sparkles
 } from 'lucide-react';
 
 export default function ResearcherDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview'); // overview, subjects (Partisipan), monitoring, instruments, analytics (Analisis & Ekspor)
+  const [activeTab, setActiveTab] = useState('overview'); // overview, subjects, public_users, monitoring, instruments, analytics
   const [subjects, setSubjects] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [cogStatus, setCogStatus] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const [publicUsers, setPublicUsers] = useState([]);
+  const [selectedUserDossier, setSelectedUserDossier] = useState(null);
+  const [loadingDossier, setLoadingDossier] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [activeDossierSubTab, setActiveDossierSubTab] = useState('modules'); // modules | evaluations | nora | runner | activities
   const [loading, setLoading] = useState(true);
   const [exportMessage, setExportMessage] = useState('');
 
@@ -39,18 +57,23 @@ export default function ResearcherDashboard() {
     let isMounted = true;
     const loadResearchData = async () => {
       try {
-        const [subs, sess, cog] = await Promise.all([
+        const [subs, sess, cog, an, pUsers] = await Promise.all([
           apiService.getResearchSubjects(),
           apiService.getResearchSessions(),
           apiService.getCognitiveLoadStatus(),
+          apiService.getResearchAnalytics(),
+          apiService.getPublicUsersSummary(),
         ]);
         if (isMounted) {
           setSubjects(subs);
           setSessions(sess);
           setCogStatus(cog);
+          setAnalytics(an);
+          setPublicUsers(pUsers || []);
           setLoading(false);
         }
       } catch (err) {
+        console.warn('[Researcher Dashboard] error loading data', err);
         if (isMounted) {
           setSubjects([
             {
@@ -61,9 +84,9 @@ export default function ResearcherDashboard() {
               active_module: 'Modul 02: Memahami Koefisien',
               pretest_status: 'Terjadwal',
               posttest_status: 'Terjadwal',
-              cognitive_load_status: 'Belum Diukur',
+              cognitive_load_status: 'NOT CONFIGURED (Belum Diukur)',
               total_sessions_logged: 0,
-              data_source: 'PROTOCOL_TEMPLATE'
+              data_source: 'CONTROL_GROUP'
             },
             {
               subject_id: 'S-002',
@@ -73,9 +96,9 @@ export default function ResearcherDashboard() {
               active_module: 'Modul 02: Memahami Koefisien',
               pretest_status: 'Terjadwal',
               posttest_status: 'Terjadwal',
-              cognitive_load_status: 'Belum Diukur',
+              cognitive_load_status: 'NOT CONFIGURED (Belum Diukur)',
               total_sessions_logged: 0,
-              data_source: 'PROTOCOL_TEMPLATE'
+              data_source: 'ACTUAL_EMPIRICAL'
             }
           ]);
           setLoading(false);
@@ -86,57 +109,69 @@ export default function ResearcherDashboard() {
     return () => { isMounted = false; };
   }, []);
 
-  // Export handlers
-  const handleExportCSV = () => {
-    const headers = ['Subject_ID', 'Group', 'Grade', 'Active_Module', 'PreTest_Status', 'PostTest_Status', 'Data_Source'];
-    const rows = subjects.map(s => [
-      s.subject_id,
-      `"${s.group}"`,
-      `"${s.grade}"`,
-      `"${s.active_module}"`,
-      `"${s.pretest_status}"`,
-      `"${s.posttest_status}"`,
-      `"${s.data_source || 'PROTOCOL_TEMPLATE'}"`
-    ]);
-
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `numora_research_protocol_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setExportMessage('Berkas CSV berhasil diekspor.');
-    setTimeout(() => setExportMessage(''), 3000);
+  const handleViewDossier = async (userEmail) => {
+    setLoadingDossier(true);
+    try {
+      const dossier = await apiService.getUserDossier(userEmail);
+      setSelectedUserDossier(dossier);
+      setActiveDossierSubTab('modules');
+    } catch (err) {
+      console.error('Gagal mengambil dossier pengguna', err);
+    } finally {
+      setLoadingDossier(false);
+    }
   };
 
-  const handleExportJSON = () => {
-    const dataToExport = {
-      research_title: 'Studi Evaluasi Desain Pembelajaran Matematika Aljabar SMP Kelas VII',
-      protocol_version: 'v1.6-SageIvory',
-      export_timestamp: new Date().toISOString(),
-      subjects: subjects,
-      cognitive_load_framework: cogStatus || { status: 'NOT CONFIGURED' },
-      sessions_logged: sessions
-    };
-
-    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(dataToExport, null, 2))}`;
-    const link = document.createElement('a');
-    link.setAttribute('href', jsonString);
-    link.setAttribute('download', `numora_research_data_${Date.now()}.json`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setExportMessage('Berkas JSON berhasil diekspor.');
-    setTimeout(() => setExportMessage(''), 3000);
+  // Export handlers dengan data riil database
+  const handleExportCSV = async () => {
+    try {
+      const csvText = await apiService.exportResearchCsv();
+      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'numora_research_and_learning_data.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setExportMessage('File CSV data penelitian & aktivitas pengguna aktual berhasil diunduh.');
+      setTimeout(() => setExportMessage(''), 4000);
+    } catch (err) {
+      console.error('Export CSV error', err);
+    }
   };
+
+  const handleExportJSON = async () => {
+    try {
+      const jsonData = await apiService.exportResearchJson();
+      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'numora_research_and_learning_data.json');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setExportMessage('File JSON data penelitian & aktivitas pengguna aktual berhasil diunduh.');
+      setTimeout(() => setExportMessage(''), 4000);
+    } catch (err) {
+      console.error('Export JSON error', err);
+    }
+  };
+
+  const filteredPublicUsers = publicUsers.filter(u => {
+    if (!userSearchQuery) return true;
+    const q = userSearchQuery.toLowerCase();
+    return (
+      (u.name || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.subject_id || '').toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-ivory text-charcoal flex">
-      {/* Sidebar */}
+      {/* Sidebar Khusus Peneliti */}
       <Sidebar
         role="researcher"
         activeTab={activeTab}
@@ -145,47 +180,30 @@ export default function ResearcherDashboard() {
         setIsOpen={setSidebarOpen}
       />
 
-      {/* Main Area */}
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
-        {/* Top Header */}
-        <header className="sticky top-0 z-30 h-16 sm:h-18 bg-pure-white/95 backdrop-blur-sm border-b border-[#28332C]/14 px-4 sm:px-8 flex items-center justify-between shadow-xs">
+        {/* Header Peneliti */}
+        <header className="h-16 px-4 sm:px-7 bg-pure-white border-b border-[#28332C]/14 flex items-center justify-between sticky top-0 z-30 shadow-xs">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="btn-interactive lg:hidden p-2 rounded-xl bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/14"
-              aria-label="Buka Menu"
+              className="lg:hidden p-2 rounded-xl text-charcoal hover:bg-ivory transition-colors"
+              aria-label="Buka Menu Sidebar"
             >
               <Menu className="w-5 h-5" />
             </button>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold text-charcoal">
-                  Ruang Peneliti
-                </h1>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sage/20 text-forest border border-sage/30">
-                  Protokol 2 Siswa (S-001 & S-002)
-                </span>
-              </div>
-              <p className="text-xs text-secondary-text hidden sm:block">
-                Evaluasi Desain Pembelajaran Matematika Aljabar SMP Kelas VII
-              </p>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-forest animate-pulse" />
+              <h1 className="text-sm font-bold text-charcoal">
+                Dashboard Evaluator Riset (P-001)
+              </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full bg-ivory border border-[#28332C]/14">
-              <div className="w-7 h-7 rounded-full bg-forest text-pure-white flex items-center justify-center font-bold text-xs">
-                P
-              </div>
-              <div className="text-left hidden sm:block">
-                <div className="text-xs font-semibold text-charcoal leading-tight">
-                  {user?.name || 'Tim Peneliti'}
-                </div>
-                <div className="text-[10px] text-secondary-text">
-                  {user?.grade || 'Pendidikan Matematika'}
-                </div>
-              </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 px-3 rounded-full bg-sage/20 border border-forest/20 text-forest text-xs font-semibold flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-forest" />
+              <span className="hidden sm:inline">Lead Researcher:</span>
+              <span>{user?.name || 'Tim Peneliti'}</span>
             </div>
 
             <button
@@ -200,71 +218,78 @@ export default function ResearcherDashboard() {
 
         {/* Content Body */}
         <main className="flex-1 p-4 sm:p-7 space-y-6 max-w-6xl mx-auto w-full">
-          {/* Collapsible Protocol Transparency Section */}
-          <details className="group p-4 rounded-xl bg-pure-white border border-[#28332C]/14 shadow-subtle text-xs">
-            <summary className="flex items-center justify-between cursor-pointer font-semibold text-charcoal">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-forest" />
-                <span>Rancangan Penelitian: Protokol 2 Siswa (S-001 & S-002)</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-sage/20 text-forest font-semibold ml-1">
-                  Transparan
-                </span>
-              </div>
-              <span className="text-secondary-text text-[11px] group-open:hidden">Buka Detail ▾</span>
-              <span className="text-secondary-text text-[11px] hidden group-open:inline">Tutup ▴</span>
-            </summary>
-            <div className="mt-3 pt-3 border-t border-[#28332C]/14 text-secondary-text leading-relaxed space-y-2">
-              <p>
-                Penelitian ini menerapkan studi komparatif berskala kecil dengan <strong>dua subjek anonim</strong>:
-              </p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li><strong>S-001</strong>: Kelompok Kontrol yang belajar konsep aljabar secara langsung melalui sesi tatap muka bersama peneliti.</li>
-                <li><strong>S-002</strong>: Kelompok Eksperimen yang belajar secara mandiri terpandu melalui platform NUMORA Space dan bimbingan NORA AI.</li>
-              </ul>
-              <p className="text-[11px]">
-                Sesuai prinsip integritas ilmiah, tidak ada nilai atau data aktivitas fiktif yang ditampilkan. Data sesi berlabel <em>PROTOCOL_TEMPLATE</em>.
-              </p>
-            </div>
-          </details>
-
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="space-y-6 animate-fade-page">
-              {/* 4 Clean Stats */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Header Hero Banner */}
+              <div className="rounded-2xl p-6 sm:p-8 bg-pure-white border border-[#28332C]/14 shadow-card-clean space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/14 pb-4">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-sage/20 text-xs font-semibold text-forest">
+                      <Microscope className="w-3.5 h-3.5" />
+                      <span>Protokol Eksperimental Aljabar Kurikulum Merdeka</span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-charcoal">
+                      Pemantauan Pembelajaran Mandiri & Efektivitas NORA
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="px-3 py-1 rounded-full bg-forest text-pure-white font-mono font-semibold">
+                      P-001 Lead
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
+                  Platform ini memantau dua kelompok subjek resmi (S-001 Kontrol Tatap Muka & S-002 Eksperimen Mandiri Terpandu) serta mencatat seluruh aktivitas belajar siswa umum yang menyetujui evaluasi pembelajaran secara persisten.
+                </p>
+              </div>
+
+              {/* 4 Ringkasan Metrik Aktual */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Subjek Riset</span>
-                  <div className="text-2xl font-bold font-mono text-charcoal">2 Siswa</div>
-                  <span className="text-[11px] text-forest font-semibold flex items-center gap-1">
+                  <span className="text-xs text-secondary-text">Peserta Riset Resmi</span>
+                  <div className="text-xl sm:text-2xl font-extrabold text-charcoal font-mono">
+                    {subjects.length} Subjek
+                  </div>
+                  <span className="text-[11px] text-forest font-medium flex items-center gap-1">
                     <Users className="w-3.5 h-3.5" />
                     <span>S-001 & S-002</span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Sesi Observasi</span>
-                  <div className="text-2xl font-bold font-mono text-charcoal">0 Sesi</div>
+                  <span className="text-xs text-secondary-text">Pengguna Umum Tercatat</span>
+                  <div className="text-xl sm:text-2xl font-extrabold text-forest font-mono">
+                    {publicUsers.filter(u => !u.is_official_research_subject).length} Siswa
+                  </div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
                     <Activity className="w-3.5 h-3.5" />
-                    <span>Belum Dimulai</span>
+                    <span>Aktivitas Persisten</span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Pre/Post-Test</span>
-                  <div className="text-lg font-bold text-charcoal">Terjadwal</div>
-                  <span className="text-[11px] text-secondary-text flex items-center gap-1">
-                    <FileCheck2 className="w-3.5 h-3.5" />
-                    <span>Instrumen Siap</span>
+                  <span className="text-xs text-secondary-text">Modul Selesai (S-002)</span>
+                  <div className="text-xl sm:text-2xl font-extrabold text-forest font-mono">
+                    {analytics?.s002_digital_learning?.modules_completed || 0} / 4
+                  </div>
+                  <span className="text-[11px] text-forest font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Intervensi Mandiri</span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Beban Kognitif</span>
-                  <div className="text-lg font-bold text-secondary-text">Belum Diukur</div>
+                  <span className="text-xs text-secondary-text">Instrumen Leppink</span>
+                  <div className="text-sm sm:text-base font-bold text-secondary-text truncate">
+                    {cogStatus?.intrinsic_load_status?.includes('NOT CONFIGURED')
+                      ? 'NOT CONFIGURED'
+                      : (cogStatus?.intrinsic_load_status || 'NOT CONFIGURED')}
+                  </div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
                     <Brain className="w-3.5 h-3.5" />
-                    <span>Pasca Sesi</span>
+                    <span>Belum Diukur Lapangan</span>
                   </span>
                 </div>
               </div>
@@ -273,13 +298,13 @@ export default function ResearcherDashboard() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-bold text-charcoal">
-                    Subjek Penelitian Terdaftar
+                    Dua Peserta Resmi Protokol Penelitian
                   </h3>
                   <button
                     onClick={() => setActiveTab('subjects')}
                     className="btn-interactive text-xs font-semibold text-forest hover:underline"
                   >
-                    Lihat Rincian Lengkap →
+                    Lihat Protokol Lengkap →
                   </button>
                 </div>
 
@@ -306,7 +331,7 @@ export default function ResearcherDashboard() {
                       </p>
 
                       <div className="pt-2 border-t border-[#28332C]/14 flex items-center justify-between text-xs text-secondary-text">
-                        <span>Modul: <strong className="text-charcoal">{sub.active_module}</strong></span>
+                        <span>Modul Target: <strong className="text-charcoal">{sub.active_module}</strong></span>
                         <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-ivory text-secondary-text">
                           {sub.data_source || 'PROTOCOL_TEMPLATE'}
                         </span>
@@ -318,15 +343,15 @@ export default function ResearcherDashboard() {
             </div>
           )}
 
-          {/* TAB 2: PARTISIPAN */}
+          {/* TAB 2: PESERTA RISET RESMI (S-001 & S-002) */}
           {activeTab === 'subjects' && (
             <div className="space-y-4 animate-fade-page">
               <div className="space-y-1">
                 <h2 className="text-xl font-bold text-charcoal">
-                  Partisipan Penelitian
+                  Peserta Resmi Protokol Penelitian
                 </h2>
                 <p className="text-xs sm:text-sm text-secondary-text">
-                  Perbandingan protokol intervensi antara kelompok kontrol dan eksperimen.
+                  Perbandingan protokol intervensi antara kelompok kontrol tatap muka (S-001) dan kelompok eksperimen mandiri (S-002).
                 </p>
               </div>
 
@@ -366,8 +391,14 @@ export default function ResearcherDashboard() {
                         <span className="text-charcoal font-medium">{sub.posttest_status}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-secondary-text">Status Data:</span>
-                        <span className="font-mono text-forest font-semibold">{sub.data_source || 'PROTOCOL_TEMPLATE'}</span>
+                        <span className="text-secondary-text">Status Beban Kognitif:</span>
+                        <span className="font-mono text-amber-700 font-semibold">{sub.cognitive_load_status || 'NOT CONFIGURED'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-secondary-text">Integritas Protokol:</span>
+                        <span className="font-mono text-forest font-semibold">
+                          {sub.subject_id === 'S-001' ? 'Intervensi Digital Diblokir (Kontrol)' : 'Aktivitas Persisten SQLite'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -376,29 +407,253 @@ export default function ResearcherDashboard() {
             </div>
           )}
 
-          {/* TAB 3: MONITORING */}
-          {activeTab === 'monitoring' && (
-            <div className="space-y-4 animate-fade-page">
-              <div className="space-y-1">
-                <h2 className="text-xl font-bold text-charcoal">
-                  Monitoring Sesi Pembelajaran
-                </h2>
-                <p className="text-xs sm:text-sm text-secondary-text">
-                  Catatan aktivitas dan log interaksi siswa selama sesi pembelajaran berlangsung.
+          {/* TAB BARU: AKTIVITAS PENGGUNA UMUM (PUBLIK) */}
+          {activeTab === 'public_users' && (
+            <div className="space-y-5 animate-fade-page">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-bold text-charcoal">
+                    Aktivitas Pembelajaran Seluruh Siswa & Pengguna
+                  </h2>
+                  <p className="text-xs sm:text-sm text-secondary-text">
+                    Rekap progres belajar, evaluasi, dan interaksi NORA dari seluruh pengguna yang menyetujui pencatatan.
+                  </p>
+                </div>
+
+                <div className="relative max-w-xs w-full">
+                  <Search className="w-4 h-4 absolute left-3 top-3 text-secondary-text pointer-events-none" />
+                  <input
+                    type="text"
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    placeholder="Cari nama, email, ID..."
+                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#28332C]/14 text-xs bg-pure-white focus:outline-none focus:border-forest"
+                  />
+                </div>
+              </div>
+
+              {/* Callout Pemisahan Protokol */}
+              <div className="p-3.5 rounded-2xl bg-sage/10 border border-forest/20 text-xs text-forest space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Pemisahan Kohort Riset & Pengguna Publik</span>
+                </div>
+                <p className="text-secondary-text text-[11px] leading-relaxed">
+                  Peserta resmi protokol komparatif tetap tepat dua siswa (<strong>S-001</strong> dan <strong>S-002</strong>). Pengguna berlabel <em>Siswa Publik</em> di bawah ini mencatat data belajar secara persisten tanpa mengubah alokasi kelompok riset.
                 </p>
               </div>
 
-              <div className="bg-pure-white rounded-2xl p-8 border border-[#28332C]/14 shadow-subtle text-center space-y-3">
-                <Activity className="w-8 h-8 text-forest mx-auto" />
-                <h3 className="text-sm font-bold text-charcoal">Belum Ada Sesi Lapangan</h3>
-                <p className="text-xs text-secondary-text max-w-md mx-auto leading-relaxed">
-                  Log aktivitas dan durasi belajar siswa akan dicatat secara otomatis ketika sesi pengujian mandiri dimulai di Ruang Siswa.
-                </p>
+              {/* Tabel Pengguna */}
+              <div className="bg-pure-white rounded-2xl border border-[#28332C]/14 shadow-card-clean overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-ivory border-b border-[#28332C]/14 text-[11px] font-bold text-secondary-text uppercase tracking-wider">
+                        <th className="p-3.5 sm:px-4">Pengguna & Akun</th>
+                        <th className="p-3.5 sm:px-4">Status Kohort</th>
+                        <th className="p-3.5 sm:px-4 text-center">Modul</th>
+                        <th className="p-3.5 sm:px-4 text-center">Evaluasi & Skor</th>
+                        <th className="p-3.5 sm:px-4 text-center">NUMORA RUN</th>
+                        <th className="p-3.5 sm:px-4 text-center">Aktivitas</th>
+                        <th className="p-3.5 sm:px-4 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#28332C]/10 text-charcoal">
+                      {filteredPublicUsers.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="p-6 text-center text-secondary-text text-xs">
+                            Tidak ada data pengguna yang cocok dengan pencarian.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredPublicUsers.map((u) => {
+                          const isOfficial = u.is_official_research_subject;
+                          return (
+                            <tr key={u.email} className="hover:bg-ivory/50 transition-colors">
+                              <td className="p-3.5 sm:px-4">
+                                <div className="font-bold text-xs text-charcoal">{u.name}</div>
+                                <div className="text-[11px] text-secondary-text font-mono truncate max-w-[180px]">{u.email}</div>
+                                <div className="text-[10px] text-secondary-text/80 font-mono mt-0.5">{u.subject_id}</div>
+                              </td>
+                              <td className="p-3.5 sm:px-4">
+                                {isOfficial ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-forest text-pure-white">
+                                    <Sparkles className="w-3 h-3" />
+                                    {u.subject_id === 'S-001' ? 'S-001 (Kontrol)' : 'S-002 (Eksperimen)'}
+                                  </span>
+                                ) : u.role === 'researcher' ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sage/30 text-forest">
+                                    <ShieldCheck className="w-3 h-3" />
+                                    Peneliti
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-ivory border border-[#28332C]/20 text-secondary-text">
+                                    Siswa Publik
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-3.5 sm:px-4 text-center font-mono">
+                                <span className="font-bold text-forest">{u.modules_completed}</span> / 4
+                              </td>
+                              <td className="p-3.5 sm:px-4 text-center">
+                                {u.evaluations_count > 0 ? (
+                                  <div>
+                                    <span className="font-bold text-charcoal font-mono">{u.latest_evaluation_score ?? '-'}</span>
+                                    <div className="text-[10px] text-secondary-text font-mono">{u.evaluations_count} sesi</div>
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] text-secondary-text">Belum Ada</span>
+                                )}
+                              </td>
+                              <td className="p-3.5 sm:px-4 text-center">
+                                {u.runner_games > 0 ? (
+                                  <div>
+                                    <span className="font-bold text-terracotta font-mono">Rekor: {u.runner_high_score}</span>
+                                    <div className="text-[10px] text-secondary-text font-mono">{u.runner_games} main</div>
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] text-secondary-text">-</span>
+                                )}
+                              </td>
+                              <td className="p-3.5 sm:px-4 text-center font-mono font-bold text-xs">
+                                {u.activities_count}
+                              </td>
+                              <td className="p-3.5 sm:px-4 text-right">
+                                <button
+                                  onClick={() => handleViewDossier(u.email)}
+                                  className="btn-interactive inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-forest text-pure-white hover:bg-forest/90 transition-colors shadow-subtle"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>Dossier</span>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: INSTRUMEN */}
+          {/* TAB 4: MONITORING SESI PENELITIAN */}
+          {activeTab === 'monitoring' && (
+            <div className="space-y-6 animate-fade-page">
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold text-charcoal">
+                  Monitoring Sesi & Hasil Evaluasi Riset
+                </h2>
+                <p className="text-xs sm:text-sm text-secondary-text">
+                  Catatan aktivitas belajar terpandu, progres modul, dan hasil evaluasi mandiri per subjek riset.
+                </p>
+              </div>
+
+              {/* Grid 2 Subjek: S-001 vs S-002 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* S-001 Card (Kontrol) */}
+                <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#28332C]/14 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-9 h-9 rounded-xl bg-forest/10 text-forest font-bold font-mono text-xs flex items-center justify-center">
+                        S-001
+                      </span>
+                      <div>
+                        <h4 className="font-bold text-charcoal text-sm">S-001 (Kontrol)</h4>
+                        <span className="text-[11px] text-secondary-text">Tatap Muka Konvensional</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sage/20 text-forest font-semibold">
+                      KONTROL TERKUNCI
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-secondary-text leading-relaxed">
+                    Siswa belajar aljabar konvensional bersama peneliti secara tatap muka langsung. Intervensi pembelajaran digital dinonaktifkan demi validitas kontrol.
+                  </p>
+
+                  <div className="space-y-2 pt-2 border-t border-[#28332C]/10 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-secondary-text">Akses Modul Digital:</span>
+                      <span className="font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded">BLOCKED (403)</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-secondary-text">Akses Evaluasi Digital:</span>
+                      <span className="font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded">BLOCKED (403)</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-secondary-text">Akses NUMORA RUN:</span>
+                      <span className="font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded">BLOCKED (403)</span>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] text-secondary-text bg-ivory p-2.5 rounded-lg border border-[#28332C]/10 flex items-center justify-between">
+                    <span>Sumber Data:</span>
+                    <span className="font-mono text-charcoal font-semibold">DIRECT_TEACHING_LOG</span>
+                  </div>
+                </div>
+
+                {/* S-002 Card (Eksperimen) */}
+                <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#28332C]/14 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-9 h-9 rounded-xl bg-forest text-pure-white font-bold font-mono text-xs flex items-center justify-center">
+                        S-002
+                      </span>
+                      <div>
+                        <h4 className="font-bold text-charcoal text-sm">S-002 (Eksperimen)</h4>
+                        <span className="text-[11px] text-secondary-text">Intervensi NUMORA Space & NORA</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-forest text-pure-white font-semibold">
+                      AKTIF PERSISTEN
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-secondary-text">Progres Modul Aljabar:</span>
+                      <span className="font-semibold text-charcoal">
+                        {analytics?.s002_digital_learning?.modules_completed || 0} dari 4 Selesai
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-secondary-text">Evaluasi Tersimpan:</span>
+                      <span className="font-semibold text-charcoal">
+                        {analytics?.s002_digital_learning?.evaluations_count || 0} Sesi
+                        {analytics?.s002_digital_learning?.latest_evaluation_score !== null && analytics?.s002_digital_learning?.latest_evaluation_score !== undefined
+                          ? ` (Skor: ${analytics.s002_digital_learning.latest_evaluation_score})`
+                          : ''}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-secondary-text">NUMORA RUN:</span>
+                      <span className="font-semibold text-charcoal">
+                        {analytics?.s002_digital_learning?.runner_stats?.total_games || 0} Main
+                        {analytics?.s002_digital_learning?.runner_stats?.high_score_beginner
+                          ? ` (Rekor: ${analytics.s002_digital_learning.runner_stats.high_score_beginner})`
+                          : ''}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-secondary-text">Waktu Belajar:</span>
+                      <span className="font-medium text-charcoal">
+                        {Math.round((analytics?.s002_digital_learning?.total_time_spent_seconds || 0) / 60)} Menit
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] text-secondary-text bg-pure-white p-2.5 rounded-lg border border-[#28332C]/10 flex items-center justify-between">
+                    <span>Sumber Data:</span>
+                    <span className="font-mono text-forest font-semibold">ACTUAL_EMPIRICAL (SQLite)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: INSTRUMEN */}
           {activeTab === 'instruments' && (
             <div className="space-y-5 animate-fade-page">
               <div className="space-y-1">
@@ -422,8 +677,8 @@ export default function ResearcherDashboard() {
                       Mengukur 3 dimensi beban pemrosesan kognitif siswa dalam pembelajaran aljabar.
                     </p>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-ivory text-secondary-text border border-[#28332C]/14">
-                    STATUS: BELUM DIUKUR
+                  <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-amber-50 text-amber-900 border border-amber-300 font-semibold">
+                    STATUS: {cogStatus?.intrinsic_load_status?.includes('NOT CONFIGURED') ? 'NOT CONFIGURED' : (cogStatus?.intrinsic_load_status || 'NOT CONFIGURED (Belum Diukur di Lapangan)')}
                   </span>
                 </div>
 
@@ -450,41 +705,18 @@ export default function ResearcherDashboard() {
                   </div>
                 </div>
               </div>
-
-              {/* Pre/Post-Test Blueprint */}
-              <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-3">
-                <h3 className="text-sm font-bold text-charcoal flex items-center gap-2">
-                  <FileCheck2 className="w-4 h-4 text-forest" />
-                  <span>Cetak Biru Pengujian</span>
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                  <div className="p-3.5 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
-                    <span className="font-semibold text-charcoal block">Pre-Test Diagnostik</span>
-                    <p className="text-[11px] text-secondary-text">Pemahaman awal sebelum sesi aljabar.</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
-                    <span className="font-semibold text-charcoal block">Formatif Lab</span>
-                    <p className="text-[11px] text-secondary-text">Evaluasi adaptif di setiap akhir modul.</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
-                    <span className="font-semibold text-charcoal block">Post-Test Komparasi</span>
-                    <p className="text-[11px] text-secondary-text">Pengukuran hasil belajar S-001 vs S-002.</p>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* TAB 5: ANALISIS & EKSPOR */}
+          {/* TAB 6: ANALISIS & EKSPOR */}
           {activeTab === 'analytics' && (
             <div className="space-y-4 animate-fade-page">
               <div className="space-y-1">
                 <h2 className="text-xl font-bold text-charcoal">
-                  Ekspor Data Penelitian
+                  Ekspor Data Aktual Penelitian & Pengguna
                 </h2>
                 <p className="text-xs sm:text-sm text-secondary-text">
-                  Unduh data protokol riset dan instrumen dalam format tabel CSV atau format objek JSON.
+                  Unduh data aktual protokol riset dan rekap aktivitas pembelajaran seluruh siswa dalam format CSV atau JSON langsung dari database SQLite.
                 </p>
               </div>
 
@@ -503,7 +735,7 @@ export default function ResearcherDashboard() {
                   <div className="space-y-1">
                     <h3 className="font-bold text-charcoal text-base">Ekspor Format CSV</h3>
                     <p className="text-xs text-secondary-text leading-relaxed">
-                      Format tabel kompatibel dengan Microsoft Excel, Google Sheets, dan SPSS.
+                      Format tabel kompatibel dengan Microsoft Excel, Google Sheets, dan SPSS. Memisahkan kohort riset dan pengguna umum secara eksplisit.
                     </p>
                   </div>
                   <button
@@ -511,7 +743,7 @@ export default function ResearcherDashboard() {
                     className="btn-interactive w-full py-2.5 rounded-xl font-semibold text-xs bg-forest text-pure-white hover:bg-forest-600 transition-colors flex items-center justify-center gap-2 shadow-subtle"
                   >
                     <Download className="w-4 h-4" />
-                    <span>Unduh CSV Protokol (.csv)</span>
+                    <span>Unduh CSV Data Aktual (.csv)</span>
                   </button>
                 </div>
 
@@ -522,7 +754,7 @@ export default function ResearcherDashboard() {
                   <div className="space-y-1">
                     <h3 className="font-bold text-charcoal text-base">Ekspor Format JSON</h3>
                     <p className="text-xs text-secondary-text leading-relaxed">
-                      Format objek terstruktur lengkap mencakup skema subjek dan instrumen Leppink.
+                      Format objek terstruktur lengkap mencakup skema subjek riset resmi (S-001/S-002), analitik, dan pengguna umum.
                     </p>
                   </div>
                   <button
@@ -541,6 +773,314 @@ export default function ResearcherDashboard() {
         {/* Global Consistent Footer */}
         <Footer />
       </div>
+
+      {/* MODAL DOSSIER LENGKAP PENGGUNA */}
+      {selectedUserDossier && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-charcoal/50 backdrop-blur-xs animate-fade-in">
+          <div className="bg-pure-white rounded-3xl p-6 sm:p-8 max-w-4xl w-full max-h-[85vh] flex flex-col border border-[#28332C]/14 shadow-modal">
+            {/* Header Modal */}
+            <div className="flex items-start justify-between pb-4 border-b border-[#28332C]/10 shrink-0">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-charcoal">
+                    {selectedUserDossier.user.name}
+                  </h3>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    selectedUserDossier.is_official_research_subject
+                      ? 'bg-forest text-pure-white'
+                      : 'bg-sage/20 text-forest'
+                  }`}>
+                    {selectedUserDossier.user.subject_id}
+                  </span>
+                </div>
+                <div className="text-xs text-secondary-text flex items-center gap-3">
+                  <span>Email: <strong className="text-charcoal">{selectedUserDossier.user.email}</strong></span>
+                  <span>Peran: <strong className="text-charcoal">{selectedUserDossier.user.role}</strong></span>
+                  <span>Tingkat: <strong className="text-charcoal">{selectedUserDossier.user.grade}</strong></span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedUserDossier(null)}
+                className="p-1.5 rounded-xl hover:bg-ivory text-secondary-text hover:text-charcoal transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Sub-Tabs Navigasi Dossier */}
+            <div className="flex items-center gap-2 pt-3 pb-2 border-b border-[#28332C]/10 text-xs overflow-x-auto shrink-0">
+              <button
+                onClick={() => setActiveDossierSubTab('modules')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors flex items-center gap-1.5 ${
+                  activeDossierSubTab === 'modules' ? 'bg-forest text-pure-white' : 'text-secondary-text hover:bg-ivory'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Modul ({selectedUserDossier.modules?.length || 0})</span>
+              </button>
+              <button
+                onClick={() => setActiveDossierSubTab('evaluations')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors flex items-center gap-1.5 ${
+                  activeDossierSubTab === 'evaluations' ? 'bg-forest text-pure-white' : 'text-secondary-text hover:bg-ivory'
+                }`}
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span>Evaluasi ({selectedUserDossier.evaluations?.length || 0})</span>
+              </button>
+              <button
+                onClick={() => setActiveDossierSubTab('runner')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors flex items-center gap-1.5 ${
+                  activeDossierSubTab === 'runner' ? 'bg-forest text-pure-white' : 'text-secondary-text hover:bg-ivory'
+                }`}
+              >
+                <Gamepad2 className="w-3.5 h-3.5" />
+                <span>NUMORA RUN ({selectedUserDossier.runner_sessions?.length || 0})</span>
+              </button>
+              <button
+                onClick={() => setActiveDossierSubTab('nora')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors flex items-center gap-1.5 ${
+                  activeDossierSubTab === 'nora' ? 'bg-forest text-pure-white' : 'text-secondary-text hover:bg-ivory'
+                }`}
+              >
+                <Bot className="w-3.5 h-3.5" />
+                <span>Percakapan NORA</span>
+              </button>
+              <button
+                onClick={() => setActiveDossierSubTab('activities')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors flex items-center gap-1.5 ${
+                  activeDossierSubTab === 'activities' ? 'bg-forest text-pure-white' : 'text-secondary-text hover:bg-ivory'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Linimasa ({selectedUserDossier.activities?.length || 0})</span>
+              </button>
+            </div>
+
+            {/* Dossier Content Area */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 text-xs pr-1">
+              {/* SUBTAB 1: MODUL BELAJAR */}
+              {activeDossierSubTab === 'modules' && (
+                <div className="space-y-3">
+                  {(!selectedUserDossier.modules || selectedUserDossier.modules.length === 0) ? (
+                    <p className="text-secondary-text py-4 text-center">Pengguna belum membuka atau menyelesaikan modul aljabar.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selectedUserDossier.modules.map((m) => (
+                        <div key={m.module_id} className="p-3.5 rounded-2xl bg-ivory border border-[#28332C]/10 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-charcoal uppercase font-mono">{m.module_id}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              m.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {m.status}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-secondary-text space-y-1">
+                            <div>Waktu Belajar: <strong>{m.time_spent_seconds} detik ({Math.round(m.time_spent_seconds / 60)} mnt)</strong></div>
+                            <div>Eksplorasi Slider: <strong>{m.slider_explored}%</strong></div>
+                            {m.completed_at && (
+                              <div>Selesai: <strong>{new Date(m.completed_at * 1000).toLocaleString('id-ID')}</strong></div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SUBTAB 2: EVALUASI 10 SOAL */}
+              {activeDossierSubTab === 'evaluations' && (
+                <div className="space-y-4">
+                  {(!selectedUserDossier.evaluations || selectedUserDossier.evaluations.length === 0) ? (
+                    <p className="text-secondary-text py-4 text-center">Pengguna belum mengerjakan evaluasi mandiri 10 soal.</p>
+                  ) : (
+                    selectedUserDossier.evaluations.map((ev, idx) => (
+                      <div key={ev.evaluation_id || idx} className="p-4 rounded-2xl bg-ivory border border-[#28332C]/10 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#28332C]/10 pb-2.5">
+                          <div>
+                            <span className="font-bold text-charcoal text-sm">Percobaan #{ev.attempt_number || idx + 1}</span>
+                            <span className="text-[11px] text-secondary-text ml-2">
+                              {new Date((ev.completed_at || 0) * 1000).toLocaleString('id-ID')}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-1 rounded-xl bg-forest text-pure-white font-mono font-bold text-xs">
+                              Skor: {ev.score} / 100
+                            </span>
+                            <span className="text-[11px] text-secondary-text">
+                              Benar: <strong>{ev.correct_count}</strong> | Salah: <strong>{ev.wrong_count}</strong>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Rincian Soal & Jawaban */}
+                        {Array.isArray(ev.detailed_answers) && ev.detailed_answers.length > 0 && (
+                          <div className="space-y-2 pt-1">
+                            <p className="font-semibold text-charcoal text-[11px]">Rincian Jawaban Soal:</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {ev.detailed_answers.map((ans, aIdx) => (
+                                <div key={aIdx} className={`p-2.5 rounded-xl text-[11px] border ${
+                                  ans.isCorrect ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'
+                                }`}>
+                                  <div className="flex items-center justify-between font-semibold mb-1">
+                                    <span>Soal #{aIdx + 1}</span>
+                                    {ans.isCorrect ? (
+                                      <span className="flex items-center gap-0.5 text-emerald-700 font-bold"><Check className="w-3 h-3" /> Benar</span>
+                                    ) : (
+                                      <span className="flex items-center gap-0.5 text-rose-700 font-bold"><XCircle className="w-3 h-3" /> Salah</span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] text-charcoal/80 line-clamp-2">{ans.questionText || ans.question}</div>
+                                  <div className="mt-1 text-[10px]">
+                                    Jawaban Siswa: <strong>{ans.selectedAnswer || '-'}</strong>
+                                    {!ans.isCorrect && ans.correctAnswer && (
+                                      <span className="block text-secondary-text">Kunci Benar: {ans.correctAnswer}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* SUBTAB 3: NUMORA RUN */}
+              {activeDossierSubTab === 'runner' && (
+                <div className="space-y-4">
+                  {/* Stats Agregat */}
+                  {selectedUserDossier.runner_stats && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-2xl bg-ivory border border-[#28332C]/10 text-center text-xs">
+                      <div>
+                        <span className="text-[10px] text-secondary-text block">Total Main</span>
+                        <strong className="text-forest text-sm font-mono">{selectedUserDossier.runner_stats.total_games || 0}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-secondary-text block">Total Koin</span>
+                        <strong className="text-amber-700 text-sm font-mono">{selectedUserDossier.runner_stats.total_coins || 0}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-secondary-text block">Total Jarak</span>
+                        <strong className="text-charcoal text-sm font-mono">{selectedUserDossier.runner_stats.total_distance || 0} m</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-secondary-text block">Akurasi Soal</span>
+                        <strong className="text-forest text-sm font-mono">
+                          {selectedUserDossier.runner_stats.total_math_answered > 0
+                            ? Math.round((selectedUserDossier.runner_stats.total_math_correct / selectedUserDossier.runner_stats.total_math_answered) * 100)
+                            : 0}%
+                        </strong>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Riwayat Sesi Runner */}
+                  {(!selectedUserDossier.runner_sessions || selectedUserDossier.runner_sessions.length === 0) ? (
+                    <p className="text-secondary-text py-4 text-center">Pengguna belum memainkan game NUMORA RUN 3D.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="font-semibold text-charcoal text-[11px]">Riwayat Sesi Permainan:</p>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {selectedUserDossier.runner_sessions.map((sess, idx) => (
+                          <div key={sess.session_id || idx} className="p-3 rounded-xl bg-ivory border border-[#28332C]/10 flex items-center justify-between text-xs">
+                            <div>
+                              <span className="font-bold text-charcoal uppercase font-mono">{sess.level}</span>
+                              <span className="text-[10px] text-secondary-text ml-2">
+                                {new Date((sess.created_at || 0) * 1000).toLocaleString('id-ID')}
+                              </span>
+                              <div className="text-[11px] text-secondary-text mt-0.5">
+                                Koin: <strong>{sess.coins}</strong> | Jarak: <strong>{sess.distance} m</strong> | Soal: <strong>{sess.correct}/{sess.answered}</strong>
+                              </div>
+                            </div>
+                            <div className="text-right font-mono">
+                              <span className="text-xs font-bold text-terracotta">Skor {sess.score}</span>
+                              <div className="text-[10px] text-secondary-text">{sess.accuracy}% akurat</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SUBTAB 4: PERCAKAPAN NORA AI */}
+              {activeDossierSubTab === 'nora' && (
+                <div className="space-y-3">
+                  {(() => {
+                    const noraActivities = (selectedUserDossier.activities || []).filter(
+                      a => a.activity_type === 'NORA_CHAT'
+                    );
+                    if (noraActivities.length === 0) {
+                      return <p className="text-secondary-text py-4 text-center">Pengguna belum berinteraksi dengan AI NORA.</p>;
+                    }
+                    return noraActivities.map((n, idx) => (
+                      <div key={n.activity_id || idx} className="p-3.5 rounded-2xl bg-ivory border border-[#28332C]/10 space-y-2 text-xs">
+                        <div className="flex items-center justify-between text-[11px] text-secondary-text border-b border-[#28332C]/10 pb-1.5">
+                          <span className="font-semibold text-forest flex items-center gap-1">
+                            <Bot className="w-3.5 h-3.5" />
+                            Mode: {n.metadata?.mode || n.module_or_feature_id}
+                          </span>
+                          <span>{new Date(n.created_at * 1000).toLocaleString('id-ID')}</span>
+                        </div>
+                        {n.metadata?.student_question && (
+                          <div className="text-charcoal bg-pure-white p-2.5 rounded-xl border border-[#28332C]/10">
+                            <strong className="text-forest text-[11px] block">Pertanyaan Siswa:</strong>
+                            <p className="mt-0.5 leading-relaxed">{n.metadata.student_question}</p>
+                          </div>
+                        )}
+                        {n.metadata?.nora_response && (
+                          <div className="text-secondary-text bg-sage/10 p-2.5 rounded-xl border border-forest/15">
+                            <strong className="text-forest text-[11px] block">Respons Bimbingan NORA:</strong>
+                            <p className="mt-0.5 text-charcoal leading-relaxed">{n.metadata.nora_response}</p>
+                          </div>
+                        )}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
+
+              {/* SUBTAB 5: LINIMASA LENGKAP (AUDIT TRAIL) */}
+              {activeDossierSubTab === 'activities' && (
+                <div className="space-y-2">
+                  {(!selectedUserDossier.activities || selectedUserDossier.activities.length === 0) ? (
+                    <p className="text-secondary-text py-4 text-center">Belum ada linimasa aktivitas tercatat.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-72 overflow-y-auto">
+                      {selectedUserDossier.activities.map((act, idx) => (
+                        <div key={act.activity_id || idx} className="p-2.5 rounded-xl bg-ivory border border-[#28332C]/10 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-bold text-forest font-mono uppercase">{act.activity_type}</span>
+                            <span className="text-secondary-text ml-2">({act.module_or_feature_id})</span>
+                          </div>
+                          <span className="text-[11px] text-secondary-text font-mono">
+                            {new Date(act.created_at * 1000).toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer Modal */}
+            <div className="pt-3 border-t border-[#28332C]/10 flex justify-end shrink-0">
+              <button
+                onClick={() => setSelectedUserDossier(null)}
+                className="px-4 py-2 rounded-xl bg-forest text-pure-white text-xs font-semibold hover:bg-forest/90 transition-colors"
+              >
+                Tutup Dossier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

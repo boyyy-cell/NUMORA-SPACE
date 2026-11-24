@@ -1157,6 +1157,45 @@ export default function NumoraRunner3D({ onBackToDashboard }) {
     setGameState('playing');
   };
 
+  // Expose runner interaction controls for deterministic E2E testing
+  useEffect(() => {
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      window.__NUMORA_RUNNER__ = {
+        getState: () => ({
+          gameState,
+          selectedLevel,
+          score,
+          coins,
+          distance,
+          lives,
+          comboMultiplier,
+          currentQuestion,
+          gameOverSummary,
+        }),
+        triggerAlgebraChallenge,
+        triggerGameOver,
+        handleOptionClick,
+        handleStartGame,
+        handleContinueAfterWrong,
+      };
+    }
+    return () => {
+      if (import.meta.env.DEV && typeof window !== 'undefined') {
+        delete window.__NUMORA_RUNNER__;
+      }
+    };
+  }, [
+    gameState,
+    selectedLevel,
+    score,
+    coins,
+    distance,
+    lives,
+    comboMultiplier,
+    currentQuestion,
+    gameOverSummary,
+  ]);
+
   return (
     <div className="relative w-full h-[620px] rounded-2xl overflow-hidden bg-[#F6F5EF] border border-[#E1E5DC] shadow-sm select-none">
       {/* CANVAS THREE.JS CONTAINER */}
