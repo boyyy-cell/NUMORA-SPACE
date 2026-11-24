@@ -79,6 +79,7 @@ app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/", response_model=RootResponse, tags=["Root"])
+@app.get("/index.py", response_model=RootResponse, tags=["Root"], include_in_schema=False)
 async def root():
     """
     Root endpoint returning general API identity and status.
