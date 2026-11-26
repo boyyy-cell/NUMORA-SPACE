@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import MathView from '../components/common/MathView';
+import InterviewResultsView from '../features/research/InterviewResultsView';
 import { apiService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -1514,6 +1515,11 @@ export default function ResearcherDashboard() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* TAB: HASIL WAWANCARA SISWA (S-001 & S-002) */}
+          {activeTab === 'interviews' && (
+            <InterviewResultsView />
           )}
 
           {/* TAB 5: INSTRUMEN */}
