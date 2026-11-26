@@ -84,7 +84,14 @@ def normalize_database_url(url: Optional[str]) -> Optional[str]:
 
 def is_postgres_configured() -> bool:
     """Returns True if DATABASE_URL points to a PostgreSQL database."""
-    url = normalize_database_url(os.environ.get("DATABASE_URL"))
+    raw = os.environ.get("DATABASE_URL")
+    if not raw:
+        try:
+            from backend.app.core.config import settings
+            raw = settings.DATABASE_URL
+        except Exception:
+            raw = None
+    url = normalize_database_url(raw)
     return bool(url and (url.startswith("postgresql://") or url.startswith("postgres://")))
 
 
@@ -292,7 +299,14 @@ class DatabaseManager:
             return
 
         # Check if PostgreSQL is configured via DATABASE_URL
-        pg_url = normalize_database_url(os.environ.get("DATABASE_URL"))
+        raw_url = os.environ.get("DATABASE_URL")
+        if not raw_url:
+            try:
+                from backend.app.core.config import settings
+                raw_url = settings.DATABASE_URL
+            except Exception:
+                raw_url = None
+        pg_url = normalize_database_url(raw_url)
         if pg_url:
             pool = self._get_pg_pool(pg_url)
             if pool is not None:

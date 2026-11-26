@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MathView, { MathText } from '../../components/common/MathView';
+import { apiService } from '../../services/api';
 import {
   X,
   ArrowLeft,
@@ -120,6 +121,26 @@ export default function ModuleLearningModal({
   });
 
   const [varValue, setVarValue] = useState(4);
+
+  // Log aktivitas melihat modul saat berganti modul di dalam modal
+  useEffect(() => {
+    const activeMod = MODULE_DETAILS[activeIdx];
+    if (activeMod) {
+      try {
+        const sessionRaw = localStorage.getItem('numora_auth_session') || sessionStorage.getItem('numora_auth_session');
+        if (sessionRaw) {
+          const session = JSON.parse(sessionRaw);
+          if (session?.subjectId !== 'S-001') {
+            apiService.logLearningActivity({
+              activity_type: 'MODULE_VIEW',
+              module_or_feature_id: activeMod.id,
+              metadata: { title: activeMod.title, subtitle: activeMod.subtitle, time: new Date().toISOString() }
+            }).catch(() => {});
+          }
+        }
+      } catch (_) {}
+    }
+  }, [activeIdx]);
 
   // Lock body scroll when modal is active
   useEffect(() => {

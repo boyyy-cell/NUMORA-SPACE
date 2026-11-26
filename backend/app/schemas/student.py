@@ -126,6 +126,9 @@ class ActivityRecord(BaseModel):
     module_or_feature_id: str
     metadata: Optional[Any] = None
     created_at: int
+    user_name: Optional[str] = None
+    subject_id: Optional[str] = None
+    user_role: Optional[str] = None
 
 
 # ----------------------------------------------------

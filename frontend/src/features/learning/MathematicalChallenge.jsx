@@ -3,6 +3,7 @@ import MathView from '../../components/common/MathView';
 import { useAuth } from '../../context/AuthContext';
 import { voiceService } from '../../services/voiceService';
 import { studentSyncService } from '../../services/studentSyncService';
+import { apiService } from '../../services/api';
 import {
   EVALUATION_QUESTIONS,
   getShuffledEvaluationQuestions,
@@ -102,6 +103,13 @@ export default function MathematicalChallenge() {
     setSelectedAnswers({});
     setEvaluationResult(null);
     setViewMode('quiz');
+    if (user && user.subjectId !== 'S-001') {
+      apiService.logLearningActivity({
+        activity_type: 'EVALUATION_START',
+        module_or_feature_id: 'EVALUATION_10_QUESTIONS',
+        metadata: { total_questions: shuffled.length, time: new Date().toISOString() }
+      }).catch(() => {});
+    }
   };
 
   // Pilih jawaban

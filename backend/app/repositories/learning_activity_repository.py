@@ -34,6 +34,7 @@ class LearningActivityRepository(BaseRepository):
         created_at: Optional[int] = None,
         activity_id: Optional[str] = None
     ) -> Dict[str, Any]:
+        clean_email = (user_email or "").strip().lower()
         normalized_type = str(activity_type).strip().upper()
         if normalized_type not in self.VALID_TYPES:
             normalized_type = "MODULE_VIEW"
@@ -53,12 +54,12 @@ class LearningActivityRepository(BaseRepository):
         with self.get_connection() as conn:
             conn.execute(
                 query,
-                (act_id, user_email, normalized_type, module_or_feature_id, meta_str, timestamp)
+                (act_id, clean_email, normalized_type, module_or_feature_id, meta_str, timestamp)
             )
 
         return {
             "activity_id": act_id,
-            "user_email": user_email,
+            "user_email": clean_email,
             "activity_type": normalized_type,
             "module_or_feature_id": module_or_feature_id,
             "metadata_json": meta_str,
@@ -71,6 +72,7 @@ class LearningActivityRepository(BaseRepository):
         limit: int = 50,
         offset: int = 0
     ) -> List[Dict[str, Any]]:
+        clean_email = (user_email or "").strip().lower()
         query = """
             SELECT activity_id, user_email, activity_type, module_or_feature_id,
                    metadata_json, created_at
@@ -80,7 +82,7 @@ class LearningActivityRepository(BaseRepository):
             LIMIT ? OFFSET ?
         """
         with self.get_connection() as conn:
-            cursor = conn.execute(query, (user_email, limit, offset))
+            cursor = conn.execute(query, (clean_email, limit, offset))
             rows = cursor.fetchall()
             results = []
             for row in rows:
@@ -105,19 +107,21 @@ class LearningActivityRepository(BaseRepository):
         conditions = []
         params = []
         if user_email:
-            conditions.append("user_email = ?")
-            params.append(user_email)
+            conditions.append("a.user_email = ?")
+            params.append(user_email.strip().lower())
         if activity_type:
-            conditions.append("activity_type = ?")
+            conditions.append("a.activity_type = ?")
             params.append(activity_type.upper())
 
         where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         query = f"""
-            SELECT activity_id, user_email, activity_type, module_or_feature_id,
-                   metadata_json, created_at
-            FROM learning_activities
+            SELECT a.activity_id, a.user_email, a.activity_type, a.module_or_feature_id,
+                   a.metadata_json, a.created_at,
+                   u.name AS user_name, u.subject_id, u.role AS user_role
+            FROM learning_activities a
+            LEFT JOIN users u ON u.email = a.user_email
             {where_clause}
-            ORDER BY created_at DESC
+            ORDER BY a.created_at DESC
             LIMIT ? OFFSET ?
         """
         params.extend([limit, offset])
@@ -139,6 +143,7 @@ class LearningActivityRepository(BaseRepository):
             return results
 
     def delete_activities_for_user(self, user_email: str) -> int:
+        clean_email = (user_email or "").strip().lower()
         with self.get_connection() as conn:
-            cur = conn.execute("DELETE FROM learning_activities WHERE user_email = ?", (user_email,))
+            cur = conn.execute("DELETE FROM learning_activities WHERE user_email = ?", (clean_email,))
             return cur.rowcount

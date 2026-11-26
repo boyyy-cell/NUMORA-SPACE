@@ -57,6 +57,12 @@ class ResearchAnalyticsResponse(BaseModel):
     total_subjects: int
     total_sessions: int
     total_duration_minutes: float
+    total_learning_activities: Optional[int] = 0
+    total_public_students: Optional[int] = 0
+    total_modules_completed: Optional[int] = 0
+    total_evaluations: Optional[int] = 0
+    average_evaluation_score: Optional[float] = None
+    max_evaluation_score: Optional[float] = None
     s002_digital_learning: Dict[str, Any]
     cognitive_load_records_count: int
     cognitive_load_instrument_status: str

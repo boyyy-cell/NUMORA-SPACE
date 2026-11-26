@@ -28,7 +28,11 @@ import {
   Check,
   XCircle,
   Clock,
-  Sparkles
+  Sparkles,
+  RefreshCw,
+  Filter,
+  Sliders,
+  ListOrdered
 } from 'lucide-react';
 
 export default function ResearcherDashboard() {
@@ -41,11 +45,15 @@ export default function ResearcherDashboard() {
   const [cogStatus, setCogStatus] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [publicUsers, setPublicUsers] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [selectedUserDossier, setSelectedUserDossier] = useState(null);
   const [loadingDossier, setLoadingDossier] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [activityFilter, setActivityFilter] = useState('ALL'); // ALL, LOGIN, MODULE, EVALUATION, NORA_CHAT, LAB_EXPERIMENT, RUNNER_PLAY
+  const [activeUserViewMode, setActiveUserViewMode] = useState('timeline'); // 'timeline' | 'summary'
   const [activeDossierSubTab, setActiveDossierSubTab] = useState('modules'); // modules | evaluations | nora | runner | activities
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [exportMessage, setExportMessage] = useState('');
 
   const handleLogout = () => {
@@ -53,60 +61,46 @@ export default function ResearcherDashboard() {
     navigate('/login', { replace: true });
   };
 
-  useEffect(() => {
-    let isMounted = true;
-    const loadResearchData = async () => {
-      try {
-        const [subs, sess, cog, an, pUsers] = await Promise.all([
-          apiService.getResearchSubjects(),
-          apiService.getResearchSessions(),
-          apiService.getCognitiveLoadStatus(),
-          apiService.getResearchAnalytics(),
-          apiService.getPublicUsersSummary(),
-        ]);
-        if (isMounted) {
-          setSubjects(subs);
-          setSessions(sess);
-          setCogStatus(cog);
-          setAnalytics(an);
-          setPublicUsers(pUsers || []);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.warn('[Researcher Dashboard] error loading data', err);
-        if (isMounted) {
-          setSubjects([
-            {
-              subject_id: 'S-001',
-              group: 'Kelompok Kontrol',
-              method: 'Tatap muka konvensional terarah bersama peneliti',
-              grade: 'SMP Kelas VII',
-              active_module: 'Modul 02: Memahami Koefisien',
-              pretest_status: 'Terjadwal',
-              posttest_status: 'Terjadwal',
-              cognitive_load_status: 'NOT CONFIGURED (Belum Diukur)',
-              total_sessions_logged: 0,
-              data_source: 'CONTROL_GROUP'
-            },
-            {
-              subject_id: 'S-002',
-              group: 'Kelompok Eksperimen',
-              method: 'Mandiri terpandu melalui platform NUMORA Space & NORA',
-              grade: 'SMP Kelas VII',
-              active_module: 'Modul 02: Memahami Koefisien',
-              pretest_status: 'Terjadwal',
-              posttest_status: 'Terjadwal',
-              cognitive_load_status: 'NOT CONFIGURED (Belum Diukur)',
-              total_sessions_logged: 0,
-              data_source: 'ACTUAL_EMPIRICAL'
-            }
-          ]);
-          setLoading(false);
-        }
+  const loadResearchData = async (showRefreshSpinner = false) => {
+    if (showRefreshSpinner) setIsRefreshing(true);
+    try {
+      const [subsRes, sessRes, cogRes, anRes, pUsersRes, actRes] = await Promise.allSettled([
+        apiService.getResearchSubjects(),
+        apiService.getResearchSessions(),
+        apiService.getCognitiveLoadStatus(),
+        apiService.getResearchAnalytics(),
+        apiService.getPublicUsersSummary(),
+        apiService.getAllActivities({ limit: 200 }),
+      ]);
+
+      if (subsRes.status === 'fulfilled' && subsRes.value) {
+        setSubjects(subsRes.value);
       }
-    };
+      if (sessRes.status === 'fulfilled' && sessRes.value) {
+        setSessions(sessRes.value);
+      }
+      if (cogRes.status === 'fulfilled' && cogRes.value) {
+        setCogStatus(cogRes.value);
+      }
+      if (anRes.status === 'fulfilled' && anRes.value) {
+        setAnalytics(anRes.value);
+      }
+      if (pUsersRes.status === 'fulfilled' && pUsersRes.value) {
+        setPublicUsers(pUsersRes.value);
+      }
+      if (actRes.status === 'fulfilled' && actRes.value) {
+        setActivities(actRes.value);
+      }
+    } catch (err) {
+      console.warn('[Researcher Dashboard] error loading data', err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     loadResearchData();
-    return () => { isMounted = false; };
   }, []);
 
   const handleViewDossier = async (userEmail) => {
@@ -158,6 +152,77 @@ export default function ResearcherDashboard() {
       console.error('Export JSON error', err);
     }
   };
+
+  const formatTimestamp = (epochSeconds) => {
+    if (!epochSeconds) return '-';
+    const date = new Date(epochSeconds * 1000);
+    return date.toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  const getActivityBadge = (type) => {
+    switch (type) {
+      case 'LOGIN':
+      case 'SESSION_START':
+      case 'SESSION_END':
+        return { label: 'Sesi / Akun', bg: 'bg-slate-100 text-slate-800 border-slate-300' };
+      case 'MODULE_VIEW':
+        return { label: 'Buka Modul', bg: 'bg-blue-50 text-blue-800 border-blue-200' };
+      case 'MODULE_COMPLETE':
+        return { label: 'Modul Selesai', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+      case 'EVALUATION_START':
+        return { label: 'Mulai Evaluasi', bg: 'bg-amber-50 text-amber-800 border-amber-200' };
+      case 'EVALUATION_SUBMIT':
+        return { label: 'Selesai Evaluasi', bg: 'bg-purple-50 text-purple-800 border-purple-200' };
+      case 'NORA_CHAT':
+        return { label: 'Bimbingan NORA', bg: 'bg-teal-50 text-teal-800 border-teal-200' };
+      case 'LAB_EXPERIMENT':
+        return { label: 'Algebra Lab', bg: 'bg-indigo-50 text-indigo-800 border-indigo-200' };
+      case 'RUNNER_PLAY':
+        return { label: 'NUMORA RUN', bg: 'bg-orange-50 text-orange-800 border-orange-200' };
+      default:
+        return { label: type, bg: 'bg-gray-100 text-gray-800 border-gray-200' };
+    }
+  };
+
+  const filteredActivities = activities.filter((act) => {
+    if (activityFilter !== 'ALL') {
+      if (activityFilter === 'LOGIN' && act.activity_type !== 'LOGIN' && act.activity_type !== 'SESSION_START' && act.activity_type !== 'SESSION_END') {
+        return false;
+      }
+      if (activityFilter === 'MODULE' && !act.activity_type.startsWith('MODULE_')) {
+        return false;
+      }
+      if (activityFilter === 'EVALUATION' && !act.activity_type.startsWith('EVALUATION_')) {
+        return false;
+      }
+      if (activityFilter === 'NORA_CHAT' && act.activity_type !== 'NORA_CHAT') {
+        return false;
+      }
+      if (activityFilter === 'LAB_EXPERIMENT' && act.activity_type !== 'LAB_EXPERIMENT') {
+        return false;
+      }
+      if (activityFilter === 'RUNNER_PLAY' && act.activity_type !== 'RUNNER_PLAY') {
+        return false;
+      }
+    }
+
+    if (!userSearchQuery) return true;
+    const q = userSearchQuery.toLowerCase();
+    return (
+      (act.user_name || '').toLowerCase().includes(q) ||
+      (act.user_email || '').toLowerCase().includes(q) ||
+      (act.subject_id || '').toLowerCase().includes(q) ||
+      (act.activity_type || '').toLowerCase().includes(q) ||
+      (act.module_or_feature_id || '').toLowerCase().includes(q)
+    );
+  });
 
   const filteredPublicUsers = publicUsers.filter(u => {
     if (!userSearchQuery) return true;
@@ -259,37 +324,35 @@ export default function ResearcherDashboard() {
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Pengguna Umum Tercatat</span>
+                  <span className="text-xs text-secondary-text">Pengguna Terdaftar</span>
                   <div className="text-xl sm:text-2xl font-extrabold text-forest font-mono">
-                    {publicUsers.filter(u => !u.is_official_research_subject).length} Siswa
+                    {publicUsers.length} Akun
                   </div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
                     <Activity className="w-3.5 h-3.5" />
-                    <span>Aktivitas Persisten</span>
+                    <span>{publicUsers.filter(u => !u.is_official_research_subject).length} Siswa Publik</span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Modul Selesai (S-002)</span>
+                  <span className="text-xs text-secondary-text">Total Log Aktivitas</span>
                   <div className="text-xl sm:text-2xl font-extrabold text-forest font-mono">
-                    {analytics?.s002_digital_learning?.modules_completed || 0} / 4
+                    {analytics?.total_learning_activities || activities.length} Log
                   </div>
                   <span className="text-[11px] text-forest font-medium flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Intervensi Mandiri</span>
+                    <span>Tercatat di Database</span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Instrumen Leppink</span>
-                  <div className="text-sm sm:text-base font-bold text-secondary-text truncate">
-                    {cogStatus?.intrinsic_load_status?.includes('NOT CONFIGURED')
-                      ? 'NOT CONFIGURED'
-                      : (cogStatus?.intrinsic_load_status || 'NOT CONFIGURED')}
+                  <span className="text-xs text-secondary-text">Evaluasi Mandiri</span>
+                  <div className="text-xl sm:text-2xl font-extrabold text-charcoal font-mono">
+                    {analytics?.total_evaluations || 0} Sesi
                   </div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
-                    <Brain className="w-3.5 h-3.5" />
-                    <span>Belum Diukur Lapangan</span>
+                    <Award className="w-3.5 h-3.5" />
+                    <span>Rata-rata: {analytics?.average_evaluation_score ?? '-'}</span>
                   </span>
                 </div>
               </div>
@@ -407,7 +470,7 @@ export default function ResearcherDashboard() {
             </div>
           )}
 
-          {/* TAB BARU: AKTIVITAS PENGGUNA UMUM (PUBLIK) */}
+          {/* TAB 3: AKTIVITAS PENGGUNA & SISWA RISET */}
           {activeTab === 'public_users' && (
             <div className="space-y-5 animate-fade-page">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -416,21 +479,92 @@ export default function ResearcherDashboard() {
                     Aktivitas Pembelajaran Seluruh Siswa & Pengguna
                   </h2>
                   <p className="text-xs sm:text-sm text-secondary-text">
-                    Rekap progres belajar, evaluasi, dan interaksi NORA dari seluruh pengguna yang menyetujui pencatatan.
+                    Pemantauan linimasa aktivitas riil, progres belajar, evaluasi, dan interaksi NORA secara terperinci.
                   </p>
                 </div>
 
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => loadResearchData(true)}
+                    disabled={isRefreshing}
+                    className="btn-interactive inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-pure-white hover:bg-ivory border border-[#28332C]/14 text-charcoal transition-colors shadow-xs"
+                    title="Segarkan data aktivitas dari server"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-forest ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshing ? 'Menyegarkan...' : 'Segarkan Data'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* View Switcher & Search Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-pure-white p-3 rounded-2xl border border-[#28332C]/14 shadow-subtle">
+                <div className="flex items-center gap-1.5 bg-ivory p-1 rounded-xl border border-[#28332C]/10 text-xs font-semibold">
+                  <button
+                    onClick={() => setActiveUserViewMode('timeline')}
+                    className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+                      activeUserViewMode === 'timeline'
+                        ? 'bg-forest text-pure-white shadow-xs'
+                        : 'text-secondary-text hover:text-charcoal'
+                    }`}
+                  >
+                    <Activity className="w-3.5 h-3.5" />
+                    <span>Linimasa Aktivitas ({filteredActivities.length})</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveUserViewMode('summary')}
+                    className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+                      activeUserViewMode === 'summary'
+                        ? 'bg-forest text-pure-white shadow-xs'
+                        : 'text-secondary-text hover:text-charcoal'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Tabel Ringkasan Siswa ({filteredPublicUsers.length})</span>
+                  </button>
+                </div>
+
                 <div className="relative max-w-xs w-full">
-                  <Search className="w-4 h-4 absolute left-3 top-3 text-secondary-text pointer-events-none" />
+                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-secondary-text pointer-events-none" />
                   <input
                     type="text"
                     value={userSearchQuery}
                     onChange={(e) => setUserSearchQuery(e.target.value)}
-                    placeholder="Cari nama, email, ID..."
-                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#28332C]/14 text-xs bg-pure-white focus:outline-none focus:border-forest"
+                    placeholder={activeUserViewMode === 'timeline' ? "Cari aktivitas, nama, email..." : "Cari nama, email, ID..."}
+                    className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-[#28332C]/14 text-xs bg-pure-white focus:outline-none focus:border-forest"
                   />
                 </div>
               </div>
+
+              {/* Category Filter Pills for Timeline View */}
+              {activeUserViewMode === 'timeline' && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                  <span className="text-[11px] font-semibold text-secondary-text mr-1 flex items-center gap-1">
+                    <Filter className="w-3 h-3" />
+                    Kategori:
+                  </span>
+                  {[
+                    { id: 'ALL', label: 'Semua Aktivitas' },
+                    { id: 'LOGIN', label: 'Sesi & Akun' },
+                    { id: 'MODULE', label: 'Modul Aljabar' },
+                    { id: 'EVALUATION', label: 'Evaluasi' },
+                    { id: 'NORA_CHAT', label: 'Bimbingan NORA' },
+                    { id: 'LAB_EXPERIMENT', label: 'Algebra Lab' },
+                    { id: 'RUNNER_PLAY', label: 'NUMORA RUN' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActivityFilter(cat.id)}
+                      className={`btn-interactive px-2.5 py-1 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-colors ${
+                        activityFilter === cat.id
+                          ? 'bg-forest text-pure-white shadow-xs'
+                          : 'bg-pure-white text-secondary-text hover:text-charcoal border border-[#28332C]/10'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Callout Pemisahan Protokol */}
               <div className="p-3.5 rounded-2xl bg-sage/10 border border-forest/20 text-xs text-forest space-y-1">
@@ -443,98 +577,209 @@ export default function ResearcherDashboard() {
                 </p>
               </div>
 
-              {/* Tabel Pengguna */}
-              <div className="bg-pure-white rounded-2xl border border-[#28332C]/14 shadow-card-clean overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-ivory border-b border-[#28332C]/14 text-[11px] font-bold text-secondary-text uppercase tracking-wider">
-                        <th className="p-3.5 sm:px-4">Pengguna & Akun</th>
-                        <th className="p-3.5 sm:px-4">Status Kohort</th>
-                        <th className="p-3.5 sm:px-4 text-center">Modul</th>
-                        <th className="p-3.5 sm:px-4 text-center">Evaluasi & Skor</th>
-                        <th className="p-3.5 sm:px-4 text-center">NUMORA RUN</th>
-                        <th className="p-3.5 sm:px-4 text-center">Aktivitas</th>
-                        <th className="p-3.5 sm:px-4 text-right">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#28332C]/10 text-charcoal">
-                      {filteredPublicUsers.length === 0 ? (
-                        <tr>
-                          <td colSpan="7" className="p-6 text-center text-secondary-text text-xs">
-                            Tidak ada data pengguna yang cocok dengan pencarian.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredPublicUsers.map((u) => {
-                          const isOfficial = u.is_official_research_subject;
-                          return (
-                            <tr key={u.email} className="hover:bg-ivory/50 transition-colors">
-                              <td className="p-3.5 sm:px-4">
-                                <div className="font-bold text-xs text-charcoal">{u.name}</div>
-                                <div className="text-[11px] text-secondary-text font-mono truncate max-w-[180px]">{u.email}</div>
-                                <div className="text-[10px] text-secondary-text/80 font-mono mt-0.5">{u.subject_id}</div>
-                              </td>
-                              <td className="p-3.5 sm:px-4">
-                                {isOfficial ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-forest text-pure-white">
-                                    <Sparkles className="w-3 h-3" />
-                                    {u.subject_id === 'S-001' ? 'S-001 (Kontrol)' : 'S-002 (Eksperimen)'}
+              {/* VIEW 1: TIMELINE STREAM */}
+              {activeUserViewMode === 'timeline' && (
+                <div className="space-y-3">
+                  {filteredActivities.length === 0 ? (
+                    <div className="p-8 text-center bg-pure-white rounded-2xl border border-[#28332C]/14 shadow-subtle text-secondary-text text-xs space-y-2">
+                      <Activity className="w-8 h-8 text-secondary-text/50 mx-auto" />
+                      <p className="font-semibold text-charcoal">Belum ada aktivitas yang sesuai dengan filter.</p>
+                      <p className="text-[11px]">Aktivitas belajar siswa akan otomatis muncul secara langsung di sini.</p>
+                    </div>
+                  ) : (
+                    filteredActivities.map((act, idx) => {
+                      const badge = getActivityBadge(act.activity_type);
+                      return (
+                        <div
+                          key={act.activity_id || idx}
+                          className="p-4 rounded-2xl bg-pure-white border border-[#28332C]/14 shadow-subtle hover:shadow-card-clean transition-shadow space-y-3"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#28332C]/10 pb-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-xl bg-forest/10 text-forest flex items-center justify-center font-bold text-xs font-mono">
+                                {act.subject_id || (act.user_role === 'researcher' ? 'P-001' : 'SISWA')}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-xs text-charcoal">
+                                    {act.user_name || act.user_email?.split('@')[0]}
                                   </span>
-                                ) : u.role === 'researcher' ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sage/30 text-forest">
-                                    <ShieldCheck className="w-3 h-3" />
-                                    Peneliti
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-ivory border border-[#28332C]/20 text-secondary-text">
-                                    Siswa Publik
-                                  </span>
-                                )}
-                              </td>
-                              <td className="p-3.5 sm:px-4 text-center font-mono">
-                                <span className="font-bold text-forest">{u.modules_completed}</span> / 4
-                              </td>
-                              <td className="p-3.5 sm:px-4 text-center">
-                                {u.evaluations_count > 0 ? (
-                                  <div>
-                                    <span className="font-bold text-charcoal font-mono">{u.latest_evaluation_score ?? '-'}</span>
-                                    <div className="text-[10px] text-secondary-text font-mono">{u.evaluations_count} sesi</div>
-                                  </div>
-                                ) : (
-                                  <span className="text-[11px] text-secondary-text">Belum Ada</span>
-                                )}
-                              </td>
-                              <td className="p-3.5 sm:px-4 text-center">
-                                {u.runner_games > 0 ? (
-                                  <div>
-                                    <span className="font-bold text-terracotta font-mono">Rekor: {u.runner_high_score}</span>
-                                    <div className="text-[10px] text-secondary-text font-mono">{u.runner_games} main</div>
-                                  </div>
-                                ) : (
-                                  <span className="text-[11px] text-secondary-text">-</span>
-                                )}
-                              </td>
-                              <td className="p-3.5 sm:px-4 text-center font-mono font-bold text-xs">
-                                {u.activities_count}
-                              </td>
-                              <td className="p-3.5 sm:px-4 text-right">
-                                <button
-                                  onClick={() => handleViewDossier(u.email)}
-                                  className="btn-interactive inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-forest text-pure-white hover:bg-forest/90 transition-colors shadow-subtle"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                  <span>Dossier</span>
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
+                                  {act.subject_id && (
+                                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-sage/20 text-forest font-semibold">
+                                      {act.subject_id}
+                                    </span>
+                                  )}
+                                  {act.user_role === 'researcher' && (
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-sage/40 text-forest font-semibold">
+                                      Peneliti
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-secondary-text font-mono truncate max-w-xs">
+                                  {act.user_email}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 self-start sm:self-auto">
+                              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${badge.bg}`}>
+                                {badge.label}
+                              </span>
+                              <span className="text-[11px] text-secondary-text flex items-center gap-1 font-mono">
+                                <Clock className="w-3 h-3 text-secondary-text/70" />
+                                {formatTimestamp(act.created_at)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Activity Content & Context */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div className="space-y-1">
+                              <div className="text-secondary-text">
+                                Fitur / Modul: <strong className="text-charcoal font-mono uppercase">{act.module_or_feature_id}</strong>
+                              </div>
+                              {act.metadata?.score !== undefined && (
+                                <div className="text-forest font-semibold flex items-center gap-2">
+                                  <span>Skor: {act.metadata.score}/100</span>
+                                  {act.metadata.correct_count !== undefined && (
+                                    <span className="text-[11px] text-secondary-text font-normal">
+                                      (Benar: {act.metadata.correct_count}, Salah: {act.metadata.wrong_count})
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {act.metadata?.student_question && (
+                                <div className="text-secondary-text bg-ivory p-2 rounded-xl border border-[#28332C]/10 max-w-2xl text-[11px] line-clamp-2">
+                                  <span className="font-semibold text-charcoal">Tanya NORA: </span>
+                                  "{act.metadata.student_question}"
+                                </div>
+                              )}
+                              {act.metadata?.active_tab && (
+                                <div className="text-secondary-text text-[11px]">
+                                  Eksplorasi Lab: <span className="font-semibold text-charcoal uppercase">{act.metadata.active_tab}</span>
+                                  {act.metadata.slider_values && (
+                                    <span className="font-mono text-secondary-text ml-1.5">
+                                      ({JSON.stringify(act.metadata.slider_values)})
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {act.metadata?.distance !== undefined && (
+                                <div className="text-terracotta font-semibold text-[11px]">
+                                  Jarak: {act.metadata.distance} m | Koin: {act.metadata.coins} | Skor: {act.metadata.score}
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              onClick={() => handleViewDossier(act.user_email)}
+                              className="btn-interactive self-start sm:self-auto inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/14 transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-forest" />
+                              <span>Lihat Dossier</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* VIEW 2: SUMMARY TABLE */}
+              {activeUserViewMode === 'summary' && (
+                <div className="bg-pure-white rounded-2xl border border-[#28332C]/14 shadow-card-clean overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-ivory border-b border-[#28332C]/14 text-[11px] font-bold text-secondary-text uppercase tracking-wider">
+                          <th className="p-3.5 sm:px-4">Pengguna & Akun</th>
+                          <th className="p-3.5 sm:px-4">Status Kohort</th>
+                          <th className="p-3.5 sm:px-4 text-center">Modul</th>
+                          <th className="p-3.5 sm:px-4 text-center">Evaluasi & Skor</th>
+                          <th className="p-3.5 sm:px-4 text-center">NUMORA RUN</th>
+                          <th className="p-3.5 sm:px-4 text-center">Aktivitas</th>
+                          <th className="p-3.5 sm:px-4 text-right">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#28332C]/10 text-charcoal">
+                        {filteredPublicUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan="7" className="p-6 text-center text-secondary-text text-xs">
+                              Tidak ada data pengguna yang cocok dengan pencarian.
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredPublicUsers.map((u) => {
+                            const isOfficial = u.is_official_research_subject;
+                            return (
+                              <tr key={u.email} className="hover:bg-ivory/50 transition-colors">
+                                <td className="p-3.5 sm:px-4">
+                                  <div className="font-bold text-xs text-charcoal">{u.name}</div>
+                                  <div className="text-[11px] text-secondary-text font-mono truncate max-w-[180px]">{u.email}</div>
+                                  <div className="text-[10px] text-secondary-text/80 font-mono mt-0.5">{u.subject_id}</div>
+                                </td>
+                                <td className="p-3.5 sm:px-4">
+                                  {isOfficial ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-forest text-pure-white">
+                                      <Sparkles className="w-3 h-3" />
+                                      {u.subject_id === 'S-001' ? 'S-001 (Kontrol)' : 'S-002 (Eksperimen)'}
+                                    </span>
+                                  ) : u.role === 'researcher' ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sage/30 text-forest">
+                                      <ShieldCheck className="w-3 h-3" />
+                                      Peneliti
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-ivory border border-[#28332C]/20 text-secondary-text">
+                                      Siswa Publik
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="p-3.5 sm:px-4 text-center font-mono">
+                                  <span className="font-bold text-forest">{u.modules_completed}</span> / 4
+                                </td>
+                                <td className="p-3.5 sm:px-4 text-center">
+                                  {u.evaluations_count > 0 ? (
+                                    <div>
+                                      <span className="font-bold text-charcoal font-mono">{u.latest_evaluation_score ?? '-'}</span>
+                                      <div className="text-[10px] text-secondary-text font-mono">{u.evaluations_count} sesi</div>
+                                    </div>
+                                  ) : (
+                                    <span className="text-[11px] text-secondary-text">Belum Ada</span>
+                                  )}
+                                </td>
+                                <td className="p-3.5 sm:px-4 text-center">
+                                  {u.runner_games > 0 ? (
+                                    <div>
+                                      <span className="font-bold text-terracotta font-mono">Rekor: {u.runner_high_score}</span>
+                                      <div className="text-[10px] text-secondary-text font-mono">{u.runner_games} main</div>
+                                    </div>
+                                  ) : (
+                                    <span className="text-[11px] text-secondary-text">-</span>
+                                  )}
+                                </td>
+                                <td className="p-3.5 sm:px-4 text-center font-mono font-bold text-xs">
+                                  {u.activities_count}
+                                </td>
+                                <td className="p-3.5 sm:px-4 text-right">
+                                  <button
+                                    onClick={() => handleViewDossier(u.email)}
+                                    className="btn-interactive inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-forest text-pure-white hover:bg-forest/90 transition-colors shadow-subtle"
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>Dossier</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -646,8 +891,58 @@ export default function ResearcherDashboard() {
 
                   <div className="text-[11px] text-secondary-text bg-pure-white p-2.5 rounded-lg border border-[#28332C]/10 flex items-center justify-between">
                     <span>Sumber Data:</span>
-                    <span className="font-mono text-forest font-semibold">ACTUAL_EMPIRICAL (SQLite)</span>
+                    <span className="font-mono text-forest font-semibold">ACTUAL_EMPIRICAL</span>
                   </div>
+                </div>
+              </div>
+
+              {/* Log Singkat Aktivitas Terbaru Seluruh Siswa */}
+              <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+                <div className="flex items-center justify-between border-b border-[#28332C]/10 pb-3">
+                  <div>
+                    <h3 className="font-bold text-charcoal text-sm flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-forest" />
+                      <span>Riwayat Aktivitas Belajar Terkini</span>
+                    </h3>
+                    <p className="text-xs text-secondary-text">
+                      Pemantauan langsung sesi belajar dan evaluasi terbaru dari seluruh peserta dan siswa.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('public_users')}
+                    className="btn-interactive text-xs font-semibold text-forest hover:underline"
+                  >
+                    Buka Linimasa Lengkap ({activities.length}) →
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {activities.slice(0, 5).map((act, idx) => {
+                    const badge = getActivityBadge(act.activity_type);
+                    return (
+                      <div key={act.activity_id || idx} className="p-3 rounded-xl bg-ivory border border-[#28332C]/10 flex items-center justify-between text-xs">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-charcoal">{act.user_name || act.user_email?.split('@')[0]}</span>
+                            <span className="font-mono text-[10px] text-secondary-text">({act.subject_id || act.user_email})</span>
+                            <span className={`text-[10px] font-bold px-2 py-0.2 rounded-full border ${badge.bg}`}>
+                              {badge.label}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-secondary-text">
+                            Fitur: <strong className="text-charcoal uppercase font-mono">{act.module_or_feature_id}</strong>
+                            {act.metadata?.score !== undefined && ` • Skor: ${act.metadata.score}/100`}
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-secondary-text font-mono">
+                          {formatTimestamp(act.created_at)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {activities.length === 0 && (
+                    <p className="text-xs text-secondary-text text-center py-3">Belum ada aktivitas belajar tercatat.</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -716,7 +1011,7 @@ export default function ResearcherDashboard() {
                   Ekspor Data Aktual Penelitian & Pengguna
                 </h2>
                 <p className="text-xs sm:text-sm text-secondary-text">
-                  Unduh data aktual protokol riset dan rekap aktivitas pembelajaran seluruh siswa dalam format CSV atau JSON langsung dari database SQLite.
+                  Unduh data aktual protokol riset dan rekap aktivitas pembelajaran seluruh siswa dalam format CSV atau JSON langsung dari database produksi.
                 </p>
               </div>
 

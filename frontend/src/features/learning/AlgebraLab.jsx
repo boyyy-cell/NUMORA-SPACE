@@ -77,6 +77,23 @@ export default function AlgebraLab() {
     return () => { isMounted = false; };
   }, [exprA, exprC, exprX]);
 
+  // Log aktivitas eksperimen lab aljabar
+  useEffect(() => {
+    try {
+      const sessionRaw = localStorage.getItem('numora_auth_session') || sessionStorage.getItem('numora_auth_session');
+      if (sessionRaw) {
+        const session = JSON.parse(sessionRaw);
+        if (session?.subjectId !== 'S-001') {
+          apiService.logLearningActivity({
+            activity_type: 'LAB_EXPERIMENT',
+            module_or_feature_id: `lab_${activeTab}`,
+            metadata: { tab: activeTab, time: new Date().toISOString() }
+          }).catch(() => {});
+        }
+      }
+    } catch (_) {}
+  }, [activeTab]);
+
   const handleSpeakExplanation = (text) => {
     if (isSpeaking) {
       voiceService.stop();

@@ -205,6 +205,19 @@ export function AuthProvider({ children }) {
       setUser(authenticatedUser);
       saveStoredSession(authenticatedUser);
       studentSyncService.initializeSync(authenticatedUser).catch(() => {});
+      if (authenticatedUser.subjectId !== 'S-001') {
+        apiService.logLearningActivity({
+          activity_type: 'LOGIN',
+          module_or_feature_id: 'google_oauth',
+          metadata: {
+            email: authenticatedUser.email,
+            name: authenticatedUser.name,
+            role: authenticatedUser.role,
+            provider: 'google',
+            time: new Date().toISOString()
+          }
+        }).catch(() => {});
+      }
       return { success: true, user: authenticatedUser };
     } catch (error) {
       setAuthError(getGoogleLoginError(error));

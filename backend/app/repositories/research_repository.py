@@ -276,10 +276,35 @@ class ResearchRepository(BaseRepository):
             cur = conn.execute("SELECT COUNT(*) AS total FROM research_cognitive_load_records")
             cog_count = cur.fetchone()["total"]
 
+            # 7. Total aktivitas pembelajaran seluruh siswa
+            cur = conn.execute("SELECT COUNT(*) AS total FROM learning_activities")
+            total_activities = cur.fetchone()["total"]
+
+            # 8. Total pengguna siswa publik terdaftar
+            cur = conn.execute("SELECT COUNT(*) AS total FROM users WHERE role = 'student' AND subject_id NOT IN ('S-001', 'S-002')")
+            total_public_students = cur.fetchone()["total"]
+
+            # 9. Total modul selesai seluruh siswa
+            cur = conn.execute("SELECT COUNT(*) AS total FROM student_module_progress WHERE status = 'COMPLETED'")
+            total_modules_completed = cur.fetchone()["total"]
+
+            # 10. Total evaluasi seluruh siswa & rata-rata skor
+            cur = conn.execute("SELECT COUNT(*) AS total, AVG(score) AS avg_score, MAX(score) AS max_score FROM student_evaluations")
+            eval_stats = cur.fetchone()
+            total_evaluations = eval_stats["total"]
+            avg_eval_score = round(eval_stats["avg_score"], 1) if eval_stats["avg_score"] is not None else None
+            max_eval_score = eval_stats["max_score"]
+
         return {
             "total_subjects": total_subjects,
             "total_sessions": total_sessions,
             "total_duration_minutes": total_duration,
+            "total_learning_activities": total_activities,
+            "total_public_students": total_public_students,
+            "total_modules_completed": total_modules_completed,
+            "total_evaluations": total_evaluations,
+            "average_evaluation_score": avg_eval_score,
+            "max_evaluation_score": max_eval_score,
             "s002_digital_learning": {
                 "modules_tracked": len(s002_progress),
                 "modules_completed": sum(1 for m in s002_progress if m["status"] == "COMPLETED"),
@@ -393,9 +418,10 @@ class ResearchRepository(BaseRepository):
         Mengembalikan rekam jejak lengkap (dossier) seorang pengguna untuk audit evaluasi pembelajaran:
         profil, progres modul, evaluasi soal per soal, riwayat sesi runner, dan linimasa aktivitas.
         """
+        clean_email = (user_email or "").strip().lower()
         with self.get_connection() as conn:
             # 1. Profil pengguna
-            cur = conn.execute("SELECT * FROM users WHERE email = ?", (user_email.strip().lower(),))
+            cur = conn.execute("SELECT * FROM users WHERE email = ?", (clean_email,))
             user_row = cur.fetchone()
             if not user_row:
                 return None
@@ -405,14 +431,14 @@ class ResearchRepository(BaseRepository):
             # 2. Progres modul
             cur = conn.execute(
                 "SELECT module_id, status, slider_explored, time_spent_seconds, completed_at, updated_at FROM student_module_progress WHERE user_email = ? ORDER BY module_id ASC",
-                (user_email,)
+                (clean_email,)
             )
             modules = [dict(r) for r in cur.fetchall()]
 
             # 3. Riwayat evaluasi
             cur = conn.execute(
                 "SELECT evaluation_id, idempotency_key, score, accuracy, total_questions, correct_count, wrong_count, category_breakdown, detailed_answers, completed_at FROM student_evaluations WHERE user_email = ? ORDER BY completed_at DESC",
-                (user_email,)
+                (clean_email,)
             )
             evals = []
             for r in cur.fetchall():
@@ -430,20 +456,20 @@ class ResearchRepository(BaseRepository):
                 evals.append(ev)
 
             # 4. Runner stats & sessions
-            cur = conn.execute("SELECT * FROM student_runner_stats WHERE user_email = ?", (user_email,))
+            cur = conn.execute("SELECT * FROM student_runner_stats WHERE user_email = ?", (clean_email,))
             r_stats = cur.fetchone()
             runner_stats = dict(r_stats) if r_stats else None
 
             cur = conn.execute(
                 "SELECT session_id, level, score, coins, distance, answered, correct, accuracy, mistakes_count, created_at FROM student_runner_sessions WHERE user_email = ? ORDER BY created_at DESC LIMIT 50",
-                (user_email,)
+                (clean_email,)
             )
             runner_sessions = [dict(r) for r in cur.fetchall()]
 
             # 5. Linimasa aktivitas pembelajaran (termasuk percakapan NORA)
             cur = conn.execute(
                 "SELECT activity_id, activity_type, module_or_feature_id, metadata_json, created_at FROM learning_activities WHERE user_email = ? ORDER BY created_at DESC LIMIT 100",
-                (user_email,)
+                (clean_email,)
             )
             activities = []
             for r in cur.fetchall():
