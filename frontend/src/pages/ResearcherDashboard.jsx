@@ -191,6 +191,24 @@ export default function ResearcherDashboard() {
     }
   };
 
+  const getUserInitial = (act) => {
+    if (!act) return 'U';
+    if (act.subject_id === 'S-001') return 'S1';
+    if (act.subject_id === 'S-002') return 'S2';
+    if (act.user_role === 'researcher') return 'P1';
+    if (act.user_name && typeof act.user_name === 'string') {
+      const parts = act.user_name.trim().split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return act.user_name.trim().substring(0, 2).toUpperCase();
+    }
+    if (act.user_email && typeof act.user_email === 'string') {
+      return act.user_email.trim().substring(0, 2).toUpperCase();
+    }
+    return 'U';
+  };
+
   const filteredActivities = activities.filter((act) => {
     if (activityFilter !== 'ALL') {
       if (activityFilter === 'LOGIN' && act.activity_type !== 'LOGIN' && act.activity_type !== 'SESSION_START' && act.activity_type !== 'SESSION_END') {
@@ -592,55 +610,87 @@ export default function ResearcherDashboard() {
                       return (
                         <div
                           key={act.activity_id || idx}
-                          className="p-4 rounded-2xl bg-pure-white border border-[#28332C]/14 shadow-subtle hover:shadow-card-clean transition-shadow space-y-3"
+                          className="p-4 sm:p-5 rounded-2xl bg-pure-white border border-[#28332C]/14 shadow-subtle hover:shadow-card-clean transition-shadow space-y-3.5 overflow-hidden"
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#28332C]/10 pb-2.5">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-xl bg-forest/10 text-forest flex items-center justify-center font-bold text-xs font-mono">
-                                {act.subject_id || (act.user_role === 'researcher' ? 'P-001' : 'SISWA')}
+                          {/* Header Baris Identitas & Kategori */}
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-[#28332C]/10 pb-3">
+                            <div className="flex items-start gap-3 min-w-0 flex-1">
+                              {/* Avatar Kotak Ringkas (1-2 Inisial, Bebas Overflow) */}
+                              <div className="w-10 h-10 rounded-xl bg-forest/10 border border-forest/20 text-forest shrink-0 flex items-center justify-center font-bold text-xs font-mono select-none">
+                                {getUserInitial(act)}
                               </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-xs text-charcoal">
+
+                              {/* Informasi Pengguna & Identitas */}
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                  <span className="font-bold text-xs sm:text-sm text-charcoal break-words">
                                     {act.user_name || act.user_email?.split('@')[0]}
                                   </span>
-                                  {act.subject_id && (
-                                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-sage/20 text-forest font-semibold">
-                                      {act.subject_id}
+
+                                  {/* Badge Status Kohort / Peran */}
+                                  {act.subject_id === 'S-001' ? (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-forest text-pure-white font-bold shrink-0">
+                                      <Sparkles className="w-2.5 h-2.5" />
+                                      S-001 (Kontrol)
                                     </span>
-                                  )}
-                                  {act.user_role === 'researcher' && (
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-sage/40 text-forest font-semibold">
+                                  ) : act.subject_id === 'S-002' ? (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-forest text-pure-white font-bold shrink-0">
+                                      <Sparkles className="w-2.5 h-2.5" />
+                                      S-002 (Eksperimen)
+                                    </span>
+                                  ) : act.user_role === 'researcher' ? (
+                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-sage/30 text-forest font-semibold shrink-0">
+                                      <ShieldCheck className="w-2.5 h-2.5" />
                                       Peneliti
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-ivory border border-[#28332C]/15 text-secondary-text shrink-0">
+                                      Siswa Publik
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-secondary-text font-mono truncate max-w-xs">
-                                  {act.user_email}
+
+                                {/* Email dan Subject ID Berdiri Rapi Tanpa Tumpang Tindih */}
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-secondary-text">
+                                  <span className="font-mono text-charcoal/90 break-all select-all">
+                                    {act.user_email}
+                                  </span>
+                                  {act.subject_id && act.subject_id !== 'S-001' && act.subject_id !== 'S-002' && (
+                                    <span className="inline-flex items-center font-mono text-[10px] px-1.5 py-0.2 rounded bg-ivory border border-[#28332C]/15 text-secondary-text break-all select-all">
+                                      ID: {act.subject_id}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-2 self-start sm:self-auto">
-                              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${badge.bg}`}>
+                            {/* Badge Kategori & Waktu */}
+                            <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-start gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#28332C]/10">
+                              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${badge.bg} whitespace-nowrap`}>
                                 {badge.label}
                               </span>
-                              <span className="text-[11px] text-secondary-text flex items-center gap-1 font-mono">
-                                <Clock className="w-3 h-3 text-secondary-text/70" />
+                              <span className="text-[11px] text-secondary-text flex items-center gap-1 font-mono whitespace-nowrap">
+                                <Clock className="w-3 h-3 text-secondary-text/70 shrink-0" />
                                 {formatTimestamp(act.created_at)}
                               </span>
                             </div>
                           </div>
 
                           {/* Activity Content & Context */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                            <div className="space-y-1">
-                              <div className="text-secondary-text">
-                                Fitur / Modul: <strong className="text-charcoal font-mono uppercase">{act.module_or_feature_id}</strong>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-0.5">
+                            <div className="space-y-1.5 min-w-0 flex-1">
+                              <div className="text-secondary-text flex flex-wrap items-center gap-1.5">
+                                <span>Fitur / Modul:</span>
+                                <span className="text-charcoal font-mono font-bold uppercase bg-ivory px-2 py-0.5 rounded border border-[#28332C]/10 break-all">
+                                  {act.module_or_feature_id}
+                                </span>
                               </div>
+
                               {act.metadata?.score !== undefined && (
-                                <div className="text-forest font-semibold flex items-center gap-2">
-                                  <span>Skor: {act.metadata.score}/100</span>
+                                <div className="text-forest font-semibold flex flex-wrap items-center gap-2">
+                                  <span className="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">
+                                    Skor: {act.metadata.score}/100
+                                  </span>
                                   {act.metadata.correct_count !== undefined && (
                                     <span className="text-[11px] text-secondary-text font-normal">
                                       (Benar: {act.metadata.correct_count}, Salah: {act.metadata.wrong_count})
@@ -648,36 +698,46 @@ export default function ResearcherDashboard() {
                                   )}
                                 </div>
                               )}
+
                               {act.metadata?.student_question && (
-                                <div className="text-secondary-text bg-ivory p-2 rounded-xl border border-[#28332C]/10 max-w-2xl text-[11px] line-clamp-2">
+                                <div className="text-secondary-text bg-ivory p-2.5 rounded-xl border border-[#28332C]/10 text-[11px] break-words">
                                   <span className="font-semibold text-charcoal">Tanya NORA: </span>
-                                  "{act.metadata.student_question}"
+                                  <span className="italic">"{act.metadata.student_question}"</span>
                                 </div>
                               )}
+
                               {act.metadata?.active_tab && (
-                                <div className="text-secondary-text text-[11px]">
-                                  Eksplorasi Lab: <span className="font-semibold text-charcoal uppercase">{act.metadata.active_tab}</span>
+                                <div className="text-secondary-text text-[11px] flex flex-wrap items-center gap-1.5">
+                                  <span>Eksplorasi Lab:</span>
+                                  <span className="font-semibold text-charcoal uppercase bg-indigo-50 text-indigo-900 px-1.5 py-0.5 rounded border border-indigo-200">
+                                    {act.metadata.active_tab}
+                                  </span>
                                   {act.metadata.slider_values && (
-                                    <span className="font-mono text-secondary-text ml-1.5">
+                                    <span className="font-mono text-secondary-text break-all">
                                       ({JSON.stringify(act.metadata.slider_values)})
                                     </span>
                                   )}
                                 </div>
                               )}
+
                               {act.metadata?.distance !== undefined && (
-                                <div className="text-terracotta font-semibold text-[11px]">
-                                  Jarak: {act.metadata.distance} m | Koin: {act.metadata.coins} | Skor: {act.metadata.score}
+                                <div className="text-terracotta font-semibold text-[11px] flex flex-wrap gap-2">
+                                  <span>Jarak: {act.metadata.distance} m</span>
+                                  <span>Koin: {act.metadata.coins}</span>
+                                  <span>Skor: {act.metadata.score}</span>
                                 </div>
                               )}
                             </div>
 
-                            <button
-                              onClick={() => handleViewDossier(act.user_email)}
-                              className="btn-interactive self-start sm:self-auto inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-ivory text-charcoal hover:bg-sage/20 border border-[#28332C]/14 transition-colors"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-forest" />
-                              <span>Lihat Dossier</span>
-                            </button>
+                            <div className="shrink-0 self-end sm:self-center">
+                              <button
+                                onClick={() => handleViewDossier(act.user_email)}
+                                className="btn-interactive inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-ivory text-charcoal hover:bg-sage/20 hover:text-forest border border-[#28332C]/14 transition-colors shadow-2xs whitespace-nowrap"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-forest" />
+                                <span>Lihat Dossier</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -715,9 +775,9 @@ export default function ResearcherDashboard() {
                             return (
                               <tr key={u.email} className="hover:bg-ivory/50 transition-colors">
                                 <td className="p-3.5 sm:px-4">
-                                  <div className="font-bold text-xs text-charcoal">{u.name}</div>
-                                  <div className="text-[11px] text-secondary-text font-mono truncate max-w-[180px]">{u.email}</div>
-                                  <div className="text-[10px] text-secondary-text/80 font-mono mt-0.5">{u.subject_id}</div>
+                                  <div className="font-bold text-xs text-charcoal break-words">{u.name}</div>
+                                  <div className="text-[11px] text-secondary-text font-mono truncate max-w-[180px] sm:max-w-xs">{u.email}</div>
+                                  <div className="text-[10px] text-secondary-text/80 font-mono mt-0.5 truncate max-w-[180px] sm:max-w-xs">{u.subject_id}</div>
                                 </td>
                                 <td className="p-3.5 sm:px-4">
                                   {isOfficial ? (
@@ -920,21 +980,21 @@ export default function ResearcherDashboard() {
                   {activities.slice(0, 5).map((act, idx) => {
                     const badge = getActivityBadge(act.activity_type);
                     return (
-                      <div key={act.activity_id || idx} className="p-3 rounded-xl bg-ivory border border-[#28332C]/10 flex items-center justify-between text-xs">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-charcoal">{act.user_name || act.user_email?.split('@')[0]}</span>
-                            <span className="font-mono text-[10px] text-secondary-text">({act.subject_id || act.user_email})</span>
-                            <span className={`text-[10px] font-bold px-2 py-0.2 rounded-full border ${badge.bg}`}>
+                      <div key={act.activity_id || idx} className="p-3 rounded-xl bg-ivory border border-[#28332C]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs overflow-hidden">
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            <span className="font-bold text-charcoal break-words">{act.user_name || act.user_email?.split('@')[0]}</span>
+                            <span className="font-mono text-[10px] text-secondary-text break-all">({act.subject_id || act.user_email})</span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badge.bg} shrink-0`}>
                               {badge.label}
                             </span>
                           </div>
-                          <div className="text-[11px] text-secondary-text">
-                            Fitur: <strong className="text-charcoal uppercase font-mono">{act.module_or_feature_id}</strong>
-                            {act.metadata?.score !== undefined && ` • Skor: ${act.metadata.score}/100`}
+                          <div className="text-[11px] text-secondary-text flex flex-wrap gap-1">
+                            <span>Fitur: <strong className="text-charcoal uppercase font-mono break-all">{act.module_or_feature_id}</strong></span>
+                            {act.metadata?.score !== undefined && <span>• Skor: <strong>{act.metadata.score}/100</strong></span>}
                           </div>
                         </div>
-                        <span className="text-[11px] text-secondary-text font-mono">
+                        <span className="text-[11px] text-secondary-text font-mono shrink-0">
                           {formatTimestamp(act.created_at)}
                         </span>
                       </div>
