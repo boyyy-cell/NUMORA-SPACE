@@ -1,4 +1,4 @@
-export const PRODUCTION_API_URL = 'https://numora-space-api.de2.netrun.io';
+export const PRODUCTION_API_URL = 'https://numora-space-api.vercel.app';
 
 const isLoopbackHost = (hostname) =>
   hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';

@@ -97,10 +97,11 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
 
             <button
               onClick={handleLogout}
-              className="text-[11px] text-rose-700 font-semibold hover:underline btn-interactive"
-              title="Ganti akun / Keluar"
+              className="text-[11px] text-rose-700 font-semibold hover:underline btn-interactive flex items-center gap-1"
+              title={role === 'researcher' ? 'Keluar dari Sesi Peneliti' : 'Ganti akun / Keluar'}
             >
-              Ganti
+              <LogOut className="w-3 h-3" />
+              <span>Keluar</span>
             </button>
           </div>
 

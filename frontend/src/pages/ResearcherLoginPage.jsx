@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, AlertCircle, ArrowLeft, Lock, Mail, KeyRound } from 'lucide-react';
 import BrandLogo from '../components/common/BrandLogo';
@@ -11,8 +11,19 @@ export default function ResearcherLoginPage() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [localError, setLocalError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Batalkan prompt Google One Tap / GIS yang mungkin tersisa dari halaman login siswa
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.google?.accounts?.id?.cancel) {
+      try {
+        window.google.accounts.id.cancel();
+      } catch (_) {}
+    }
+  }, []);
 
   const displayError = localError || authError;
+  const isBusy = isSubmitting || isLoading;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,11 +38,18 @@ export default function ResearcherLoginPage() {
       return;
     }
 
-    const result = await loginResearcher(email.trim().toLowerCase(), password, rememberMe);
-    if (result.success) {
-      navigate('/researcher-dashboard', { replace: true });
-    } else {
-      setLocalError(result.error || 'Autentikasi peneliti gagal.');
+    setIsSubmitting(true);
+    try {
+      const result = await loginResearcher(email.trim().toLowerCase(), password, rememberMe);
+      if (result.success) {
+        navigate('/researcher-dashboard', { replace: true });
+      } else {
+        setLocalError(result.error || 'Autentikasi peneliti gagal.');
+      }
+    } catch (err) {
+      setLocalError(err?.message || 'Terjadi kesalahan sistem saat memverifikasi kredensial.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -127,11 +145,11 @@ export default function ResearcherLoginPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isBusy}
               className="w-full py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm bg-forest text-pure-white hover:bg-forest/90 active:scale-[0.99] disabled:opacity-50 transition-all shadow-subtle flex items-center justify-center gap-2"
             >
               <Lock className="w-4 h-4" />
-              <span>{isLoading ? 'Memverifikasi Kredensial...' : 'Masuk ke Dashboard Peneliti'}</span>
+              <span>{isBusy ? 'Memverifikasi Kredensial...' : 'Masuk ke Dashboard Peneliti'}</span>
             </button>
           </form>
 

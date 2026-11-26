@@ -36,7 +36,11 @@ export async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
     if (!response.ok) {
       const errDetail = await response.text();
 
-      if (response.status === 401 && !url.includes('/api/v1/auth/google')) {
+      if (
+        response.status === 401 &&
+        !url.includes('/api/v1/auth/google') &&
+        !url.includes('/api/v1/auth/researcher/login')
+      ) {
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('numora_auth_unauthorized'));
         }

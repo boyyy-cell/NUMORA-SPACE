@@ -60,8 +60,8 @@ assert.strictEqual(
 // Test 1.5: Vercel deployment without envUrl fallback to production backend URL
 assert.strictEqual(
   resolveBaseUrl('', { location: { hostname: 'numora-space.vercel.app', protocol: 'https:' } }),
-  'https://numora-space-api.de2.netrun.io',
-  'Vercel without envUrl must fallback to https://numora-space-api.de2.netrun.io (never relative path)'
+  PRODUCTION_BACKEND_URL,
+  'Vercel without envUrl must fallback to production backend URL (never relative path)'
 );
 
 // Test 1.6: A configured LAN host must resolve to loopback in local browser development.
@@ -74,7 +74,7 @@ assert.strictEqual(
 // Test 1.7: A local backend URL must never leak into a remote frontend deployment.
 assert.strictEqual(
   resolveBaseUrl('http://192.168.1.28:8000', { location: { hostname: 'numora-space.vercel.app', protocol: 'https:' } }),
-  'https://numora-space-api.de2.netrun.io',
+  PRODUCTION_BACKEND_URL,
   'Remote deployments must not use a private LAN backend URL'
 );
 

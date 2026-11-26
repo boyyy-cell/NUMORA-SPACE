@@ -32,8 +32,26 @@ import {
   RefreshCw,
   Filter,
   Sliders,
-  ListOrdered
+  ListOrdered,
+  AlertCircle
 } from 'lucide-react';
+
+const DEFAULT_RESEARCH_SUBJECTS = [
+  {
+    id: 'S-001',
+    subject_id: 'S-001',
+    name: 'S-001 (Kontrol)',
+    group: 'control',
+    notes: 'Tatap Muka Konvensional'
+  },
+  {
+    id: 'S-002',
+    subject_id: 'S-002',
+    name: 'S-002 (Eksperimen)',
+    group: 'experimental',
+    notes: 'Mandiri Terpandu Digital'
+  }
+];
 
 export default function ResearcherDashboard() {
   const navigate = useNavigate();
@@ -46,6 +64,7 @@ export default function ResearcherDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [publicUsers, setPublicUsers] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [dataFetchErrors, setDataFetchErrors] = useState({});
   const [selectedUserDossier, setSelectedUserDossier] = useState(null);
   const [loadingDossier, setLoadingDossier] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -73,24 +92,45 @@ export default function ResearcherDashboard() {
         apiService.getAllActivities({ limit: 200 }),
       ]);
 
-      if (subsRes.status === 'fulfilled' && subsRes.value) {
+      const errors = {};
+
+      if (subsRes.status === 'fulfilled' && Array.isArray(subsRes.value)) {
         setSubjects(subsRes.value);
+      } else {
+        errors.subjects = true;
       }
+
       if (sessRes.status === 'fulfilled' && sessRes.value) {
         setSessions(sessRes.value);
+      } else {
+        errors.sessions = true;
       }
+
       if (cogRes.status === 'fulfilled' && cogRes.value) {
         setCogStatus(cogRes.value);
+      } else {
+        errors.cognitiveLoad = true;
       }
+
       if (anRes.status === 'fulfilled' && anRes.value) {
         setAnalytics(anRes.value);
+      } else {
+        errors.analytics = true;
       }
-      if (pUsersRes.status === 'fulfilled' && pUsersRes.value) {
+
+      if (pUsersRes.status === 'fulfilled' && Array.isArray(pUsersRes.value)) {
         setPublicUsers(pUsersRes.value);
+      } else {
+        errors.publicUsers = true;
       }
-      if (actRes.status === 'fulfilled' && actRes.value) {
+
+      if (actRes.status === 'fulfilled' && Array.isArray(actRes.value)) {
         setActivities(actRes.value);
+      } else {
+        errors.activities = true;
       }
+
+      setDataFetchErrors(errors);
     } catch (err) {
       console.warn('[Researcher Dashboard] error loading data', err);
     } finally {
@@ -299,6 +339,22 @@ export default function ResearcherDashboard() {
           </div>
         </header>
 
+        {/* Banner Sesi Tidak Valid atau Kedaluwarsa */}
+        {(!user || user.role !== 'researcher') && (
+          <div className="mx-4 sm:mx-7 mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-subtle">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+              <span>Sesi login peneliti tidak terdeteksi atau telah kedaluwarsa. Data yang ditampilkan menggunakan proteksi cache lokal.</span>
+            </div>
+            <button
+              onClick={() => navigate('/research-login')}
+              className="px-3.5 py-1.5 rounded-lg bg-forest text-pure-white font-semibold hover:bg-forest/90 shrink-0 text-center"
+            >
+              Masuk Kembali ke Portal Peneliti
+            </button>
+          </div>
+        )}
+
         {/* Content Body */}
         <main className="flex-1 p-4 sm:p-7 space-y-6 max-w-6xl mx-auto w-full">
           {/* TAB 1: OVERVIEW */}
@@ -333,44 +389,62 @@ export default function ResearcherDashboard() {
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
                   <span className="text-xs text-secondary-text">Peserta Riset Resmi</span>
                   <div className="text-xl sm:text-2xl font-extrabold text-charcoal font-mono">
-                    {subjects.length} Subjek
+                    {dataFetchErrors.subjects ? (
+                      <span className="text-sm font-sans font-medium text-amber-700">Tidak tersedia</span>
+                    ) : (
+                      `${subjects.length} Subjek`
+                    )}
                   </div>
                   <span className="text-[11px] text-forest font-medium flex items-center gap-1">
                     <Users className="w-3.5 h-3.5" />
-                    <span>S-001 & S-002</span>
+                    <span>S-001 & S-002 (Protokol Baku)</span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
                   <span className="text-xs text-secondary-text">Pengguna Terdaftar</span>
                   <div className="text-xl sm:text-2xl font-extrabold text-forest font-mono">
-                    {publicUsers.length} Akun
+                    {dataFetchErrors.publicUsers ? (
+                      <span className="text-sm font-sans font-medium text-amber-700">Tidak tersedia</span>
+                    ) : (
+                      `${publicUsers.length} Akun`
+                    )}
                   </div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
                     <Activity className="w-3.5 h-3.5" />
-                    <span>{publicUsers.filter(u => !u.is_official_research_subject).length} Siswa Publik</span>
+                    <span>
+                      {dataFetchErrors.publicUsers ? '-' : `${publicUsers.filter(u => !u.is_official_research_subject).length} Siswa Publik`}
+                    </span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
                   <span className="text-xs text-secondary-text">Total Log Aktivitas</span>
                   <div className="text-xl sm:text-2xl font-extrabold text-forest font-mono">
-                    {analytics?.total_learning_activities || activities.length} Log
+                    {dataFetchErrors.activities && dataFetchErrors.analytics ? (
+                      <span className="text-sm font-sans font-medium text-amber-700">Tidak tersedia</span>
+                    ) : (
+                      `${analytics?.total_learning_activities ?? activities.length} Log`
+                    )}
                   </div>
                   <span className="text-[11px] text-forest font-medium flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Tercatat di Database</span>
+                    <span>{dataFetchErrors.activities ? 'Koneksi database terganggu' : 'Tercatat di Database'}</span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
                   <span className="text-xs text-secondary-text">Evaluasi Mandiri</span>
                   <div className="text-xl sm:text-2xl font-extrabold text-charcoal font-mono">
-                    {analytics?.total_evaluations || 0} Sesi
+                    {dataFetchErrors.analytics ? (
+                      <span className="text-sm font-sans font-medium text-amber-700">Tidak tersedia</span>
+                    ) : (
+                      `${analytics?.total_evaluations ?? '-'} Sesi`
+                    )}
                   </div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
                     <Award className="w-3.5 h-3.5" />
-                    <span>Rata-rata: {analytics?.average_evaluation_score ?? '-'}</span>
+                    <span>Rata-rata: {dataFetchErrors.analytics ? '-' : (analytics?.average_evaluation_score ?? '-')}</span>
                   </span>
                 </div>
               </div>
@@ -378,9 +452,16 @@ export default function ResearcherDashboard() {
               {/* S-001 & S-002 Clean Cards */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-charcoal">
-                    Dua Peserta Resmi Protokol Penelitian
-                  </h3>
+                  <div className="space-y-0.5">
+                    <h3 className="text-base font-bold text-charcoal">
+                      Dua Peserta Resmi Protokol Penelitian
+                    </h3>
+                    {dataFetchErrors.subjects && (
+                      <p className="text-[11px] text-amber-700 font-medium">
+                        *Menampilkan spesifikasi protokol baku (sinkronisasi live database belum tersedia)
+                      </p>
+                    )}
+                  </div>
                   <button
                     onClick={() => setActiveTab('subjects')}
                     className="btn-interactive text-xs font-semibold text-forest hover:underline"
@@ -390,7 +471,7 @@ export default function ResearcherDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {subjects.map((sub) => (
+                  {(subjects.length > 0 ? subjects : DEFAULT_RESEARCH_SUBJECTS).map((sub) => (
                     <div key={sub.subject_id} className="btn-interactive bg-pure-white rounded-2xl p-5 border border-[#28332C]/14 space-y-3 shadow-subtle">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -398,12 +479,12 @@ export default function ResearcherDashboard() {
                             {sub.subject_id}
                           </span>
                           <div>
-                            <h4 className="font-bold text-charcoal text-sm">{sub.subject_id}</h4>
-                            <span className="text-[11px] text-secondary-text">{sub.grade}</span>
+                            <h4 className="font-bold text-charcoal text-sm">{sub.name || sub.subject_id}</h4>
+                            <span className="text-[11px] text-secondary-text">{sub.notes || sub.grade}</span>
                           </div>
                         </div>
                         <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-sage/20 text-forest">
-                          {sub.group}
+                          {sub.group === 'control' ? 'Kelompok Kontrol' : 'Kelompok Eksperimen'}
                         </span>
                       </div>
 

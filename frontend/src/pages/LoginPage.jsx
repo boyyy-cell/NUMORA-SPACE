@@ -121,6 +121,11 @@ export default function LoginPage() {
 
     return () => {
       if (activeGoogleCallback === callbackHandler) activeGoogleCallback = null;
+      if (typeof window !== 'undefined' && window.google?.accounts?.id?.cancel) {
+        try {
+          window.google.accounts.id.cancel();
+        } catch (_) {}
+      }
     };
   }, [googleStatus, googleConfig.clientId]);
 
