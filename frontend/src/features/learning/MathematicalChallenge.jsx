@@ -32,6 +32,29 @@ import {
 
 const EVAL_STORAGE_PREFIX = 'numora_evaluation_results_';
 
+/**
+ * Format tanggal dan waktu riwayat evaluasi secara aman.
+ * Menghindari TypeError: Invalid option : timeStyle pada toLocaleDateString di mesin V8/browser.
+ */
+function formatEvaluationDate(timestamp) {
+  if (!timestamp) return 'Waktu tidak tersedia';
+  try {
+    const d = new Date(timestamp);
+    if (isNaN(d.getTime())) return 'Waktu tidak valid';
+    return d.toLocaleString('id-ID', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+  } catch (_) {
+    try {
+      const d = new Date(timestamp);
+      return d.toLocaleDateString('id-ID');
+    } catch {
+      return 'Waktu tidak tersedia';
+    }
+  }
+}
+
 export default function MathematicalChallenge() {
   const { user } = useAuth();
   const studentId = user?.subjectId || 'S-002';
@@ -246,31 +269,43 @@ export default function MathematicalChallenge() {
                   </h3>
                 </div>
                 <span className="text-xs text-secondary-text">
-                  {new Date(historyResult.timestamp).toLocaleDateString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                  {formatEvaluationDate(historyResult?.timestamp)}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-4 rounded-2xl bg-ivory text-center border border-[#28332C]/14">
                   <span className="text-xs text-secondary-text block mb-1">Nilai Akhir</span>
-                  <span className="text-3xl font-black text-forest font-mono">{historyResult.score}</span>
+                  <span className="text-3xl font-black text-forest font-mono">
+                    {typeof historyResult?.score === 'number' ? historyResult.score : 'Tidak tersedia'}
+                  </span>
                   <span className="text-[11px] text-secondary-text block mt-1">Skala 0 - 100</span>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-ivory text-center border border-[#28332C]/14">
                   <span className="text-xs text-secondary-text block mb-1">Akurasi Jawaban</span>
                   <span className="text-2xl font-black text-charcoal font-mono">
-                    {historyResult.correctCount} / {historyResult.totalQuestions}
+                    {typeof historyResult?.correctCount === 'number' && typeof historyResult?.totalQuestions === 'number'
+                      ? `${historyResult.correctCount} / ${historyResult.totalQuestions}`
+                      : 'Data tidak lengkap'}
                   </span>
                   <span className="text-[11px] text-emerald-700 font-semibold block mt-1">
-                    {historyResult.percentage}% Berhasil
+                    {typeof historyResult?.percentage === 'number'
+                      ? `${historyResult.percentage}% Berhasil`
+                      : 'Tidak tersedia'}
                   </span>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-ivory text-center border border-[#28332C]/14">
                   <span className="text-xs text-secondary-text block mb-1">Status Penguasaan</span>
                   <span className="text-sm font-bold text-charcoal block mt-1">
-                    {historyResult.score >= 80 ? '🌟 Sangat Menguasai' : historyResult.score >= 60 ? '👍 Cukup Menguasai' : '📚 Perlu Latihan'}
+                    {typeof historyResult?.score === 'number'
+                      ? historyResult.score >= 80
+                        ? '🌟 Sangat Menguasai'
+                        : historyResult.score >= 60
+                        ? '👍 Cukup Menguasai'
+                        : '📚 Perlu Latihan'
+                      : 'Data tidak lengkap'}
                   </span>
                   <button
                     type="button"
@@ -481,30 +516,44 @@ export default function MathematicalChallenge() {
             </div>
 
             <h2 className="text-3xl sm:text-4xl font-extrabold text-charcoal">
-              {evaluationResult.score} <span className="text-base text-secondary-text font-normal">/ 100 Poin</span>
+              {typeof evaluationResult?.score === 'number' ? (
+                <>
+                  {evaluationResult.score} <span className="text-base text-secondary-text font-normal">/ 100 Poin</span>
+                </>
+              ) : (
+                <span className="text-xl text-secondary-text">Data Skor Tidak Tersedia</span>
+              )}
             </h2>
 
             <p className="text-xs sm:text-sm text-secondary-text max-w-md mx-auto">
-              {evaluationResult.score >= 80
-                ? 'Luar biasa! Kamu telah menguasai konsep dasar aljabar SMP Kelas VII dengan sangat baik.'
-                : evaluationResult.score >= 60
-                ? 'Bagus! Sebagian besar konsep sudah kamu pahami, perhatikan kembali beberapa materi yang keliru.'
-                : 'Tetap semangat! Pelajari kembali pembahasan di bawah ini dan latih konsep melalui simulasi Algebra Lab.'}
+              {typeof evaluationResult?.score === 'number'
+                ? evaluationResult.score >= 80
+                  ? 'Luar biasa! Kamu telah menguasai konsep dasar aljabar SMP Kelas VII dengan sangat baik.'
+                  : evaluationResult.score >= 60
+                  ? 'Bagus! Sebagian besar konsep sudah kamu pahami, perhatikan kembali beberapa materi yang keliru.'
+                  : 'Tetap semangat! Pelajari kembali pembahasan di bawah ini dan latih konsep melalui simulasi Algebra Lab.'
+                : 'Data evaluasi telah dimuat. Silakan periksa rincian pembahasan materi di bawah ini.'}
             </p>
 
             {/* Statistik Ringkas */}
             <div className="grid grid-cols-3 gap-3 max-w-md mx-auto pt-2">
               <div className="p-3 bg-ivory rounded-2xl border border-[#28332C]/14">
                 <span className="text-[10px] text-secondary-text uppercase font-bold block">Benar</span>
-                <span className="text-lg font-bold text-emerald-700 font-mono">{evaluationResult.correctCount} Soal</span>
+                <span className="text-lg font-bold text-emerald-700 font-mono">
+                  {typeof evaluationResult?.correctCount === 'number' ? `${evaluationResult.correctCount} Soal` : 'Tidak tersedia'}
+                </span>
               </div>
               <div className="p-3 bg-ivory rounded-2xl border border-[#28332C]/14">
                 <span className="text-[10px] text-secondary-text uppercase font-bold block">Salah</span>
-                <span className="text-lg font-bold text-rose-700 font-mono">{evaluationResult.wrongCount} Soal</span>
+                <span className="text-lg font-bold text-rose-700 font-mono">
+                  {typeof evaluationResult?.wrongCount === 'number' ? `${evaluationResult.wrongCount} Soal` : 'Tidak tersedia'}
+                </span>
               </div>
               <div className="p-3 bg-ivory rounded-2xl border border-[#28332C]/14">
                 <span className="text-[10px] text-secondary-text uppercase font-bold block">Akurasi</span>
-                <span className="text-lg font-bold text-forest font-mono">{evaluationResult.percentage}%</span>
+                <span className="text-lg font-bold text-forest font-mono">
+                  {typeof evaluationResult?.percentage === 'number' ? `${evaluationResult.percentage}%` : 'Tidak tersedia'}
+                </span>
               </div>
             </div>
 
@@ -608,7 +657,7 @@ export default function MathematicalChallenge() {
                       : 'bg-ivory text-secondary-text hover:text-charcoal'
                   }`}
                 >
-                  Semua ({evaluationResult.questionReviews?.length || 10})
+                  Semua ({Array.isArray(evaluationResult?.questionReviews) ? evaluationResult.questionReviews.length : 'Tidak tersedia'})
                 </button>
                 <button
                   type="button"
@@ -619,7 +668,7 @@ export default function MathematicalChallenge() {
                       : 'bg-ivory text-secondary-text hover:text-charcoal'
                   }`}
                 >
-                  Perlu Dipelajari ({evaluationResult.wrongCount})
+                  Perlu Dipelajari ({typeof evaluationResult?.wrongCount === 'number' ? evaluationResult.wrongCount : 'Tidak tersedia'})
                 </button>
                 <button
                   type="button"
@@ -630,7 +679,7 @@ export default function MathematicalChallenge() {
                       : 'bg-ivory text-secondary-text hover:text-charcoal'
                   }`}
                 >
-                  Benar ({evaluationResult.correctCount})
+                  Benar ({typeof evaluationResult?.correctCount === 'number' ? evaluationResult.correctCount : 'Tidak tersedia'})
                 </button>
               </div>
             </div>
@@ -745,9 +794,15 @@ export default function MathematicalChallenge() {
                     Pembahasan Lengkap 10 Soal Evaluasi
                   </h3>
                   <div className="flex items-center gap-2 text-xs text-secondary-text">
-                    <span>Skor: <strong className="text-forest font-mono">{evaluationResult.score} / 100</strong></span>
+                    <span>
+                      Skor: <strong className="text-forest font-mono">{typeof evaluationResult?.score === 'number' ? `${evaluationResult.score} / 100` : 'Tidak tersedia'}</strong>
+                    </span>
                     <span>•</span>
-                    <span>Akurasi: <strong className="text-charcoal font-mono">{evaluationResult.percentage}%</strong> ({evaluationResult.correctCount} Benar, {evaluationResult.wrongCount} Salah)</span>
+                    <span>
+                      Akurasi: <strong className="text-charcoal font-mono">{typeof evaluationResult?.percentage === 'number' ? `${evaluationResult.percentage}%` : 'Tidak tersedia'}</strong> (
+                      {typeof evaluationResult?.correctCount === 'number' ? `${evaluationResult.correctCount} Benar` : 'Data tidak lengkap'},{' '}
+                      {typeof evaluationResult?.wrongCount === 'number' ? `${evaluationResult.wrongCount} Salah` : 'Data tidak lengkap'})
+                    </span>
                   </div>
                 </div>
               </div>
@@ -775,7 +830,7 @@ export default function MathematicalChallenge() {
                       : 'bg-ivory text-secondary-text hover:text-charcoal'
                   }`}
                 >
-                  Semua ({evaluationResult.questionReviews?.length || 10})
+                  Semua ({Array.isArray(evaluationResult?.questionReviews) ? evaluationResult.questionReviews.length : 'Tidak tersedia'})
                 </button>
                 <button
                   type="button"
@@ -786,7 +841,7 @@ export default function MathematicalChallenge() {
                       : 'bg-ivory text-secondary-text hover:text-charcoal'
                   }`}
                 >
-                  Perlu Dipelajari ({evaluationResult.wrongCount})
+                  Perlu Dipelajari ({typeof evaluationResult?.wrongCount === 'number' ? evaluationResult.wrongCount : 'Tidak tersedia'})
                 </button>
                 <button
                   type="button"
@@ -797,7 +852,7 @@ export default function MathematicalChallenge() {
                       : 'bg-ivory text-secondary-text hover:text-charcoal'
                   }`}
                 >
-                  Benar ({evaluationResult.correctCount})
+                  Benar ({typeof evaluationResult?.correctCount === 'number' ? evaluationResult.correctCount : 'Tidak tersedia'})
                 </button>
               </div>
 
