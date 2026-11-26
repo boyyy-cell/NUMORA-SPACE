@@ -297,3 +297,131 @@ export function calculateEvaluationResult(studentAnswers, questionsList) {
     timestamp: new Date().toISOString()
   };
 }
+
+/**
+ * Normalisasi data evaluasi dari berbagai format (camelCase, snake_case, cache lokal, atau API)
+ * menjamin struktur questionReviews dan categoryAnalysis selalu utuh dan valid.
+ */
+export function normalizeEvaluationResult(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const totalQuestions = Number(raw.totalQuestions ?? raw.total_questions ?? 10);
+  const correctCount = Number(raw.correctCount ?? raw.correct_count ?? 0);
+  const wrongCount = Number(raw.wrongCount ?? raw.wrong_count ?? Math.max(0, totalQuestions - correctCount));
+  const score = Number(raw.score ?? Math.round((correctCount / (totalQuestions || 1)) * 100));
+  const percentage = Number(raw.percentage ?? raw.accuracy ?? score);
+
+  // Ambil detailed answers / question reviews
+  const rawReviews = raw.questionReviews || raw.detailed_answers || raw.detailedAnswers || [];
+
+  let questionReviews = [];
+  if (Array.isArray(rawReviews) && rawReviews.length > 0) {
+    questionReviews = rawReviews.map((r, idx) => {
+      // Cocokkan HANYA berdasarkan ID soal yang identik pada bank soal resmi (jangan menebak dengan index acak)
+      const fallbackQ = EVALUATION_QUESTIONS.find(eq => eq.id === r.id) || null;
+      const chosen = r.chosenAnswer || r.chosen_answer || r.student_answer || 'Tidak Dijawab';
+      const correct = r.correctAnswer || r.correct_answer || fallbackQ?.correctAnswer || 'Kunci jawaban tidak tersedia';
+
+      let isCorrect = false;
+      if (typeof r.isCorrect === 'boolean') {
+        isCorrect = r.isCorrect;
+      } else if (typeof r.is_correct === 'boolean') {
+        isCorrect = r.is_correct;
+      } else if (r.chosenAnswer && (r.correctAnswer || fallbackQ?.correctAnswer)) {
+        const targetCorrect = r.correctAnswer || fallbackQ.correctAnswer;
+        isCorrect = String(r.chosenAnswer).trim().toLowerCase() === String(targetCorrect).trim().toLowerCase();
+      }
+
+      return {
+        questionNumber: r.questionNumber ?? r.question_number ?? idx + 1,
+        id: r.id || (fallbackQ ? fallbackQ.id : `q_${idx + 1}`),
+        category: r.category || fallbackQ?.category || 'general',
+        categoryTitle: r.categoryTitle || r.category_title || fallbackQ?.categoryTitle || 'Materi Evaluasi',
+        question: r.question || fallbackQ?.question || 'Soal evaluasi tidak dapat dimuat (data riwayat tidak lengkap)',
+        expressionLatex: r.expressionLatex || r.expression_latex || fallbackQ?.expressionLatex || '',
+        options: r.options || fallbackQ?.options || [],
+        chosenAnswer: chosen,
+        correctAnswer: correct,
+        isCorrect,
+        explanation: r.explanation || fallbackQ?.explanation || 'Pembahasan materi belum tersedia untuk rekaman riwayat ini.'
+      };
+    });
+  }
+
+  // categoryAnalysis
+  let categoryAnalysis = [];
+  if (Array.isArray(raw.categoryAnalysis) && raw.categoryAnalysis.length > 0) {
+    categoryAnalysis = raw.categoryAnalysis;
+  } else if (raw.category_breakdown && typeof raw.category_breakdown === 'object') {
+    categoryAnalysis = Object.keys(raw.category_breakdown).map((k) => {
+      const item = raw.category_breakdown[k] || {};
+      const catPercent = Number(item.percentage ?? 0);
+      return {
+        categoryKey: k,
+        title: item.title || k,
+        correct: item.correct ?? 0,
+        total: item.total ?? (k === 'variable' || k === 'coefficient' ? 3 : 2),
+        percentage: catPercent,
+        masteryStatus: item.masteryStatus || item.mastery_status || (catPercent >= 80 ? 'Sangat Baik' : catPercent >= 50 ? 'Cukup Baik' : 'Perlu Pendalaman'),
+        recommendation: item.recommendation || `Pelajari kembali materi pada ${item.title || k}.`
+      };
+    });
+  }
+
+  // Jika categoryAnalysis kosong tetapi ada questionReviews, bentuk categoryAnalysis secara dinamis
+  if (categoryAnalysis.length === 0 && questionReviews.length > 0) {
+    const catMap = {
+      variable: { categoryKey: 'variable', title: 'Menentukan Variabel', correct: 0, total: 0 },
+      coefficient: { categoryKey: 'coefficient', title: 'Memahami Koefisien', correct: 0, total: 0 },
+      constant: { categoryKey: 'constant', title: 'Memahami Konstanta', correct: 0, total: 0 },
+      expression: { categoryKey: 'expression', title: 'Memahami Bentuk Aljabar', correct: 0, total: 0 }
+    };
+
+    questionReviews.forEach((q) => {
+      const catKey = q.category || 'variable';
+      if (!catMap[catKey]) {
+        catMap[catKey] = { categoryKey: catKey, title: q.categoryTitle || 'Materi Aljabar', correct: 0, total: 0 };
+      }
+      catMap[catKey].total += 1;
+      if (q.isCorrect) catMap[catKey].correct += 1;
+    });
+
+    categoryAnalysis = Object.values(catMap).map((cat) => {
+      const catPercent = cat.total > 0 ? Math.round((cat.correct / cat.total) * 100) : 0;
+      let masteryStatus = 'Sangat Baik';
+      let recommendation = `Pertahankan pemahaman konsep ${cat.title}.`;
+      if (catPercent < 50) {
+        masteryStatus = 'Perlu Pendalaman';
+        recommendation = `Disarankan mempelajari kembali konsep ${cat.title} melalui modul materi dan Algebra Lab.`;
+      } else if (catPercent < 80) {
+        masteryStatus = 'Cukup Baik';
+        recommendation = `Perbanyak latihan soal pada ${cat.title} untuk memantapkan pemahaman simbol dan operasi.`;
+      }
+      return {
+        ...cat,
+        percentage: catPercent,
+        masteryStatus,
+        recommendation
+      };
+    });
+  }
+
+  // Validasi timestamp
+  let timestampStr = new Date().toISOString();
+  if (raw.timestamp && !isNaN(new Date(raw.timestamp).getTime())) {
+    timestampStr = new Date(raw.timestamp).toISOString();
+  } else if (raw.completed_at && typeof raw.completed_at === 'number') {
+    timestampStr = new Date(raw.completed_at * 1000).toISOString();
+  }
+
+  return {
+    score,
+    percentage,
+    correctCount,
+    wrongCount,
+    totalQuestions,
+    categoryAnalysis,
+    questionReviews,
+    timestamp: timestampStr
+  };
+}

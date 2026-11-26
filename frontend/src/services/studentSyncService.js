@@ -337,16 +337,28 @@ class StudentSyncService {
     }
 
     const idempotencyKey = evaluationResult.idempotency_key || generateIdempotencyKey('eval');
+    const totalQuestions = Number(evaluationResult.totalQuestions || evaluationResult.total_questions || 10);
+    const correctCount = Number(evaluationResult.correctCount || evaluationResult.correct_count || 0);
+    const wrongCount = Number(evaluationResult.wrongCount || evaluationResult.wrong_count || Math.max(0, totalQuestions - correctCount));
+    const accuracy = Number(evaluationResult.percentage || evaluationResult.accuracy || Math.round((correctCount / totalQuestions) * 100));
+
     const payload = {
       idempotency_key: idempotencyKey,
       score: Number(evaluationResult.score || 0),
-      accuracy: Number(evaluationResult.percentage || evaluationResult.accuracy || 0),
-      total_questions: Number(evaluationResult.totalQuestions || 10),
-      correct_count: Number(evaluationResult.correctCount || 0),
-      wrong_count: Number(evaluationResult.wrongCount || 0),
-      category_breakdown: evaluationResult.categoryBreakdown || evaluationResult.categoryStats || {},
-      detailed_answers: evaluationResult.detailedAnswers || evaluationResult.questionReviews || [],
+      accuracy,
+      percentage: accuracy,
+      total_questions: totalQuestions,
+      totalQuestions,
+      correct_count: correctCount,
+      correctCount,
+      wrong_count: wrongCount,
+      wrongCount,
+      category_breakdown: evaluationResult.categoryBreakdown || evaluationResult.category_breakdown || evaluationResult.categoryStats || {},
+      categoryAnalysis: evaluationResult.categoryAnalysis || [],
+      detailed_answers: evaluationResult.detailedAnswers || evaluationResult.questionReviews || evaluationResult.detailed_answers || [],
+      questionReviews: evaluationResult.questionReviews || evaluationResult.detailedAnswers || evaluationResult.detailed_answers || [],
       completed_at: Math.floor(Date.now() / 1000),
+      timestamp: evaluationResult.timestamp || new Date().toISOString()
     };
 
     // Update local cache optimistically
