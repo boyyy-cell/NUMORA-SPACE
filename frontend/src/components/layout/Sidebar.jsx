@@ -48,9 +48,7 @@ export default function Sidebar({ role = 'student', activeTab = 'overview', setA
   // Simplified primary navigation tabs for Researcher Space
   const researcherLinks = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'subjects', label: 'Peserta Riset', icon: Users },
     { id: 'public_users', label: 'Aktivitas Pengguna', icon: Activity },
-    { id: 'monitoring', label: 'Monitoring Sesi', icon: Microscope },
     { id: 'interviews', label: 'Hasil Wawancara', icon: MessageSquareQuote },
     { id: 'instruments', label: 'Instrumen', icon: FileText },
     { id: 'analytics', label: 'Analisis & Ekspor', icon: Download },
