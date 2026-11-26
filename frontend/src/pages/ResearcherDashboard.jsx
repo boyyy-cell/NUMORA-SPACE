@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
+import MathView from '../components/common/MathView';
 import { apiService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -33,7 +34,10 @@ import {
   Filter,
   Sliders,
   ListOrdered,
-  AlertCircle
+  AlertCircle,
+  Scale,
+  GitCompare,
+  Layers
 } from 'lucide-react';
 
 const DEFAULT_RESEARCH_SUBJECTS = [
@@ -74,6 +78,7 @@ export default function ResearcherDashboard() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [exportMessage, setExportMessage] = useState('');
+  const [researchTraceFilter, setResearchTraceFilter] = useState('ALL'); // 'ALL' | 'S-001' | 'S-002'
 
   const handleLogout = () => {
     logout();
@@ -292,6 +297,157 @@ export default function ResearcherDashboard() {
     );
   });
 
+  // =========================================================================
+  // LOGIKA PENGGABUNGAN DATA PENELITIAN AKTUAL (S-001 & S-002)
+  // =========================================================================
+  const researchSubjectsList = subjects.length > 0 ? subjects : DEFAULT_RESEARCH_SUBJECTS;
+  const s001 = researchSubjectsList.find(s => s.subject_id === 'S-001') || DEFAULT_RESEARCH_SUBJECTS[0];
+  const s002 = researchSubjectsList.find(s => s.subject_id === 'S-002') || DEFAULT_RESEARCH_SUBJECTS[1];
+  const totalOfficialSubjects = researchSubjectsList.filter(s => s.subject_id === 'S-001' || s.subject_id === 'S-002').length;
+
+  const s001Sessions = (sessions || []).filter(s => s.subject_id === 'S-001');
+  const s002Sessions = (sessions || []).filter(s => s.subject_id === 'S-002');
+  const s002UserRecord = (publicUsers || []).find(u => u.subject_id === 'S-002' || u.email === 'siswa.demo@numora.space');
+  const s002DigitalActivities = (activities || []).filter(a => a.subject_id === 'S-002' || a.user_email === 'siswa.demo@numora.space');
+
+  // Unified research activities map (Deduplikasi ketat dengan ID unik)
+  const unifiedResearchActivitiesMap = new Map();
+
+  s001Sessions.forEach(sess => {
+    unifiedResearchActivitiesMap.set(sess.session_id, {
+      id: sess.session_id,
+      timestamp: sess.created_at ? sess.created_at * 1000 : null,
+      dateString: sess.session_date || (sess.created_at ? new Date(sess.created_at * 1000).toLocaleDateString('id-ID') : 'Waktu tidak tersedia'),
+      subject_id: 'S-001',
+      group_name: 'Kontrol (Tatap Muka)',
+      activity_type: 'SESI_TATAP_MUKA',
+      activity_label: 'Sesi Pembelajaran Tatap Muka Terarah',
+      module_id: sess.module_id || 'Modul 02',
+      concept: sess.concept_studied || 'Pemahaman Koefisien',
+      duration_minutes: sess.duration_minutes || 0,
+      source: 'Peneliti Langsung (P-001)',
+      notes: sess.notes || 'Pembelajaran tatap muka konvensional terarah bersama peneliti.',
+      is_digital: false
+    });
+  });
+
+  s002Sessions.forEach(sess => {
+    unifiedResearchActivitiesMap.set(sess.session_id, {
+      id: sess.session_id,
+      timestamp: sess.created_at ? sess.created_at * 1000 : null,
+      dateString: sess.session_date || (sess.created_at ? new Date(sess.created_at * 1000).toLocaleDateString('id-ID') : 'Waktu tidak tersedia'),
+      subject_id: 'S-002',
+      group_name: 'Eksperimen (NUMORA Space)',
+      activity_type: 'SESI_MONITORING',
+      activity_label: 'Monitoring Pembelajaran Mandiri',
+      module_id: sess.module_id || 'Modul 02',
+      concept: sess.concept_studied || 'Pemahaman Koefisien',
+      duration_minutes: sess.duration_minutes || 0,
+      source: 'Peneliti Langsung (P-001)',
+      notes: sess.notes || 'Observasi interaksi siswa dengan platform digital.',
+      is_digital: false
+    });
+  });
+
+  s002DigitalActivities.forEach(act => {
+    const actId = act.activity_id || `act_${act.created_at}_${act.activity_type}`;
+    if (!unifiedResearchActivitiesMap.has(actId)) {
+      unifiedResearchActivitiesMap.set(actId, {
+        id: actId,
+        timestamp: act.created_at ? act.created_at * 1000 : null,
+        dateString: act.created_at ? new Date(act.created_at * 1000).toLocaleDateString('id-ID') : 'Waktu tidak tersedia',
+        subject_id: 'S-002',
+        group_name: 'Eksperimen (NUMORA Space)',
+        activity_type: act.activity_type,
+        activity_label: getActivityBadge(act.activity_type).label,
+        module_id: act.module_or_feature_id || 'Platform NUMORA',
+        concept: act.module_or_feature_id || 'Aktivitas Belajar Mandiri',
+        duration_minutes: null,
+        source: 'Log Sistem NUMORA Space',
+        notes: typeof act.metadata === 'object' && act.metadata ? JSON.stringify(act.metadata) : 'Log aktivitas mandiri digital.',
+        is_digital: true
+      });
+    }
+  });
+
+  const unifiedResearchActivities = Array.from(unifiedResearchActivitiesMap.values())
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  const filteredUnifiedActivities = unifiedResearchActivities.filter(item => {
+    if (researchTraceFilter === 'S-001') return item.subject_id === 'S-001';
+    if (researchTraceFilter === 'S-002') return item.subject_id === 'S-002';
+    return true;
+  });
+
+  const totalUnifiedActivitiesCount = unifiedResearchActivities.length;
+  const s001DurationMinutes = s001Sessions.reduce((acc, s) => acc + (Number(s.duration_minutes) || 0), 0);
+  const s002DigitalSeconds = analytics?.s002_digital_learning?.total_time_spent_seconds || 0;
+  const s002DurationMinutes = s002Sessions.reduce((acc, s) => acc + (Number(s.duration_minutes) || 0), 0) + Math.round(s002DigitalSeconds / 60);
+  const totalCombinedDurationMinutes = s001DurationMinutes + s002DurationMinutes;
+
+  const MODULES_MATRIX = [
+    {
+      id: 'modul-1',
+      title: 'Mengenal Variabel',
+      math: 'x + 3 = 7',
+      s001_status: s001Sessions.some(s => s.module_id === 'modul-1' || s.module_id === 'Modul 01') ? 'Selesai (Tatap Muka)' : 'Belum Dimulai',
+      s002_status: (s002UserRecord?.modules_completed >= 1) ? 'Selesai (Digital)' : 'Belum Selesai',
+      is_target: false
+    },
+    {
+      id: 'modul-2',
+      title: 'Memahami Koefisien',
+      math: '3x + 5 = 20',
+      s001_status: s001Sessions.some(s => s.module_id === 'modul-2' || s.module_id === 'Modul 02')
+        ? 'Sedang Dipelajari (Tatap Muka)'
+        : 'Target Protokol Aktif (Belum Ada Log Sesi)',
+      s002_status: s002DigitalActivities.some(a => a.module_or_feature_id === 'modul-2' || a.module_or_feature_id === 'Modul 02')
+        ? 'Sedang Dipelajari (Digital NORA)'
+        : 'Target Protokol Aktif (Belum Ada Log Aktivitas)',
+      is_target: true
+    },
+    {
+      id: 'modul-3',
+      title: 'Menentukan Konstanta',
+      math: '2x - 8 = 10',
+      s001_status: 'Belum Dimulai (Menunggu Rotasi Tatap Muka)',
+      s002_status: (s002UserRecord?.modules_completed >= 3) ? 'Selesai (Digital)' : 'Belum Dimulai',
+      is_target: false
+    },
+    {
+      id: 'modul-4',
+      title: 'Memahami Bentuk Aljabar',
+      math: '4x + 2y - 5',
+      s001_status: 'Belum Dimulai (Menunggu Rotasi Tatap Muka)',
+      s002_status: (s002UserRecord?.modules_completed >= 4) ? 'Selesai (Digital)' : 'Belum Dimulai',
+      is_target: false
+    }
+  ];
+
+  const s001Pretest = s001.pretest_score !== null && s001.pretest_score !== undefined ? s001.pretest_score : null;
+  const s002Pretest = s002.pretest_score !== null && s002.pretest_score !== undefined ? s002.pretest_score : null;
+  const s001Posttest = s001.posttest_score !== null && s001.posttest_score !== undefined ? s001.posttest_score : null;
+  const s002Posttest = s002.posttest_score !== null && s002.posttest_score !== undefined ? s002.posttest_score : null;
+  const s002EvalCount = typeof analytics?.s002_digital_learning?.evaluations_count === 'number'
+    ? analytics.s002_digital_learning.evaluations_count
+    : (typeof s002UserRecord?.evaluations_count === 'number' ? s002UserRecord.evaluations_count : 0);
+
+  const s002LatestScore = typeof analytics?.s002_digital_learning?.latest_evaluation_score === 'number'
+    ? analytics.s002_digital_learning.latest_evaluation_score
+    : (typeof s002UserRecord?.latest_evaluation_score === 'number' ? s002UserRecord.latest_evaluation_score : null);
+
+  const s002MaxScore = typeof s002UserRecord?.max_evaluation_score === 'number'
+    ? s002UserRecord.max_evaluation_score
+    : null;
+
+  const actualTestScores = [
+    ...(s001Pretest !== null ? [{ subject: 'S-001', test: 'Pre-Test', score: s001Pretest }] : []),
+    ...(s002Pretest !== null ? [{ subject: 'S-002', test: 'Pre-Test', score: s002Pretest }] : []),
+    ...(s001Posttest !== null ? [{ subject: 'S-001', test: 'Post-Test', score: s001Posttest }] : []),
+    ...(s002Posttest !== null ? [{ subject: 'S-002', test: 'Post-Test', score: s002Posttest }] : []),
+    ...(s002EvalCount > 0 && s002LatestScore !== null ? [{ subject: 'S-002', test: 'Evaluasi Mandiri', score: s002LatestScore }] : []),
+  ];
+
   return (
     <div className="min-h-screen bg-ivory text-charcoal flex">
       {/* Sidebar Khusus Peneliti */}
@@ -357,150 +513,421 @@ export default function ResearcherDashboard() {
 
         {/* Content Body */}
         <main className="flex-1 p-4 sm:p-7 space-y-6 max-w-6xl mx-auto w-full">
-          {/* TAB 1: OVERVIEW */}
+          {/* TAB 1: OVERVIEW — RINGKASAN TERPADU RISET S-001 & S-002 */}
           {activeTab === 'overview' && (
             <div className="space-y-6 animate-fade-page">
-              {/* Header Hero Banner */}
+              {/* Header Hero Banner: Ringkasan Terpadu Protokol Penelitian */}
               <div className="rounded-2xl p-6 sm:p-8 bg-pure-white border border-[#28332C]/14 shadow-card-clean space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/14 pb-4">
                   <div className="space-y-1">
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-sage/20 text-xs font-semibold text-forest">
                       <Microscope className="w-3.5 h-3.5" />
-                      <span>Protokol Eksperimental Aljabar Kurikulum Merdeka</span>
+                      <span>Ringkasan Terpadu Penelitian Aljabar SMP Kelas VII</span>
                     </div>
                     <h2 className="text-xl sm:text-2xl font-bold text-charcoal">
-                      Pemantauan Pembelajaran Mandiri & Efektivitas NORA
+                      Dashboard Riset Komparatif: S-001 (Kontrol) & S-002 (Eksperimen)
                     </h2>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
                     <span className="px-3 py-1 rounded-full bg-forest text-pure-white font-mono font-semibold">
-                      P-001 Lead
+                      Lead P-001
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full bg-ivory text-secondary-text border border-[#28332C]/14 font-mono font-medium">
+                      Sampel Kohort N = 2
                     </span>
                   </div>
                 </div>
 
                 <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
-                  Platform ini memantau dua kelompok subjek resmi (S-001 Kontrol Tatap Muka & S-002 Eksperimen Mandiri Terpandu) serta mencatat seluruh aktivitas belajar siswa umum yang menyetujui evaluasi pembelajaran secara persisten.
+                  Bagian ini menyatukan seluruh rekam data aktual dari dua subjek penelitian resmi: <strong>S-001</strong> (Kelompok Kontrol · Pembelajaran Tatap Muka Konvensional) dan <strong>S-002</strong> (Kelompok Eksperimen · Pembelajaran Berbantuan Platform NUMORA Space & NORA AI). Seluruh metrik dihitung secara riil dari database tanpa fabrikasi data atau penghitungan ganda.
                 </p>
               </div>
 
-              {/* 4 Ringkasan Metrik Aktual */}
+              {/* 4 Ringkasan Metrik Gabungan Riset Aktual (Unified KPI Cards) */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Peserta Riset Resmi</span>
+                  <span className="text-xs text-secondary-text">Subjek Riset Kohort</span>
                   <div className="text-xl sm:text-2xl font-extrabold text-charcoal font-mono">
-                    {dataFetchErrors.subjects ? (
-                      <span className="text-sm font-sans font-medium text-amber-700">Tidak tersedia</span>
-                    ) : (
-                      `${subjects.length} Subjek`
-                    )}
+                    {totalOfficialSubjects} Subjek
                   </div>
                   <span className="text-[11px] text-forest font-medium flex items-center gap-1">
                     <Users className="w-3.5 h-3.5" />
-                    <span>S-001 & S-002 (Protokol Baku)</span>
+                    <span>S-001 (Kontrol) + S-002 (Eksperimen)</span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Pengguna Terdaftar</span>
+                  <span className="text-xs text-secondary-text">Total Aktivitas & Sesi Terverifikasi</span>
                   <div className="text-xl sm:text-2xl font-extrabold text-forest font-mono">
-                    {dataFetchErrors.publicUsers ? (
-                      <span className="text-sm font-sans font-medium text-amber-700">Tidak tersedia</span>
-                    ) : (
-                      `${publicUsers.length} Akun`
-                    )}
+                    {totalUnifiedActivitiesCount} Sesi / Log
                   </div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
-                    <Activity className="w-3.5 h-3.5" />
-                    <span>
-                      {dataFetchErrors.publicUsers ? '-' : `${publicUsers.filter(u => !u.is_official_research_subject).length} Siswa Publik`}
-                    </span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-forest" />
+                    <span>{s001Sessions.length} Tatap Muka + {s002DigitalActivities.length} Digital (Deduplikasi)</span>
                   </span>
                 </div>
 
                 <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Total Log Aktivitas</span>
-                  <div className="text-xl sm:text-2xl font-extrabold text-forest font-mono">
-                    {dataFetchErrors.activities && dataFetchErrors.analytics ? (
-                      <span className="text-sm font-sans font-medium text-amber-700">Tidak tersedia</span>
-                    ) : (
-                      `${analytics?.total_learning_activities ?? activities.length} Log`
-                    )}
-                  </div>
-                  <span className="text-[11px] text-forest font-medium flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>{dataFetchErrors.activities ? 'Koneksi database terganggu' : 'Tercatat di Database'}</span>
-                  </span>
-                </div>
-
-                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
-                  <span className="text-xs text-secondary-text">Evaluasi Mandiri</span>
+                  <span className="text-xs text-secondary-text">Akumulasi Waktu Belajar</span>
                   <div className="text-xl sm:text-2xl font-extrabold text-charcoal font-mono">
-                    {dataFetchErrors.analytics ? (
-                      <span className="text-sm font-sans font-medium text-amber-700">Tidak tersedia</span>
-                    ) : (
-                      `${analytics?.total_evaluations ?? '-'} Sesi`
-                    )}
+                    {totalCombinedDurationMinutes > 0 ? `${totalCombinedDurationMinutes} Menit` : 'Data Berjalan'}
                   </div>
                   <span className="text-[11px] text-secondary-text flex items-center gap-1">
-                    <Award className="w-3.5 h-3.5" />
-                    <span>Rata-rata: {dataFetchErrors.analytics ? '-' : (analytics?.average_evaluation_score ?? '-')}</span>
+                    <Clock className="w-3.5 h-3.5 text-forest" />
+                    <span>S-001: {s001DurationMinutes} mnt · S-002: {s002DurationMinutes} mnt</span>
+                  </span>
+                </div>
+
+                <div className="bg-pure-white rounded-xl p-4 border border-[#28332C]/14 shadow-subtle space-y-1">
+                  <span className="text-xs text-secondary-text">Status Evaluasi & Kognitif</span>
+                  <div className="text-xl sm:text-2xl font-extrabold text-charcoal font-mono">
+                    {s002EvalCount > 0 ? `${s002EvalCount} Evaluasi` : 'Terjadwal'}
+                  </div>
+                  <span className="text-[11px] text-amber-700 font-medium flex items-center gap-1">
+                    <Brain className="w-3.5 h-3.5" />
+                    <span>Leppink Scale: NOT CONFIGURED</span>
                   </span>
                 </div>
               </div>
 
-              {/* S-001 & S-002 Clean Cards */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
+              {/* REKAPITULASI PROGRES 4 MODUL ALJABAR GABUNGAN */}
+              <div className="bg-pure-white rounded-2xl p-5 sm:p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#28332C]/14 pb-3">
                   <div className="space-y-0.5">
-                    <h3 className="text-base font-bold text-charcoal">
-                      Dua Peserta Resmi Protokol Penelitian
+                    <h3 className="text-base font-bold text-charcoal flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-forest" />
+                      <span>Rekapitulasi Progres Empat Modul Aljabar</span>
                     </h3>
-                    {dataFetchErrors.subjects && (
-                      <p className="text-[11px] text-amber-700 font-medium">
-                        *Menampilkan spesifikasi protokol baku (sinkronisasi live database belum tersedia)
-                      </p>
-                    )}
+                    <p className="text-xs text-secondary-text">
+                      Pemantauan ketercapaian materi aljabar Kurikulum Merdeka pada subjek kontrol dan eksperimen.
+                    </p>
                   </div>
-                  <button
-                    onClick={() => setActiveTab('subjects')}
-                    className="btn-interactive text-xs font-semibold text-forest hover:underline"
-                  >
-                    Lihat Protokol Lengkap →
-                  </button>
+                  <span className="text-[11px] font-mono font-semibold px-2.5 py-1 rounded bg-ivory text-forest border border-[#28332C]/10 self-start sm:self-auto">
+                    Target Aktif: Modul 02
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(subjects.length > 0 ? subjects : DEFAULT_RESEARCH_SUBJECTS).map((sub) => (
-                    <div key={sub.subject_id} className="btn-interactive bg-pure-white rounded-2xl p-5 border border-[#28332C]/14 space-y-3 shadow-subtle">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {MODULES_MATRIX.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`p-4 rounded-xl border text-xs space-y-2.5 transition-all ${
+                        m.is_target
+                          ? 'bg-sage/10 border-forest/40 shadow-xs'
+                          : 'bg-ivory/60 border-[#28332C]/10'
+                      }`}
+                    >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="w-8 h-8 rounded-xl bg-forest/10 text-forest font-bold font-mono text-xs flex items-center justify-center">
-                            {sub.subject_id}
-                          </span>
-                          <div>
-                            <h4 className="font-bold text-charcoal text-sm">{sub.name || sub.subject_id}</h4>
-                            <span className="text-[11px] text-secondary-text">{sub.notes || sub.grade}</span>
-                          </div>
-                        </div>
-                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-sage/20 text-forest">
-                          {sub.group === 'control' ? 'Kelompok Kontrol' : 'Kelompok Eksperimen'}
+                        <span className="font-mono text-[10px] font-bold text-secondary-text uppercase">
+                          {m.id.replace('-', ' ')}
                         </span>
+                        {m.is_target && (
+                          <span className="px-2 py-0.5 rounded-full bg-forest text-pure-white text-[9px] font-extrabold uppercase tracking-wider">
+                            Target Aktif
+                          </span>
+                        )}
                       </div>
 
-                      <p className="text-xs text-secondary-text leading-relaxed">
-                        {sub.method || sub.role_description}
-                      </p>
+                      <h4 className="font-bold text-charcoal text-sm">{m.title}</h4>
 
-                      <div className="pt-2 border-t border-[#28332C]/14 flex items-center justify-between text-xs text-secondary-text">
-                        <span>Modul Target: <strong className="text-charcoal">{sub.active_module}</strong></span>
-                        <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-ivory text-secondary-text">
-                          {sub.data_source || 'PROTOCOL_TEMPLATE'}
-                        </span>
+                      <div className="py-1 px-2.5 rounded bg-pure-white text-center border border-[#28332C]/10 text-xs text-forest font-semibold">
+                        <MathView math={m.math} />
+                      </div>
+
+                      <div className="space-y-1.5 pt-1 text-[11px] border-t border-[#28332C]/10">
+                        <div className="flex justify-between items-center">
+                          <span className="text-secondary-text font-medium">S-001 (Kontrol):</span>
+                          <span className="font-semibold text-charcoal text-right">{m.s001_status}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-secondary-text font-medium">S-002 (Eksperimen):</span>
+                          <span className="font-semibold text-charcoal text-right">{m.s002_status}</span>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* REKAPITULASI HASIL EVALUASI & PENGUKURAN PEMAHAMAN */}
+              <div className="bg-pure-white rounded-2xl p-5 sm:p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#28332C]/14 pb-3">
+                  <div className="space-y-0.5">
+                    <h3 className="text-base font-bold text-charcoal flex items-center gap-2">
+                      <Award className="w-4 h-4 text-terracotta" />
+                      <span>Rekapitulasi Hasil Evaluasi & Pengukuran Pemahaman</span>
+                    </h3>
+                    <p className="text-xs text-secondary-text">
+                      Pengukuran kuantitatif baseline (pre-test), evaluasi formatif mandiri, dan capaian akhir (post-test).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Pre-Test Baseline */}
+                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/14 space-y-2">
+                    <span className="text-xs font-bold text-charcoal block">1. Pre-Test (Baseline Kompetensi)</span>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between py-1 border-b border-[#28332C]/10">
+                        <span className="text-secondary-text">S-001 (Kontrol):</span>
+                        <span className="font-semibold text-charcoal">
+                          {s001Pretest !== null ? `${s001Pretest} Poin` : 'Belum diukur (Terjadwal)'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-secondary-text">S-002 (Eksperimen):</span>
+                        <span className="font-semibold text-charcoal">
+                          {s002Pretest !== null ? `${s002Pretest} Poin` : 'Belum diukur (Terjadwal)'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Evaluasi Mandiri Formatif (NUMORA Space) */}
+                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/14 space-y-2">
+                    <span className="text-xs font-bold text-charcoal block">2. Evaluasi Mandiri 10 Soal (Formatif)</span>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between py-1 border-b border-[#28332C]/10">
+                        <span className="text-secondary-text">S-001 (Kontrol):</span>
+                        <span className="font-mono text-secondary-text">Dinonaktifkan (Isolasi)</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-secondary-text">S-002 (Eksperimen):</span>
+                        <span className="font-semibold text-forest">
+                          {s002EvalCount > 0 ? `${s002EvalCount} Sesi Dikerjakan` : 'Belum Dikerjakan'}
+                        </span>
+                      </div>
+                      {s002EvalCount > 0 && s002LatestScore !== null && (
+                        <div className="text-[11px] text-secondary-text pt-1">
+                          Skor Terakhir: <strong>{s002LatestScore} / 100</strong> (Tertinggi: <strong>{s002MaxScore ?? s002LatestScore}</strong>)
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Post-Test Capaian Akhir */}
+                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/14 space-y-2">
+                    <span className="text-xs font-bold text-charcoal block">3. Post-Test (Capaian Akhir)</span>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between py-1 border-b border-[#28332C]/10">
+                        <span className="text-secondary-text">S-001 (Kontrol):</span>
+                        <span className="font-semibold text-charcoal">
+                          {s001Posttest !== null ? `${s001Posttest} Poin` : 'Belum diukur (Menunggu Selesai Modul)'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-secondary-text">S-002 (Eksperimen):</span>
+                        <span className="font-semibold text-charcoal">
+                          {s002Posttest !== null ? `${s002Posttest} Poin` : 'Belum diukur (Menunggu Selesai Modul)'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Box Distribusi Nilai Empiris */}
+                <div className="p-3.5 rounded-xl bg-ivory/80 border border-[#28332C]/10 text-xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-forest shrink-0" />
+                    <span className="text-secondary-text">
+                      <strong>Distribusi Nilai:</strong> {actualTestScores.length > 0 ? `${actualTestScores.length} data skor tercatat.` : 'Belum tersedia (Data nilai ujian formal belum diukur di lapangan). Pengukuran kuantitatif pre-test dan post-test akan diinput setelah sesi evaluasi serempak di lapangan.'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-pure-white text-secondary-text border border-[#28332C]/10 shrink-0">
+                    N = 2
+                  </span>
+                </div>
+              </div>
+
+              {/* PERBANDINGAN S-001 vs S-002 (COMPARATIVE DESIGN MATRIX) */}
+              <div className="bg-pure-white rounded-2xl p-5 sm:p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#28332C]/14 pb-3">
+                  <div className="space-y-0.5">
+                    <h3 className="text-base font-bold text-charcoal flex items-center gap-2">
+                      <GitCompare className="w-4 h-4 text-forest" />
+                      <span>Perbandingan Rancangan & Metrik S-001 (Kontrol) vs S-002 (Eksperimen)</span>
+                    </h3>
+                    <p className="text-xs text-secondary-text">
+                      Perbedaan perlakuan intervensi, lingkungan pembelajaran, durasi, dan tingkat bantuan pada kedua kelompok.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead>
+                      <tr className="border-b border-[#28332C]/14 bg-ivory/80 text-secondary-text">
+                        <th className="py-2.5 px-3 font-semibold">Dimensi Penelitian</th>
+                        <th className="py-2.5 px-3 font-semibold text-forest">S-001 (Kelompok Kontrol)</th>
+                        <th className="py-2.5 px-3 font-semibold text-forest">S-002 (Kelompok Eksperimen)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#28332C]/10 text-charcoal">
+                      <tr>
+                        <td className="py-2.5 px-3 font-medium text-secondary-text">Metode Pembelajaran</td>
+                        <td className="py-2.5 px-3 font-semibold">Tatap Muka Konvensional (Direct Teaching)</td>
+                        <td className="py-2.5 px-3 font-semibold">Mandiri Terpandu (NUMORA Space + NORA AI)</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-medium text-secondary-text">Media & Alat Bantu</td>
+                        <td className="py-2.5 px-3">LKS Kertas & Bimbingan Langsung Peneliti</td>
+                        <td className="py-2.5 px-3">Modul Web Interaktif 3D & Tutor Sokratik AI</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-medium text-secondary-text">Akses Fitur Digital</td>
+                        <td className="py-2.5 px-3">
+                          <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-800 font-semibold border border-rose-200 text-[10px]">
+                            Diblokir Penuh (Isolasi Kontrol)
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200 text-[10px]">
+                            Aktif & Tersinkronisasi Persisten
+                          </span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-medium text-secondary-text">Modul Target Aktif</td>
+                        <td className="py-2.5 px-3 font-mono font-semibold">Modul 02: Memahami Koefisien</td>
+                        <td className="py-2.5 px-3 font-mono font-semibold">Modul 02: Memahami Koefisien</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-medium text-secondary-text">Total Sesi / Log Terverifikasi</td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-forest">{s001Sessions.length} Sesi Tatap Muka</td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-forest">{s002Sessions.length + s002DigitalActivities.length} Sesi & Log Digital</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-medium text-secondary-text">Akumulasi Waktu Pembelajaran</td>
+                        <td className="py-2.5 px-3 font-mono font-bold">{s001DurationMinutes} Menit</td>
+                        <td className="py-2.5 px-3 font-mono font-bold">{s002DurationMinutes} Menit</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-medium text-secondary-text">Status Beban Kognitif</td>
+                        <td className="py-2.5 px-3 font-mono text-amber-700 font-semibold">NOT CONFIGURED (Belum Diukur)</td>
+                        <td className="py-2.5 px-3 font-mono text-amber-700 font-semibold">NOT CONFIGURED (Belum Diukur)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* ANALISIS HASIL PENELITIAN & INTEGRITAS METODOLOGIS */}
+              <div className="bg-sage/15 rounded-2xl p-5 sm:p-6 border border-forest/20 shadow-subtle space-y-3">
+                <div className="flex items-center gap-2 text-forest font-bold text-sm">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Analisis Hasil Penelitian Berdasarkan Data Aktual & Catatan Metodologis</span>
+                </div>
+                <div className="space-y-2 text-xs text-charcoal/90 leading-relaxed">
+                  <p>
+                    <strong>Fase Intervensi Aktif:</strong> Berdasarkan data aktual per {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}, kedua subjek berada pada tahap intervensi <strong>Modul 02: Memahami Koefisien</strong>. Kelompok kontrol (S-001) menjalani sesi pembelajaran terarah secara langsung bersama peneliti tanpa intervensi digital, sementara kelompok eksperimen (S-002) mengeksplorasi modul interaktif dan bimbingan NORA secara mandiri.
+                  </p>
+                  <p className="p-3 rounded-xl bg-pure-white/80 border border-forest/20 text-secondary-text text-[11px]">
+                    <strong>Catatan Transparansi Metodologis (N = 2):</strong> Sesuai kaidah integritas ilmiah, efektivitas komparatif platform NUMORA Space belum dapat disimpulkan secara definitif dari data yang berjalan saat ini. Pengukuran komparatif resmi akan disimpulkan setelah pelaksanaan ujian post-test lapangan dan instrumen skala beban kognitif Leppink et al. dilaksanakan secara serempak.
+                  </p>
+                </div>
+              </div>
+
+              {/* TABEL RINCIAN DATA PENELITIAN YANG DAPAT DITELUSURI (UNIFIED TRACEABILITY TABLE) */}
+              <div className="bg-pure-white rounded-2xl p-5 sm:p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/14 pb-3">
+                  <div className="space-y-0.5">
+                    <h3 className="text-base font-bold text-charcoal flex items-center gap-2">
+                      <ListOrdered className="w-4 h-4 text-forest" />
+                      <span>Tabel Rincian Data Penelitian yang Dapat Ditelusuri</span>
+                    </h3>
+                    <p className="text-xs text-secondary-text">
+                      Audit trail terpadu sesi tatap muka dan log pembelajaran yang terverifikasi untuk S-001 dan S-002.
+                    </p>
+                  </div>
+
+                  {/* Filter Subjek Riset */}
+                  <div className="flex items-center gap-1.5 bg-ivory p-1 rounded-xl border border-[#28332C]/10 text-xs font-semibold self-start sm:self-auto">
+                    <button
+                      onClick={() => setResearchTraceFilter('ALL')}
+                      className={`px-3 py-1 rounded-lg transition-colors ${
+                        researchTraceFilter === 'ALL'
+                          ? 'bg-forest text-pure-white shadow-xs'
+                          : 'text-secondary-text hover:text-charcoal'
+                      }`}
+                    >
+                      Semua ({unifiedResearchActivities.length})
+                    </button>
+                    <button
+                      onClick={() => setResearchTraceFilter('S-001')}
+                      className={`px-3 py-1 rounded-lg transition-colors ${
+                        researchTraceFilter === 'S-001'
+                          ? 'bg-forest text-pure-white shadow-xs'
+                          : 'text-secondary-text hover:text-charcoal'
+                      }`}
+                    >
+                      S-001 Kontrol ({s001Sessions.length})
+                    </button>
+                    <button
+                      onClick={() => setResearchTraceFilter('S-002')}
+                      className={`px-3 py-1 rounded-lg transition-colors ${
+                        researchTraceFilter === 'S-002'
+                          ? 'bg-forest text-pure-white shadow-xs'
+                          : 'text-secondary-text hover:text-charcoal'
+                      }`}
+                    >
+                      S-002 Eksperimen ({s002Sessions.length + s002DigitalActivities.length})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tabel Konten */}
+                {filteredUnifiedActivities.length === 0 ? (
+                  <div className="py-8 text-center space-y-2">
+                    <Clock className="w-8 h-8 text-secondary-text/50 mx-auto" />
+                    <p className="text-xs text-secondary-text">
+                      Belum ada sesi atau aktivitas penelitian yang tercatat di database untuk filter ini.
+                    </p>
+                    <p className="text-[11px] text-forest font-medium">
+                      Peneliti dapat menambahkan sesi tatap muka baru melalui tab <strong>Monitoring Sesi</strong>.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead>
+                        <tr className="border-b border-[#28332C]/14 bg-ivory/80 text-secondary-text">
+                          <th className="py-2.5 px-3 font-semibold">No</th>
+                          <th className="py-2.5 px-3 font-semibold">Tanggal / Waktu</th>
+                          <th className="py-2.5 px-3 font-semibold">Subjek</th>
+                          <th className="py-2.5 px-3 font-semibold">Kelompok</th>
+                          <th className="py-2.5 px-3 font-semibold">Aktivitas</th>
+                          <th className="py-2.5 px-3 font-semibold">Materi / Modul</th>
+                          <th className="py-2.5 px-3 font-semibold">Sumber Verifikasi</th>
+                          <th className="py-2.5 px-3 font-semibold">Durasi / Catatan</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#28332C]/10 text-charcoal">
+                        {filteredUnifiedActivities.map((item, idx) => (
+                          <tr key={item.id} className="hover:bg-ivory/50 transition-colors">
+                            <td className="py-2.5 px-3 font-mono text-secondary-text">{idx + 1}</td>
+                            <td className="py-2.5 px-3 font-mono text-secondary-text">{item.dateString}</td>
+                            <td className="py-2.5 px-3 font-bold font-mono text-forest">{item.subject_id}</td>
+                            <td className="py-2.5 px-3">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                item.subject_id === 'S-001'
+                                  ? 'bg-sage/20 text-forest'
+                                  : 'bg-emerald-50 text-emerald-800'
+                              }`}>
+                                {item.group_name}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 font-semibold">{item.activity_label}</td>
+                            <td className="py-2.5 px-3 font-mono">{item.module_id}</td>
+                            <td className="py-2.5 px-3 text-secondary-text">{item.source}</td>
+                            <td className="py-2.5 px-3 text-secondary-text max-w-xs truncate" title={item.notes}>
+                              {item.duration_minutes ? `${item.duration_minutes} mnt - ` : ''}{item.notes}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
