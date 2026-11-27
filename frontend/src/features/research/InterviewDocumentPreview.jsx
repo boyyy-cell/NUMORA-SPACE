@@ -80,8 +80,8 @@ export default function InterviewDocumentPreview() {
   return (
     <div className="space-y-6 animate-fade-page">
       {/* 1. Header & Ringkasan Dokumen Wawancara */}
-      <div className="bg-pure-white rounded-2xl p-6 sm:p-7 border border-[#28332C]/14 shadow-subtle space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/14 pb-4">
+      <div className="bg-pure-white rounded-2xl p-5 sm:p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#28332C]/14 pb-3.5">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-sage/20 text-xs font-semibold text-forest">
               <FileText className="w-3.5 h-3.5" />
@@ -90,9 +90,6 @@ export default function InterviewDocumentPreview() {
             <h2 className="text-xl sm:text-2xl font-bold text-charcoal">
               Dokumentasi Wawancara Penelitian
             </h2>
-            <p className="text-xs sm:text-sm text-secondary-text max-w-3xl leading-relaxed">
-              Dokumentasi lengkap hasil wawancara mendalam dengan subjek penelitian <strong>S-001</strong> (Kelompok Kontrol · Pembelajaran Langsung Tatap Muka) dan <strong>S-002</strong> (Kelompok Eksperimen · Pembelajaran Berbantuan Platform NUMORA Space & NORA AI).
-            </p>
           </div>
 
           <div className="flex flex-col sm:items-end gap-1.5 self-start sm:self-auto shrink-0">
@@ -107,7 +104,7 @@ export default function InterviewDocumentPreview() {
         </div>
 
         {/* Action Bar & Metadata Dokumen */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2 text-xs text-secondary-text">
             <span className="px-2.5 py-1 rounded-lg bg-ivory border border-[#28332C]/10 font-mono font-medium">
               Format: <strong>Microsoft Word (.docx)</strong>
