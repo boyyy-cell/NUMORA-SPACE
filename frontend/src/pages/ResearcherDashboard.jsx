@@ -4,6 +4,7 @@ import Sidebar from '../components/layout/Sidebar';
 import Footer from '../components/layout/Footer';
 import MathView from '../components/common/MathView';
 import InterviewResultsView from '../features/research/InterviewResultsView';
+import InterviewDocumentPreview from '../features/research/InterviewDocumentPreview';
 import { INTERVIEW_METADATA } from '../data/interviewDocumentationData';
 import { apiService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -15,8 +16,6 @@ import {
   Brain,
   ShieldCheck,
   Download,
-  FileSpreadsheet,
-  FileCode,
   CheckCircle2,
   ChevronDown,
   LogOut,
@@ -82,7 +81,6 @@ export default function ResearcherDashboard() {
   const [activeDossierSubTab, setActiveDossierSubTab] = useState('modules'); // modules | evaluations | nora | runner | activities
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [exportMessage, setExportMessage] = useState('');
 
   const handleLogout = () => {
     logout();
@@ -162,43 +160,6 @@ export default function ResearcherDashboard() {
       console.error('Gagal mengambil dossier pengguna', err);
     } finally {
       setLoadingDossier(false);
-    }
-  };
-
-  // Export handlers dengan data riil database
-  const handleExportCSV = async () => {
-    try {
-      const csvText = await apiService.exportResearchCsv();
-      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'numora_research_and_learning_data.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setExportMessage('File CSV data penelitian & aktivitas pengguna aktual berhasil diunduh.');
-      setTimeout(() => setExportMessage(''), 4000);
-    } catch (err) {
-      console.error('Export CSV error', err);
-    }
-  };
-
-  const handleExportJSON = async () => {
-    try {
-      const jsonData = await apiService.exportResearchJson();
-      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'numora_research_and_learning_data.json');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setExportMessage('File JSON data penelitian & aktivitas pengguna aktual berhasil diunduh.');
-      setTimeout(() => setExportMessage(''), 4000);
-    } catch (err) {
-      console.error('Export JSON error', err);
     }
   };
 
@@ -1080,65 +1041,9 @@ export default function ResearcherDashboard() {
             </div>
           )}
 
-          {/* TAB 6: ANALISIS & EKSPOR */}
+          {/* TAB 5: DOKUMENTASI WAWANCARA PENELITIAN (ANALISIS & EKSPOR) */}
           {activeTab === 'analytics' && (
-            <div className="space-y-4 animate-fade-page">
-              <div className="space-y-1">
-                <h2 className="text-xl font-bold text-charcoal">
-                  Ekspor Data Aktual Penelitian & Pengguna
-                </h2>
-                <p className="text-xs sm:text-sm text-secondary-text">
-                  Unduh data aktual protokol riset dan rekap aktivitas pembelajaran seluruh siswa dalam format CSV atau JSON langsung dari database produksi.
-                </p>
-              </div>
-
-              {exportMessage && (
-                <div className="p-3 rounded-xl bg-sage/20 border border-sage/40 text-forest text-xs font-semibold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{exportMessage}</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
-                  <div className="w-10 h-10 rounded-xl bg-forest/10 border border-forest/20 flex items-center justify-center text-forest">
-                    <FileSpreadsheet className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-charcoal text-base">Ekspor Format CSV</h3>
-                    <p className="text-xs text-secondary-text leading-relaxed">
-                      Format tabel kompatibel dengan Microsoft Excel, Google Sheets, dan SPSS. Memisahkan kohort riset dan pengguna umum secara eksplisit.
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleExportCSV}
-                    className="btn-interactive w-full py-2.5 rounded-xl font-semibold text-xs bg-forest text-pure-white hover:bg-forest-600 transition-colors flex items-center justify-center gap-2 shadow-subtle"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Unduh CSV Data Aktual (.csv)</span>
-                  </button>
-                </div>
-
-                <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
-                  <div className="w-10 h-10 rounded-xl bg-forest/10 border border-forest/20 flex items-center justify-center text-forest">
-                    <FileCode className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-charcoal text-base">Ekspor Format JSON</h3>
-                    <p className="text-xs text-secondary-text leading-relaxed">
-                      Format objek terstruktur lengkap mencakup skema subjek riset resmi (S-001/S-002), analitik, dan pengguna umum.
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleExportJSON}
-                    className="btn-interactive w-full py-2.5 rounded-xl font-semibold text-xs bg-pure-white hover:bg-ivory text-charcoal border border-[#28332C]/14 hover:border-forest/40 transition-colors flex items-center justify-center gap-2 shadow-subtle"
-                  >
-                    <Download className="w-4 h-4 text-forest" />
-                    <span>Unduh JSON Lengkap (.json)</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <InterviewDocumentPreview />
           )}
         </main>
 

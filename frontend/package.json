@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "docx-preview": "^0.4.1",
     "katex": "^0.16.10",
     "lucide-react": "^0.378.0",
     "react": "^18.3.1",

@@ -181,3 +181,39 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* DOCX Preview Responsive Styles */
+.numora-docx-preview-viewport .docx-wrapper {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.numora-docx-preview-viewport .docx-wrapper > section.docx {
+  background: #ffffff !important;
+  box-shadow: 0 4px 20px -2px rgba(40, 51, 44, 0.08), 0 2px 6px -1px rgba(40, 51, 44, 0.04) !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(40, 51, 44, 0.14) !important;
+  margin: 0 auto 24px auto !important;
+  padding: 32px 40px !important;
+  color: #28332C !important;
+  font-family: inherit !important;
+}
+
+@media (max-width: 640px) {
+  .numora-docx-preview-viewport .docx-wrapper > section.docx {
+    padding: 20px 16px !important;
+    margin-bottom: 16px !important;
+  }
+}
+
+.numora-docx-preview-viewport table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin: 16px 0 !important;
+}
+
+.numora-docx-preview-viewport table td,
+.numora-docx-preview-viewport table th {
+  border: 1px solid rgba(40, 51, 44, 0.18) !important;
+  padding: 8px 12px !important;
+}
