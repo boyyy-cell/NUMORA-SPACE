@@ -5,6 +5,7 @@ import Footer from '../components/layout/Footer';
 import MathView from '../components/common/MathView';
 import InterviewResultsView from '../features/research/InterviewResultsView';
 import InterviewDocumentPreview from '../features/research/InterviewDocumentPreview';
+import ResearchInstrumentsView from '../features/research/ResearchInstrumentsView';
 import { INTERVIEW_METADATA } from '../data/interviewDocumentationData';
 import { apiService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -986,58 +987,10 @@ export default function ResearcherDashboard() {
             <InterviewResultsView />
           )}
 
-          {/* TAB 5: INSTRUMEN */}
+          {/* TAB 5: INSTRUMEN PENELITIAN */}
           {activeTab === 'instruments' && (
-            <div className="space-y-5 animate-fade-page">
-              <div className="space-y-1">
-                <h2 className="text-xl font-bold text-charcoal">
-                  Instrumen Pengukuran
-                </h2>
-                <p className="text-xs sm:text-sm text-secondary-text">
-                  Skala baku pengukuran beban kognitif dan evaluasi pemahaman matematis.
-                </p>
-              </div>
-
-              {/* Leppink Multidimensional Scale */}
-              <div className="bg-pure-white rounded-2xl p-6 border border-[#28332C]/14 shadow-subtle space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#28332C]/14 pb-3">
-                  <div>
-                    <h3 className="text-sm font-bold text-charcoal flex items-center gap-2">
-                      <Brain className="w-4 h-4 text-forest" />
-                      <span>Skala Beban Kognitif (Leppink et al., 2013)</span>
-                    </h3>
-                    <p className="text-xs text-secondary-text">
-                      Mengukur 3 dimensi beban pemrosesan kognitif siswa dalam pembelajaran aljabar.
-                    </p>
-                  </div>
-                  <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-amber-50 text-amber-900 border border-amber-300 font-semibold">
-                    STATUS: {cogStatus?.intrinsic_load_status?.includes('NOT CONFIGURED') ? 'NOT CONFIGURED' : (cogStatus?.intrinsic_load_status || 'NOT CONFIGURED (Belum Diukur di Lapangan)')}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
-                    <span className="font-bold text-forest block">1. Intrinsic Load (ICL)</span>
-                    <p className="text-[11px] text-secondary-text leading-relaxed">
-                      Beban dari kesulitan alami materi aljabar (variabel, notasi negatif).
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
-                    <span className="font-bold text-forest block">2. Extraneous Load (ECL)</span>
-                    <p className="text-[11px] text-secondary-text leading-relaxed">
-                      Beban dari antarmuka. Diminimalkan melalui desain Sage & Ivory yang bersih.
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-ivory border border-[#28332C]/14 space-y-1">
-                    <span className="font-bold text-forest block">3. Germane Load (GCL)</span>
-                    <p className="text-[11px] text-secondary-text leading-relaxed">
-                      Beban produktif yang digunakan siswa untuk membangun pemahaman konsep.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div className="animate-fade-page">
+              <ResearchInstrumentsView cogStatus={cogStatus} />
             </div>
           )}
 
