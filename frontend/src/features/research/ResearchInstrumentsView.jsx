@@ -46,7 +46,7 @@ export default function ResearchInstrumentsView({ cogStatus }) {
     subjectCode: '',
     date: new Date().toISOString().split('T')[0],
     topic: 'Aljabar: Variabel, Koefisien, Konstanta',
-    observer: 'Tim Peneliti NUMORA (P-001)'
+    observer: ''
   });
 
   const [obsChecklist, setObsChecklist] = useState({});
@@ -196,25 +196,18 @@ export default function ResearchInstrumentsView({ cogStatus }) {
         </div>
 
         {/* METADATA STRIP */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-[#8DA399]/20 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-[#8DA399]/20 text-xs">
           <div>
             <span className="text-[#28332C]/60 block">Materi Pembelajaran</span>
-            <span className="font-semibold text-[#28332C]">{INSTRUMENT_METADATA.topic}</span>
+            <span className="font-semibold text-[#28332C]">Aljabar: Variabel, Koefisien, Konstanta, dan Bentuk Aljabar</span>
           </div>
           <div>
-            <span className="text-[#28332C]/60 block">Target Subjek</span>
+            <span className="text-[#28332C]/60 block">Target Subjek Penelitian</span>
             <span className="font-semibold text-[#28332C]">{INSTRUMENT_METADATA.targetGrade}</span>
           </div>
           <div>
-            <span className="text-[#28332C]/60 block">Peneliti Utama</span>
-            <span className="font-semibold text-[#28332C]">{INSTRUMENT_METADATA.researcherId} (Dr. Hendra Wijaya)</span>
-          </div>
-          <div>
-            <span className="text-[#28332C]/60 block">Status Pengukuran Beban</span>
-            <span className="inline-flex items-center gap-1 font-semibold text-amber-700">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              {cogStatus?.display || 'Belum Diukur (Leppink Not Configured)'}
-            </span>
+            <span className="text-[#28332C]/60 block">Peneliti</span>
+            <span className="font-semibold text-[#28332C]">Peneliti Utama</span>
           </div>
         </div>
       </div>
@@ -829,62 +822,152 @@ export default function ResearchInstrumentsView({ cogStatus }) {
               Prosedur Operasional Standar Pengumpulan Data
             </h2>
             <p className="text-xs text-[#28332C]/70 mt-1 max-w-3xl">
-              Protokol pelaksanaan penelitian lapangan yang harus dijalankan secara terstandardisasi pada subjek Kontrol (S-001) dan subjek Eksperimen (S-002) untuk menjaga validitas internal penelitian.
+              Protokol pelaksanaan penelitian lapangan yang dijalankan secara terstandardisasi pada subjek Kontrol (S-001) dan subjek Eksperimen (S-002) untuk menjaga validitas internal penelitian.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* S-001 PROCEDURE */}
+            {/* S-001 PROCEDURE: KELOMPOK KONTROL */}
             <div className="bg-white border border-[#8DA399]/30 rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 pb-3 border-b border-[#8DA399]/20">
-                <span className="w-3 h-3 rounded-full bg-[#8DA399]"></span>
+                <span className="w-3.5 h-3.5 rounded-full bg-[#8DA399]"></span>
                 <div>
                   <h3 className="font-serif font-bold text-base text-[#28332C]">
-                    Kelompok Kontrol: S-001
+                    Kelompok Kontrol: {RESEARCH_PROCEDURES.s001_control?.code || 'S-001'}
                   </h3>
-                  <span className="text-xs text-[#28332C]/60">Metode Pembelajaran Langsung (Direct Teaching)</span>
+                  <span className="text-xs text-[#28332C]/70 block font-medium">
+                    {RESEARCH_PROCEDURES.s001_control?.treatment || 'Pembelajaran Tatap Muka Langsung bersama Peneliti'}
+                  </span>
                 </div>
               </div>
 
+              <p className="text-xs text-[#28332C]/75 leading-relaxed bg-[#FAF9F6] p-3 rounded-xl border border-[#8DA399]/20">
+                {RESEARCH_PROCEDURES.s001_control?.description}
+              </p>
+
               <div className="space-y-4 pt-2">
-                {RESEARCH_PROCEDURES.s001Control.map((step) => (
-                  <div key={step.step} className="flex items-start gap-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#28332C]/60 block">
+                  Urutan Pelaksanaan Pengumpulan Data:
+                </span>
+                {(RESEARCH_PROCEDURES.s001_control?.steps || []).map((step) => (
+                  <div key={step.step} className="flex items-start gap-3 p-3 rounded-xl border border-[#8DA399]/20 hover:bg-[#FAF9F6]/40 transition">
                     <span className="w-6 h-6 rounded-full bg-[#8DA399]/20 text-[#28332C] flex items-center justify-center font-serif font-bold text-xs shrink-0 mt-0.5">
                       {step.step}
                     </span>
-                    <div className="space-y-0.5">
-                      <h4 className="text-xs font-bold text-[#28332C]">{step.title}</h4>
+                    <div className="space-y-1 w-full">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-xs font-bold text-[#28332C]">{step.title}</h4>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#8DA399]/15 text-[#28332C] font-medium shrink-0">
+                          Tahap {step.step}
+                        </span>
+                      </div>
                       <p className="text-xs text-[#28332C]/70 leading-relaxed">{step.description}</p>
+                      <div className="text-[11px] text-[#28332C]/80 font-medium pt-1 border-t border-[#8DA399]/10">
+                        <span className="text-[#8DA399] font-bold">Fokus Aktivitas:</span> {step.activity}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* S-002 PROCEDURE */}
+            {/* S-002 PROCEDURE: KELOMPOK EKSPERIMEN */}
             <div className="bg-white border border-[#D58B68]/30 rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 pb-3 border-b border-[#D58B68]/20">
-                <span className="w-3 h-3 rounded-full bg-[#D58B68]"></span>
+                <span className="w-3.5 h-3.5 rounded-full bg-[#D58B68]"></span>
                 <div>
                   <h3 className="font-serif font-bold text-base text-[#28332C]">
-                    Kelompok Eksperimen: S-002
+                    Kelompok Eksperimen: {RESEARCH_PROCEDURES.s002_experiment?.code || 'S-002'}
                   </h3>
-                  <span className="text-xs text-[#28332C]/60">Metode Pembelajaran Berbantuan Platform NUMORA Space</span>
+                  <span className="text-xs text-[#28332C]/70 block font-medium">
+                    {RESEARCH_PROCEDURES.s002_experiment?.treatment || 'Pembelajaran Berbantuan NUMORA Space & Pendampingan NORA AI'}
+                  </span>
                 </div>
               </div>
 
+              <p className="text-xs text-[#28332C]/75 leading-relaxed bg-[#D58B68]/5 p-3 rounded-xl border border-[#D58B68]/20">
+                {RESEARCH_PROCEDURES.s002_experiment?.description}
+              </p>
+
               <div className="space-y-4 pt-2">
-                {RESEARCH_PROCEDURES.s002Experiment.map((step) => (
-                  <div key={step.step} className="flex items-start gap-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#28332C]/60 block">
+                  Urutan Pelaksanaan Pengumpulan Data:
+                </span>
+                {(RESEARCH_PROCEDURES.s002_experiment?.steps || []).map((step) => (
+                  <div key={step.step} className="flex items-start gap-3 p-3 rounded-xl border border-[#D58B68]/20 hover:bg-[#D58B68]/5 transition">
                     <span className="w-6 h-6 rounded-full bg-[#D58B68]/20 text-[#D58B68] flex items-center justify-center font-serif font-bold text-xs shrink-0 mt-0.5">
                       {step.step}
                     </span>
-                    <div className="space-y-0.5">
-                      <h4 className="text-xs font-bold text-[#28332C]">{step.title}</h4>
+                    <div className="space-y-1 w-full">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-xs font-bold text-[#28332C]">{step.title}</h4>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#D58B68]/15 text-[#D58B68] font-medium shrink-0">
+                          Tahap {step.step}
+                        </span>
+                      </div>
                       <p className="text-xs text-[#28332C]/70 leading-relaxed">{step.description}</p>
+                      <div className="text-[11px] text-[#28332C]/80 font-medium pt-1 border-t border-[#D58B68]/10">
+                        <span className="text-[#D58B68] font-bold">Fokus Aktivitas:</span> {step.activity}
+                      </div>
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* DOKUMENTASI, WAKTU PELAKSANAAN & PENYIMPANAN DATA */}
+          <div className="bg-white border border-[#8DA399]/30 rounded-2xl p-6 shadow-sm space-y-4">
+            <h3 className="text-sm font-serif font-bold text-[#28332C] flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-[#8DA399]" />
+              Format Waktu Pelaksanaan & Pencatatan Hasil Penelitian (Dapat Diisi Peneliti)
+            </h3>
+            <p className="text-xs text-[#28332C]/70">
+              Formulir pencatatan operasional untuk mendokumentasikan tanggal pelaksanaan, durasi sesi lapangan nyata, serta lokasi penyimpanan berkas data penelitian.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div className="p-4 rounded-xl bg-[#FAF9F6] border border-[#8DA399]/30 space-y-3">
+                <span className="text-xs font-bold text-[#28332C] block">Log Pelaksanaan Subjek S-001 (Kontrol)</span>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label className="text-[11px] text-[#28332C]/70 block font-medium mb-1">Tanggal Sesi</label>
+                    <input type="text" placeholder="Contoh: Terlaksana di lapangan" className="w-full px-3 py-1.5 rounded-lg border border-[#8DA399]/30 bg-white text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-[#28332C]/70 block font-medium mb-1">Pencatatan Lembar Tes</label>
+                    <input type="text" placeholder="10 Butir Terarsip" className="w-full px-3 py-1.5 rounded-lg border border-[#8DA399]/30 bg-white text-xs" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] text-[#28332C]/70 block font-medium mb-1">Catatan Verifikasi & Dokumentasi S-001</label>
+                  <textarea rows="2" placeholder="Tuliskan catatan verifikasi berkas tes evaluasi, wawancara, dan observasi tatap muka..." className="w-full px-3 py-1.5 rounded-lg border border-[#8DA399]/30 bg-white text-xs"></textarea>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#FAF9F6] border border-[#D58B68]/30 space-y-3">
+                <span className="text-xs font-bold text-[#28332C] block">Log Pelaksanaan Subjek S-002 (Eksperimen)</span>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label className="text-[11px] text-[#28332C]/70 block font-medium mb-1">Tanggal Sesi</label>
+                    <input type="text" placeholder="Contoh: Terlaksana di platform" className="w-full px-3 py-1.5 rounded-lg border border-[#D58B68]/30 bg-white text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-[#28332C]/70 block font-medium mb-1">Log Sistem & Tes</label>
+                    <input type="text" placeholder="10 Butir & Aktivitas Tersimpan" className="w-full px-3 py-1.5 rounded-lg border border-[#D58B68]/30 bg-white text-xs" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] text-[#28332C]/70 block font-medium mb-1">Catatan Verifikasi & Dokumentasi S-002</label>
+                  <textarea rows="2" placeholder="Tuliskan catatan verifikasi hasil tes, transkrip wawancara, dan log interaksi NORA AI..." className="w-full px-3 py-1.5 rounded-lg border border-[#D58B68]/30 bg-white text-xs"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-xs text-[#28332C]/80 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-[#8DA399] shrink-0 mt-0.5" />
+              <div>
+                <strong>Rekomendasi Prosedur Penyimpanan Hasil Penelitian:</strong> Seluruh berkas fisik (lembar jawaban tes tertulis, formulir observasi terisi, dan catatan lapangan) diarsipkan dalam map arsip penelitian, sedangkan dokumentasi digital (rekaman audio wawancara, transkrip, dan data log sistem) direkomendasikan untuk disimpan secara terstruktur dan aman pada direktori penelitian yang dilindungi aksesnya.
               </div>
             </div>
           </div>
